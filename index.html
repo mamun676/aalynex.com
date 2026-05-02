@@ -918,7 +918,378 @@ h1 em{
   -webkit-backdrop-filter: blur(18px) !important;
   background: rgba(0, 0, 0, 0.15);
   z-index: 9999;
+}/* ═══════════════════════════════════════════════════════════════
+   AALYNEX — PREMIUM CHAT UI LAYER
+   Paste this entire block at the very END of your <style> tag,
+   right before . Nothing else needs to change.
+═══════════════════════════════════════════════════════════════ */
+
+/* ── 1. CHAT WRAP — container polish ── */
+.chat-wrap {
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+  background: var(--bg);
 }
+
+/* ── 2. SIDEBAR — conversation list ── */
+.chat-list {
+  background: var(--surface);
+  border-right: 1px solid var(--glass-border);
+}
+
+.chat-list::-webkit-scrollbar { width: 3px; }
+.chat-list::-webkit-scrollbar-thumb { background: rgba(0,0,0,.08); border-radius: 99px; }
+
+/* conversation item */
+.cc-item {
+  padding: 12px 14px;
+  gap: 10px;
+  transition: background .15s ease, transform .15s ease;
+  border-bottom: 1px solid rgba(0,0,0,.04);
+  position: relative;
+}
+.cc-item:last-child { border-bottom: none; }
+.cc-item:hover { background: var(--bg2); transform: translateX(2px); }
+.cc-item.active {
+  background: rgba(224,92,42,.05);
+  border-left: 3px solid var(--accent);
+  padding-left: 11px;
+}
+
+/* sidebar avatar */
+.c-av {
+  background: linear-gradient(135deg, var(--accent2), #6D28D9);
+  box-shadow: 0 2px 8px rgba(124,58,237,.22);
+  font-weight: 700;
+  letter-spacing: -.3px;
+  flex-shrink: 0;
+}
+
+/* name & preview */
+.cc-name {
+  font-size: .82rem;
+  font-weight: 600;
+  color: var(--text);
+  letter-spacing: -.1px;
+  margin-bottom: 2px;
+  line-height: 1.25;
+}
+.cc-prev {
+  font-size: .69rem;
+  color: var(--text-3);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 154px;
+  line-height: 1.4;
+}
+
+/* ── 3. CHAT HEADER ── */
+.ch-header {
+  padding: 13px 18px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--glass-border);
+  box-shadow: 0 1px 6px rgba(0,0,0,.04);
+  font-size: .87rem;
+  font-weight: 600;
+  color: var(--text);
+  gap: 9px;
+  flex-shrink: 0;
+}
+
+/* avatar in header */
+.ch-header .c-av {
+  width: 32px !important;
+  height: 32px !important;
+  font-size: .72rem !important;
+}
+
+/* online dot */
+.online-dot {
+  width: 7px;
+  height: 7px;
+  border: 1.5px solid var(--surface);
+  box-shadow: 0 0 0 1px rgba(22,163,74,.3);
+  transition: background .3s ease;
+  flex-shrink: 0;
+}
+
+/* ── 4. MESSAGES AREA ── */
+.chat-msgs {
+  padding: 20px 18px;
+  gap: 3px;
+  background: var(--bg);
+  /* subtle ambient tint */
+  background-image:
+    radial-gradient(ellipse 60% 40% at 10% 90%, rgba(224,92,42,.03) 0%, transparent 60%),
+    radial-gradient(ellipse 50% 35% at 90% 10%, rgba(124,58,237,.03) 0%, transparent 60%);
+}
+.chat-msgs::-webkit-scrollbar { width: 3px; }
+.chat-msgs::-webkit-scrollbar-thumb { background: rgba(0,0,0,.1); border-radius: 99px; }
+
+/* ── 5. MESSAGE BUBBLES ── */
+.msg {
+  padding: 9px 13px;
+  line-height: 1.58;
+  font-size: .835rem;
+  word-break: break-word;
+  animation: chatMsgIn .18s cubic-bezier(.25,.46,.45,.94) both;
+  transition: opacity .15s ease;
+}
+
+@keyframes chatMsgIn {
+  from { opacity: 0; transform: translateY(5px) scale(.98); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* received bubble */
+.msg.received {
+  background: var(--surface);
+  border: 1px solid rgba(0,0,0,.07);
+  border-radius: 3px 16px 16px 16px;
+  box-shadow: 0 1px 4px rgba(0,0,0,.07), 0 0 0 0.5px rgba(0,0,0,.04);
+  color: var(--text);
+  max-width: 72%;
+}
+
+/* sent bubble */
+.msg.sent {
+  background: linear-gradient(135deg, #E05C2A, #F07A45);
+  color: #fff;
+  border-radius: 16px 3px 16px 16px;
+  box-shadow: 0 2px 12px rgba(224,92,42,.28), 0 1px 3px rgba(224,92,42,.15);
+  max-width: 72%;
+}
+
+/* ── 6. TIMESTAMPS ── */
+.msg-time {
+  font-size: .61rem;
+  color: var(--text-4);
+  margin-top: 3px;
+  letter-spacing: .02em;
+}
+.msg.sent + div .msg-time, .msg-time { opacity: .85; }
+
+/* ── 7. VIDEO MESSAGE CARD ── */
+.msg-video { max-width: 74%; }
+.msg-video.sent-video { align-self: flex-end; }
+
+.msg-video-inner {
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--shadow-sm);
+  transition: box-shadow .2s ease;
+}
+.msg-video-inner:hover { box-shadow: var(--shadow-md); }
+.msg-video.sent-video .msg-video-inner {
+  background: rgba(224,92,42,.06);
+  border-color: rgba(224,92,42,.2);
+}
+
+.msg-video-label {
+  padding: 10px 13px;
+  gap: 9px;
+  font-size: .77rem;
+  font-weight: 500;
+  color: var(--text-2);
+  background: var(--surface2);
+  border-bottom: 1px solid var(--glass-border);
+}
+.msg-video-label .vico {
+  width: 28px;
+  height: 28px;
+  border-radius: 7px;
+  background: linear-gradient(135deg, var(--accent), #F07A45);
+  box-shadow: 0 2px 6px rgba(224,92,42,.22);
+}
+
+.msg-video-player {
+  display: block;
+  width: 100%;
+  max-width: 280px;
+  max-height: 168px;
+  object-fit: cover;
+  background: #0a0a0a;
+}
+
+.msg-video-footer {
+  padding: 7px 13px;
+  background: var(--surface2);
+  font-size: .63rem;
+  color: var(--text-3);
+}
+
+/* ── 8. NEGOTIATION BUBBLE ── */
+/* The negotiation bubble already uses .msg; just tighten it */
+.msg[style*="NEGOTIATION"] strong { font-weight: 700; }
+
+/* ── 9. CHAT INPUT BAR ── */
+.chat-inp-bar {
+  padding: 11px 15px;
+  background: var(--surface);
+  border-top: 1px solid var(--glass-border);
+  gap: 9px;
+  align-items: center;
+  box-shadow: 0 -1px 0 rgba(0,0,0,.04);
+  flex-shrink: 0;
+}
+
+/* input pill */
+.chat-inp {
+  flex: 1;
+  padding: 9px 16px;
+  background: var(--bg2);
+  border: 1.5px solid var(--glass-border-strong);
+  border-radius: 999px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: .84rem;
+  color: var(--text);
+  outline: none;
+  transition: border-color .2s ease, background .2s ease, box-shadow .2s ease;
+  line-height: 1.4;
+}
+.chat-inp::placeholder { color: var(--text-3); }
+.chat-inp:hover { border-color: rgba(0,0,0,.16); }
+.chat-inp:focus {
+  background: var(--surface);
+  border-color: rgba(224,92,42,.45);
+  box-shadow: 0 0 0 3px rgba(224,92,42,.09);
+}
+
+/* send button — circular premium */
+.chat-inp-bar .btn-primary.btn-sm {
+  border-radius: 999px;
+  padding: 9px 18px;
+  font-size: .82rem;
+  font-weight: 600;
+  letter-spacing: -.01em;
+  flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(224,92,42,.22);
+  transition: transform .18s ease, box-shadow .18s ease, background .18s ease;
+}
+.chat-inp-bar .btn-primary.btn-sm:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(224,92,42,.32);
+}
+.chat-inp-bar .btn-primary.btn-sm:active { transform: scale(.96); }
+
+/* attachment icon button */
+.chat-inp-bar label[for^="chat-upload"] {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg2);
+  border: 1px solid var(--glass-border-strong);
+  transition: background .18s, border-color .18s, transform .18s;
+  flex-shrink: 0;
+  color: var(--text-3);
+}
+.chat-inp-bar label[for^="chat-upload"]:hover {
+  background: var(--accent-soft);
+  border-color: rgba(224,92,42,.3);
+  color: var(--accent);
+  transform: scale(1.08);
+}
+
+/* ── 10. EMPTY STATE ── */
+.chat-msgs div[style*="text-align:center"] {
+  background: var(--surface);
+  border: 1px dashed var(--glass-border-strong);
+  border-radius: var(--radius);
+  padding: 28px 20px;
+  font-size: .82rem;
+  color: var(--text-3);
+  margin: 16px auto;
+  max-width: 280px;
+}
+
+/* ── 11. CHAT TOGGLE BUTTON (mobile) ── */
+.chat-toggle {
+  display: none !important;
+}
+@media (max-width: 768px) {
+  .chat-toggle {
+    display: inline-flex !important;
+    align-items: center;
+    gap: 5px;
+    padding: 7px 14px;
+    font-size: .78rem;
+    font-weight: 600;
+    border-radius: 999px;
+    border: none;
+    background: linear-gradient(135deg, var(--accent), #F07A45);
+    color: #fff;
+    box-shadow: 0 2px 10px rgba(224,92,42,.3);
+    z-index: 1200;
+    cursor: pointer;
+    top: calc(var(--nav-h) + 12px);
+    left: 12px;
+    position: fixed;
+    transition: transform .18s ease, box-shadow .18s ease;
+  }
+  .chat-toggle:active { transform: scale(.95); }
+}
+
+/* ── 12. MOBILE CHAT OVERLAY ── */
+@media (max-width: 768px) {
+  .chat-list {
+    box-shadow: 4px 0 24px rgba(0,0,0,.14);
+    border-right: none;
+    top: 0;
+    padding-top: calc(var(--nav-h) + 8px);
+    z-index: 1100;
+  }
+  .chat-list.open {
+    border-right: 1px solid var(--glass-border);
+  }
+
+  /* narrow bubbles on mobile */
+  .msg.received,
+  .msg.sent { max-width: 80%; }
+
+  .chat-msgs { padding: 14px 12px; }
+  .chat-inp-bar { padding: 9px 12px; gap: 7px; }
+
+  .chat-inp { padding: 8px 13px; font-size: .82rem; }
+  .chat-inp-bar .btn-primary.btn-sm { padding: 8px 14px; font-size: .78rem; }
+}
+
+/* ── 13. NO MESSAGES IN SIDEBAR ── */
+.chat-list > div[style*="padding:14px"] {
+  padding: 20px 16px !important;
+  font-size: .78rem !important;
+  color: var(--text-3) !important;
+  text-align: center;
+  line-height: 1.6;
+}
+
+/* ── 14. SKELETON LOADER for chat (optional usage) ── */
+@keyframes chatSkeleton {
+  0%,100% { opacity: .45; }
+  50%      { opacity: .85; }
+}
+.chat-skeleton-msg {
+  height: 36px;
+  border-radius: 3px 14px 14px 14px;
+  background: var(--bg2);
+  animation: chatSkeleton 1.4s ease infinite;
+  max-width: 55%;
+  margin-bottom: 8px;
+}
+.chat-skeleton-msg.right {
+  border-radius: 14px 3px 14px 14px;
+  align-self: flex-end;
+  max-width: 45%;
+  background: rgba(224,92,42,.08);
+}
+
+/* ── END OF CHAT UI LAYER ── */
 
 </style>
 </head>
@@ -4085,7 +4456,7 @@ function escapeHtml(str) {
 
 function renderMsgs(msgs, myId) {
   if (!msgs || !msgs.length)
-    return '<div style="text-align:center;color:var(--text-3);font-size:.78rem;padding:20px 0;">Start the conversation!</div>';
+    return '<div style="text-align:center;">Start the conversation!</div>';
 
   const isCreator = CU.role === 'creator';
 
