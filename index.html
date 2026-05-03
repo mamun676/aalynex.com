@@ -2956,18 +2956,36 @@ if (wfStep === 7) {
     const showRating  = p && p.paid && (!p.rating || p.rating === 0);
     const showDone    = p && p.paid && p.rating > 0;
 
-    if (showDone) {
-      return `
-      <h3>Project Complete</h3>
-      <div class="alert alert-s" style="margin-bottom:16px;">
-        ✅ Payment done and rating submitted. This project is fully complete!
+   if (showDone) {
+  return `
+  <h3>Project Complete</h3>
+  <div class="alert alert-s" style="margin-bottom:16px;display:flex;align-items:center;gap:10px;">
+    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="var(--green)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+    Payment done and rating submitted. This project is fully complete!
+  </div>
+  <div style="background:linear-gradient(135deg,rgba(224,92,42,.06),rgba(124,58,237,.05));border:1px solid rgba(224,92,42,.2);border-radius:var(--radius);padding:20px 22px;margin-bottom:16px;text-align:center;">
+    <div style="display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:8px;">
+      <div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
       </div>
-      <div class="det-card">
-        <div class="info-row"><span class="key">Editor</span><span>${eName}</span></div>
-        <div class="info-row"><span class="key">Your Rating</span><span>${'★'.repeat(p.rating)}${'☆'.repeat(5 - p.rating)}</span></div>
-        ${p.review ? `<div class="info-row"><span class="key">Your Review</span><span style="font-style:italic;">"${p.review}"</span></div>` : ''}
-      </div>`;
-    }
+      <div style="font-family:Outfit,sans-serif;font-size:1.15rem;font-weight:700;color:var(--text);letter-spacing:-.3px;">Your video is ready.</div>
+    </div>
+    <div style="font-size:.85rem;color:var(--text-2);line-height:1.75;max-width:420px;margin:0 auto 16px;">
+      The final edited video is now available in your <strong style="color:var(--accent)">Messages</strong> section.
+      Head over to the chat to download your finished project.
+      Thank you for trusting <strong style="color:var(--accent)">Aalynex</strong> — we hope the result exceeds your expectations.
+    </div>
+    <button class="btn btn-primary" onclick="cPage('chat', null)" style="border-radius:999px;padding:10px 26px;display:inline-flex;align-items:center;gap:8px;">
+      <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+      Go to Chat &amp; Download
+    </button>
+  </div>
+  <div class="det-card">
+    <div class="info-row"><span class="key">Editor</span><span>${eName}</span></div>
+    <div class="info-row"><span class="key">Your Rating</span><span>${'&#9733;'.repeat(p.rating)}${'&#9734;'.repeat(5 - p.rating)}</span></div>
+    ${p.review ? `<div class="info-row"><span class="key">Your Review</span><span style="font-style:italic;">"${p.review}"</span></div>` : ''}
+  </div>`;
+}
 
     return `
     <h3>${showPayment ? 'Complete Payment' : ''}${showPayment && showRating ? ' &amp; ' : ''}${showRating ? 'Rate Editor' : ''}</h3>
