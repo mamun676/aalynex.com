@@ -85,7 +85,11 @@ function manageProject(pid) {
   selFreelancerName = DB.users().find(u => u.id === p.freelancerId)?.name;
   selContent = p.contentType;
 
-  if (p.status === 'open') { showToast('Waiting for freelancers to accept...', 'info'); return; }
+  if (p.status === 'open') {
+  // Open project: show full details (files, invited editors, status) + Remove option
+  document.getElementById('c-main').innerHTML = cProjectDetail(pid);
+  return;
+}
   if (p.status === 'ongoing' && !p.editedUploaded) wfStep = 5;
   else if (p.status === 'ongoing' && p.editedUploaded && !p.paid) wfStep = 7;
   else wfStep = 7;
@@ -93,6 +97,188 @@ function manageProject(pid) {
   cPage('new', document.querySelector('[data-page="new"]'));
 }
 
+function cProjectDetail(pid) {
+  const p = DB.projects().find(x => x.id === pid);
+  if (!p) return '<div class="page-head"><h2>Project not found</h2></div>';
+
+  const atts       = (DB.attachments() || []).filter(a => a.projectId === pid);
+  const invited    = (p.invited_freelancers || []).map(id => DB.users().find(u => u.id === id)).filter(Boolean);
+  const acceptedBy = p.freelancerId ? DB.users().find(u => u.id === p.freelancerId) : null;
+
+  const statusBadge = `<span class="pstatus ${statusClass(p.status)}">${p.status === 'open' ? '🔒 Waiting for acceptance' : statusLabel(p.status)}</span>`;
+  const acceptedLine = acceptedBy
+    ? `Accepted by <strong>${escapeHtml(acceptedBy.name)}</strong>`
+    : 'Not accepted yet — waiting for an editor to accept';
+
+  const filesHtml = atts.length
+    ? atts.map(a => `
+        <div class="info-row">
+          <span>📎 ${escapeHtml(a.name || 'File')}${a.size ? ` <span style="color:var(--text-3);font-size:.75rem;">(${fmtFileSize(a.size)})</span>` : ''}</span>
+          ${a.file_url ? `<button class="btn btn-ghost btn-xs" onclick="openProjectFile('${a.file_url}')">Download</button>` : '<span style="color:var(--text-3);font-size:.75rem;">Uploaded</span>'}
+        </div>`).join('')
+    : '<div style="color:var(--text-3);font-size:.85rem;">No files uploaded.</div>';
+
+  const invitedHtml = invited.length
+    ? invited.map(f => `<span style="display:inline-block;background:var(--accent-soft);color:var(--accent);border-radius:99px;padding:3px 10px;font-size:.75rem;margin:2px 4px 2px 0;">${escapeHtml(f.name)}</span>`).join('')
+    : '<span style="color:var(--text-3);font-size:.85rem;">No editors invited.</span>';
+
+  return `
+  <div class="page-head" style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;">
+    <div><h2>${escapeHtml(p.title)}</h2><p>Project details</p></div>
+    ${statusBadge}
+  </div>
+
+  <div class="det-card" style="margin-bottom:16px;">
+    <div class="info-row"><span class="key">Description</span><span>${escapeHtml(p.description || '—')}</span></div>
+    <div class="info-row"><span class="key">Content Type</span><span>${escapeHtml(p.contentType || '—')}</span></div>
+    <div class="info-row"><span class="key">Budget</span><span>₹${fmt(p.budget || 0)}</span></div>
+    <div class="info-row"><span class="key">Deadline</span><span>${fmtDate(p.deadline)}</span></div>
+    <div class="info-row"><span class="key">Posted On</span><span>${fmtDate(p.createdAt)}</span></div>
+    <div class="info-row"><span class="key">Status</span><span>${acceptedLine}</span></div>
+  </div>
+
+  <div class="section-title">Invited Editors</div>
+  <div class="det-card" style="margin-bottom:16px;">${invitedHtml}</div>
+
+  <div class="section-title">Uploaded Files</div>
+  <div class="det-card" style="margin-bottom:16px;">${filesHtml}</div>
+
+<div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:8px;">
+  <button class="btn btn-ghost" onclick="cPage('projects', document.querySelector('[data-page=projects]'))">← Back</button>
+  <button class="btn btn-primary" onclick="cProjectEdit('${p.id}')">✏️ Edit Project</button>
+  <button class="btn" style="background:#e5484d;color:#fff;margin-left:auto;" onclick="deleteProjectConfirm('${p.id}')">🗑 Remove Project</button>
+</div>`;
+}
+
+async function openProjectFile(key) {
+  try {
+    let url = key;
+    if (typeof isS3Key === 'function' && isS3Key(key)) url = await s3GetUrl(key);
+    window.open(url, '_blank');
+  } catch (e) { showToast('File open nahi ho paayi', 'err', ''); }
+}
+
+function deleteProjectConfirm(pid) {
+  const p = DB.projects().find(x => x.id === pid);
+  if (!p) return;
+  if (confirm(`"${p.title}" project ko hataana chahte ho? Ye wapas nahi aayega.`)) deleteProject(pid);
+}
+
+async function deleteProject(pid) {
+  if (supaClient) {
+    try {
+      await supaClient.from('project_attachments').delete().eq('project_id', pid);
+      const { error } = await supaClient.from('projects').delete().eq('id', pid);
+      if (error) { showToast('Delete failed: ' + error.message, 'err', ''); return; }
+    } catch (e) { showToast('Delete failed. Try again.', 'err', ''); return; }
+  }
+  DB.saveProjects(DB.projects().filter(x => x.id !== pid));
+  DB.saveAttachments((DB.attachments() || []).filter(a => a.projectId !== pid));
+  showToast('Project removed.', 'ok', '🗑️');
+  activeManageProjectId = null;
+  cPage('projects', document.querySelector('[data-page="projects"]'));
+}
+function cProjectEdit(pid) {
+  const p = DB.projects().find(x => x.id === pid);
+  if (!p) return;
+  newProjectFiles = [];
+  window._editRemoveAtts = [];
+
+  document.getElementById('c-main').innerHTML = `
+  <div class="page-head"><h2>Edit Project</h2><p>Update title, description, budget, deadline & files</p></div>
+  <div class="fg"><label>Project Title</label><input id="ed-title" value="${escapeHtml(p.title || '')}" placeholder="Project title"/></div>
+  <div class="fg"><label>Description</label><textarea id="ed-desc" placeholder="Describe what you need edited…">${escapeHtml(p.description || '')}</textarea></div>
+  <div class="fg"><label>Budget (₹)</label><input id="ed-budget" type="number" min="1" value="${p.budget || ''}"/></div>
+  <div class="fg"><label>Deadline</label><input id="ed-deadline" type="date" value="${p.deadline || ''}"/></div>
+
+  <div class="section-title">Current Files</div>
+  <div id="ed-existing-files" style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px;"></div>
+
+  <div class="section-title">Add New Files</div>
+  <label class="upload-area-lg" for="ed-file-input">
+    <div class="upload-label">Click to add files</div>
+    <div class="upload-sub">Videos, Images, Audio</div>
+    <input type="file" id="ed-file-input" multiple accept="video/*,audio/*,image/*" style="display:none;" onchange="handleMultiFileUpload(this)"/>
+  </label>
+  <div id="file-list-preview" style="display:flex;flex-direction:column;gap:8px;margin-top:12px;"></div>
+
+  <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:18px;">
+    <button class="btn btn-ghost" onclick="manageProject('${pid}')">Cancel</button>
+    <button class="btn btn-primary" id="ed-save-btn" onclick="saveProjectEdit('${pid}')">Save Changes</button>
+  </div>`;
+
+  renderEditExistingFiles(pid);
+}
+
+function renderEditExistingFiles(pid) {
+  const box = document.getElementById('ed-existing-files');
+  if (!box) return;
+  const atts = (DB.attachments() || []).filter(a => a.projectId === pid);
+  const removing = (window._editRemoveAtts || []).map(String);
+  if (!atts.length) { box.innerHTML = '<div style="color:var(--text-3);font-size:.85rem;">No files uploaded.</div>'; return; }
+  box.innerHTML = atts.map(a => {
+    const marked = removing.includes(String(a.id));
+    return `<div style="display:flex;align-items:center;justify-content:space-between;padding:10px;background:var(--surface);border:1px solid var(--glass-border);border-radius:var(--radius-sm);${marked ? 'opacity:.5;' : ''}">
+      <span style="${marked ? 'text-decoration:line-through;' : ''}">📎 ${escapeHtml(a.name || 'File')}</span>
+      <button class="btn btn-xs ${marked ? 'btn-ghost' : 'btn-danger'}" style="border:none;" onclick="toggleRemoveAtt('${pid}','${a.id}')">${marked ? 'Undo' : 'Remove'}</button>
+    </div>`;
+  }).join('');
+}
+
+function toggleRemoveAtt(pid, attId) {
+  window._editRemoveAtts = window._editRemoveAtts || [];
+  const i = window._editRemoveAtts.map(String).indexOf(String(attId));
+  if (i === -1) window._editRemoveAtts.push(attId);
+  else window._editRemoveAtts.splice(i, 1);
+  renderEditExistingFiles(pid);
+}
+
+async function saveProjectEdit(pid) {
+  const p = DB.projects().find(x => x.id === pid);
+  if (!p) return;
+  const title    = (document.getElementById('ed-title').value || '').trim();
+  const desc     = (document.getElementById('ed-desc').value || '').trim();
+  const budget   = parseInt(document.getElementById('ed-budget').value) || p.budget;
+  const deadline = document.getElementById('ed-deadline').value || p.deadline;
+  if (!title) { showToast('Title khaali nahi ho sakta', 'err', ''); return; }
+
+  const btn = document.getElementById('ed-save-btn');
+  if (btn) { btn.disabled = true; btn.textContent = 'Saving…'; }
+
+  const removeIds  = (window._editRemoveAtts || []).slice();
+  const filesToAdd = [...newProjectFiles];
+
+  if (supaClient) {
+    const { error: upErr } = await supaClient.from('projects')
+      .update({ title, description: desc, budget, deadline }).eq('id', pid);
+    if (upErr) { showToast('Update failed: ' + upErr.message, 'err', ''); if (btn) { btn.disabled = false; btn.textContent = 'Save Changes'; } return; }
+
+    for (const attId of removeIds) {
+      await supaClient.from('project_attachments').delete().eq('id', attId);
+    }
+
+    for (const f of filesToAdd) {
+      try {
+        const key = await s3Upload(f.file, 'projects');
+        await supaClient.from('project_attachments').insert({
+          project_id: pid, creator_id: CU.id,
+          file_name: f.name, file_url: key, file_type: f.type, file_size: f.size, duration: f.duration
+        });
+      } catch (e) { showToast('File upload failed: ' + f.name, 'err', ''); }
+    }
+  }
+
+  const projs = DB.projects().map(x => x.id === pid ? { ...x, title, description: desc, budget, deadline } : x);
+  DB.saveProjects(projs);
+  const keptAtts = (DB.attachments() || []).filter(a => !(a.projectId === pid && removeIds.map(String).includes(String(a.id))));
+  const localNew = filesToAdd.map(f => ({ id: uid(), projectId: pid, name: f.name, type: f.type, size: f.size, duration: f.duration }));
+  DB.saveAttachments([...keptAtts, ...localNew]);
+
+  newProjectFiles = [];
+  window._editRemoveAtts = [];
+  showToast('Project updated!', 'ok', '✅');
+  manageProject(pid);
+}
 function cHome() {
   const projs  = DB.projects().filter(p => p.creatorId === CU.id);
   const active = projs.filter(p => p.status === 'ongoing').length;
