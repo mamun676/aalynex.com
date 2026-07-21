@@ -142,7 +142,6 @@ async function acceptProject(id) {
       .eq('id', id).is('freelancer_id', null).select();
 
     if (error || !data || data.length === 0) {
-       console.log('ACCEPT FAIL →', { error, data });
       showToast('Project already taken by another freelancer!', 'err', '');
       renderF('browse');
       return;
