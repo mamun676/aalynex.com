@@ -294,23 +294,23 @@ function fViewOngoing(id) {
 function fNegotiate() {
   const projs = DB.projects().filter(p => p.freelancerId === CU.id && p.status === 'ongoing');
   return `
-  <div class="page-head"><h2>Negotiate Price & Deadline</h2></div>
-  ${projs.length
-    ? projs.map(p => `
-        <div class="det-card">
-          <h4>${p.title}</h4>
-          <p>Client's offer: <strong>₹${fmt(p.budget)}</strong> &middot; Deadline: ${fmtDate(p.deadline)}</p>
-          <div class="two-col" style="margin-top:14px;">
-            <div class="fg"><label>Your Counter-Price (₹)</label><input type="number" id="neg-price-${p.id}" value="${Math.round(p.budget * 1.15)}"/></div>
-            <div class="fg"><label>Proposed Deadline</label><input type="date" id="neg-date-${p.id}" value="${new Date(Date.now() + 7 * 86400000).toISOString().split('T')[0]}"/></div>
+  <div class="page-head"><h2>Negotiate Price & Deadline</h2><p>${projs.length} project${projs.length !== 1 ? 's' : ''} open for negotiation</p></div>
+  <div class="project-list">
+    ${projs.length
+      ? projs.map(p => {
+        const c = DB.users().find(u => u.id === p.creatorId);
+        return `
+        <div class="pc" style="cursor:pointer;" onclick="fViewNegotiate('${p.id}')">
+          <div class="pico">${contentIconSvg(p.contentType)}</div>
+          <div class="pinfo">
+            <div class="ptitle">${p.title}</div>
+            <div class="pmeta">${c?.name || 'Creator'} &#183; Offer &#8377;${fmt(p.budget)} &#183; Due ${fmtDate(p.deadline)}</div>
           </div>
-          <div class="fg"><label>Message to Client</label><input id="neg-msg-${p.id}" placeholder="I can complete this at the revised price…"/></div>
-          <div style="display:flex;gap:10px;flex-wrap:wrap;">
-            <button class="btn btn-primary btn-sm"    onclick="sendCounter('${p.id}')">Send Counter-Offer</button>
-            <button class="btn btn-green-btn btn-sm"  onclick="showToast('Accepted at original terms!','ok','')">Accept Original</button>
-          </div>
-        </div>`).join('')
-    : '<div class="alert alert-i">No projects to negotiate right now.</div>'}`;
+          <div class="pstatus s-on" style="flex-shrink:0;">Negotiate</div>
+        </div>`;
+      }).join('')
+      : '<div class="alert alert-i">No projects to negotiate right now.</div>'}
+  </div>`;
 }
 
 function fViewNegotiate(id) {
