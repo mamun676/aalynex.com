@@ -488,29 +488,65 @@ function fViewUpload(id) {
 function fEarnings() {
   const projs    = DB.projects().filter(p => p.freelancerId === CU.id);
   const received = projs.filter(p => p.paid).reduce((s, p) => s + p.budget, 0);
-  const pending  = projs.filter(p => !p.paid && p.status === 'completed').reduce((s, p) => s + p.budget, 0);
+  const pending  = projs.filter(p => !p.paid).reduce((s, p) => s + p.budget, 0);
   return `
   <div class="page-head"><h2>Earnings</h2></div>
   <div class="cards-grid">
-    <div class="mc g"><div class="label">Total Received</div><div class="value">₹${fmt(received)}</div></div>
-    <div class="mc a"><div class="label">Pending Payout</div><div class="value">₹${fmt(pending)}</div></div>
+    <div class="mc g"><div class="label">Total Received</div><div class="value">&#8377;${fmt(received)}</div></div>
+    <div class="mc a"><div class="label">Pending Payout</div><div class="value">&#8377;${fmt(pending)}</div></div>
     <div class="mc"><div class="label">Projects</div><div class="value">${projs.length}</div></div>
   </div>
   <div class="section-title">Transaction History</div>
   <div class="project-list">
     ${projs.length
       ? projs.map(p => { const c = DB.users().find(u => u.id === p.creatorId); return `
-          <div class="pc">
+          <div class="pc" style="cursor:pointer;" onclick="fViewEarning('${p.id}')">
             <div class="pico"><svg class="pico-icon" viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div>
-            <div class="pinfo"><div class="ptitle">${p.title}</div><div class="pmeta">From ${c?.name || 'Creator'} · ${fmtDate(p.createdAt)}</div></div>
+            <div class="pinfo"><div class="ptitle">${p.title}</div><div class="pmeta">From ${c?.name || 'Creator'} &#183; ${fmtDate(p.createdAt)}</div></div>
             <div style="display:flex;align-items:center;gap:8px;">
-              <div style="font-weight:600;font-size:.9rem;">₹${fmt(p.budget)}</div>
+              <div style="font-weight:600;font-size:.9rem;">&#8377;${fmt(p.budget)}</div>
               <div class="pstatus ${p.paid ? 's-co' : 's-pe'}">${p.paid ? 'Received' : 'Pending'}</div>
             </div>
           </div>`; }).join('')
       : '<div style="color:var(--text-3);font-size:.85rem;padding:20px 0;">No transactions yet.</div>'}
   </div>`;
 }
+
+function fViewEarning(id) {
+  const p = DB.projects().find(x => x.id === id);
+  if (!p) return;
+  const c = DB.users().find(u => u.id === p.creatorId);
+  const paid = !!p.paid;
+  const statusColor = paid ? 'var(--green)' : '#d97706';
+  const statusText  = paid ? 'Received' : 'Pending';
+  let note;
+  if (paid) {
+    note = `Payment of &#8377;${fmt(p.budget)} has been received from ${c?.name || 'the client'}.`;
+  } else if (p.status === 'completed') {
+    note = `Project is completed. Payout of &#8377;${fmt(p.budget)} is pending from ${c?.name || 'the client'} - you can follow up via Chat.`;
+  } else if (p.editedUploaded) {
+    note = `Final video delivered. Payment of &#8377;${fmt(p.budget)} will be released after ${c?.name || 'the client'} approves the work.`;
+  } else {
+    note = `Complete and deliver this project to receive your payout of &#8377;${fmt(p.budget)}.`;
+  }
+  const stars = p.rating ? ('&#9733;'.repeat(p.rating) + '&#9734;'.repeat(5 - p.rating)) : '';
+  const bodyHtml = `
+    <div style="display:flex;flex-direction:column;gap:2px;">
+      <div class="info-row"><span class="key">Payment Status</span><span style="color:${statusColor};font-weight:600;">${statusText}</span></div>
+      <div class="info-row"><span class="key">Amount</span><span style="font-weight:600;">&#8377;${fmt(p.budget)}</span></div>
+      <div class="info-row"><span class="key">Client</span><span>${c?.name || 'Creator'}</span></div>
+      <div class="info-row"><span class="key">Content Type</span><span>${p.contentType || '-'}</span></div>
+      <div class="info-row"><span class="key">Project Status</span><span>${statusLabel(p.status)}</span></div>
+      <div class="info-row"><span class="key">Final Video</span><span>${p.editedUploaded ? 'Delivered' : 'Not delivered'}</span></div>
+      <div class="info-row"><span class="key">Deadline</span><span>${p.deadline ? fmtDate(p.deadline) : '-'}</span></div>
+      <div class="info-row"><span class="key">Created</span><span>${fmtDate(p.createdAt)}</span></div>
+      ${stars ? `<div class="info-row"><span class="key">Client Rating</span><span style="color:#f59e0b;">${stars}</span></div>` : ''}
+      <div class="alert alert-i" style="margin-top:12px;">${note}</div>
+    </div>`;
+  showModal(p.title, bodyHtml, () => { currentChatUserId = p.creatorId; fPage('chat', null); });
+  document.getElementById('modal-confirm').textContent = 'Chat with Client';
+}
+
 function fProfile() {
   const u = CU;
   const skills = u.skills || [];
