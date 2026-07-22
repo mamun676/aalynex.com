@@ -244,37 +244,53 @@ function viewProject(id) {
 function fOngoing() {
   const projs = DB.projects().filter(p => p.freelancerId === CU.id && p.status === 'ongoing');
   return `
-  <div class="page-head"><h2>Ongoing Projects</h2></div>
-  ${projs.length
-    ? projs.map(p => {
-      const c    = DB.users().find(u => u.id === p.creatorId);
-      // Progress logic: Since raw is attached natively, it's 50%. After final upload, it's 100%.
-      const prog = p.editedUploaded ? 100 : 50;
-      return `
-        <div class="det-card">
-          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;">
-            <h4>${p.title}</h4><div class="pstatus s-on">In Progress</div>
+  <div class="page-head"><h2>Ongoing Projects</h2><p>${projs.length} active project${projs.length !== 1 ? 's' : ''}</p></div>
+  <div class="project-list">
+    ${projs.length
+      ? projs.map(p => {
+        const c    = DB.users().find(u => u.id === p.creatorId);
+        const prog = p.editedUploaded ? 100 : 50;
+        return `
+        <div class="pc" style="cursor:pointer;" onclick="fViewOngoing('${p.id}')">
+          <div class="pico">${contentIconSvg(p.contentType)}</div>
+          <div class="pinfo">
+            <div class="ptitle">${p.title}</div>
+            <div class="pmeta">${c?.name || 'Creator'} &#183; &#8377;${fmt(p.budget)} &#183; ${prog}% done</div>
           </div>
-          <div class="info-row"><span class="key">Client</span><span>${c?.name || 'Creator'}</span></div>
-          <div class="info-row"><span class="key">Budget</span><span>₹${fmt(p.budget)}</span></div>
-          <div class="info-row"><span class="key">Raw Files</span>
-            <span><span class="tag g">Received</span></span>
-          </div>
-          <div style="margin-top:10px;">
-            <div style="display:flex;justify-content:space-between;font-size:.72rem;color:var(--text-3);margin-bottom:4px;">
-              <span>Progress</span><span>${prog}%</span>
-            </div>
-            <div class="pb"><div class="pf" style="width:${prog}%;"></div></div>
-          </div>
-          <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap;">
-            <button class="btn btn-outline-f btn-sm" onclick="fPage('chat',null)">Chat</button>
-            <button class="btn btn-primary btn-sm"   onclick="fPage('upload',null)">Upload Final</button>
-            <button class="btn btn-ghost btn-sm"     onclick="fPage('negotiate',null)">Negotiate</button>
-          </div>
+          <div class="pstatus s-on" style="flex-shrink:0;">In Progress</div>
         </div>`;
-    }).join('')
-    : '<div class="alert alert-i">No ongoing projects.</div>'}`;
+      }).join('')
+      : '<div class="alert alert-i">No ongoing projects.</div>'}
+  </div>`;
 }
+
+function fViewOngoing(id) {
+  const p = DB.projects().find(x => x.id === id);
+  if (!p) return;
+  const c    = DB.users().find(u => u.id === p.creatorId);
+  const prog = p.editedUploaded ? 100 : 50;
+  const bodyHtml = `
+    <div style="display:flex;flex-direction:column;gap:2px;">
+      <div class="info-row"><span class="key">Client</span><span>${c?.name || 'Creator'}</span></div>
+      <div class="info-row"><span class="key">Budget</span><span>&#8377;${fmt(p.budget)}</span></div>
+      <div class="info-row"><span class="key">Content Type</span><span>${p.contentType || '-'}</span></div>
+      <div class="info-row"><span class="key">Deadline</span><span>${p.deadline ? fmtDate(p.deadline) : '-'}</span></div>
+      <div class="info-row"><span class="key">Priority</span><span>${p.priority || 'Normal'}</span></div>
+      <div class="info-row"><span class="key">Raw Files</span><span><span class="tag g">Received</span></span></div>
+      <div style="margin-top:10px;">
+        <div style="display:flex;justify-content:space-between;font-size:.72rem;color:var(--text-3);margin-bottom:4px;"><span>Progress</span><span>${prog}%</span></div>
+        <div class="pb"><div class="pf" style="width:${prog}%;"></div></div>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:16px;flex-wrap:wrap;">
+        <button class="btn btn-outline-f btn-sm" onclick="closeModal();currentChatUserId='${p.creatorId}';fPage('chat',null)">Chat</button>
+        <button class="btn btn-primary btn-sm"   onclick="closeModal();fPage('upload',null)">Upload Final</button>
+        <button class="btn btn-ghost btn-sm"     onclick="closeModal();fPage('negotiate',null)">Negotiate</button>
+      </div>
+    </div>`;
+  showModal(p.title, bodyHtml, () => {});
+  document.getElementById('modal-confirm').textContent = 'Close';
+}
+
 function fNegotiate() {
   const projs = DB.projects().filter(p => p.freelancerId === CU.id && p.status === 'ongoing');
   return `
