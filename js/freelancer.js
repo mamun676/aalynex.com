@@ -432,6 +432,7 @@ async function uploadFinalVideo(pid) {
 
     if (progFill) progFill.style.width = '100%';
     sendFinalUploadNotificationEmail(proj.creatorId, proj.title);
+    closeModal();
     showToast('Final video uploaded and sent to creator!', 'ok', '');
     fPage('upload', document.querySelector('[data-page="upload"]'));
   } catch (err) {
@@ -444,27 +445,44 @@ async function uploadFinalVideo(pid) {
 function fUpload() {
   const projs = DB.projects().filter(p => p.freelancerId === CU.id && p.status === 'ongoing');
   return `
-  <div class="page-head"><h2>Upload Edited Video</h2></div>
+  <div class="page-head"><h2>Upload Edited Video</h2><p>${projs.length} project${projs.length !== 1 ? 's' : ''} ready for delivery</p></div>
   <div class="alert alert-i">Upload final video here OR securely inside the Chat menu!</div>
-  ${projs.length
-    ? projs.map(p => `
-        <div class="det-card">
-          <h4>Upload for: ${p.title}</h4>
-          <label class="upload-area-lg" for="final-video-input-${p.id}" id="final-drop-zone-${p.id}">
-            <div class="upload-icon" id="final-upload-icon-${p.id}">
-              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="rgba(0,0,0,0.25)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg>
-            </div>
-            <div class="upload-label" id="final-file-label-${p.id}">Drag & drop your final edited video or click to browse</div>
-            <div class="upload-sub">MP4, MOV &middot; Up to 10 GB</div>
-            <input type="file" id="final-video-input-${p.id}" accept="video/*" style="display:none;" onchange="onFinalFileSelect(this, '${p.id}')"/>
-          </label>
-          <div class="upload-progress-wrap" id="final-progress-wrap-${p.id}">
-            <div class="upload-progress-bar"><div class="upload-progress-fill" id="final-progress-fill-${p.id}"></div></div>
+  <div class="project-list">
+    ${projs.length
+      ? projs.map(p => {
+        const c = DB.users().find(u => u.id === p.creatorId);
+        return `
+        <div class="pc" style="cursor:pointer;" onclick="fViewUpload('${p.id}')">
+          <div class="pico">${contentIconSvg(p.contentType)}</div>
+          <div class="pinfo">
+            <div class="ptitle">${p.title}</div>
+            <div class="pmeta">${c?.name || 'Creator'} &#183; &#8377;${fmt(p.budget)} &#183; ${p.editedUploaded ? 'Final delivered' : 'Awaiting final upload'}</div>
           </div>
-          <div class="fg"><label>Version Notes</label><input id="final-note-${p.id}" placeholder="v1 – Color graded, audio synced…"/></div>
-          <button class="btn btn-primary" id="final-video-btn-${p.id}" onclick="uploadFinalVideo('${p.id}')">Upload Final Video →</button>
-        </div>`).join('')
-    : '<div class="alert alert-i">No projects ready for upload.</div>'}`;
+          <div class="pstatus ${p.editedUploaded ? 's-co' : 's-on'}" style="flex-shrink:0;">${p.editedUploaded ? 'Delivered' : 'Upload'}</div>
+        </div>`;
+      }).join('')
+      : '<div class="alert alert-i">No projects ready for upload.</div>'}
+  </div>`;
+}
+function fViewUpload(id) {
+  const p = DB.projects().find(x => x.id === id);
+  if (!p) return;
+  const bodyHtml = `
+    <label class="upload-area-lg" for="final-video-input-${p.id}" id="final-drop-zone-${p.id}">
+      <div class="upload-icon" id="final-upload-icon-${p.id}">
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="rgba(0,0,0,0.25)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg>
+      </div>
+      <div class="upload-label" id="final-file-label-${p.id}">Drag & drop your final edited video or click to browse</div>
+      <div class="upload-sub">MP4, MOV &middot; Up to 10 GB</div>
+      <input type="file" id="final-video-input-${p.id}" accept="video/*" style="display:none;" onchange="onFinalFileSelect(this, '${p.id}')"/>
+    </label>
+    <div class="upload-progress-wrap" id="final-progress-wrap-${p.id}">
+      <div class="upload-progress-bar"><div class="upload-progress-fill" id="final-progress-fill-${p.id}"></div></div>
+    </div>
+    <div class="fg"><label>Version Notes</label><input id="final-note-${p.id}" placeholder="v1 &#8211; Color graded, audio synced..."/></div>
+    <button class="btn btn-primary" style="width:100%;" id="final-video-btn-${p.id}" onclick="uploadFinalVideo('${p.id}')">Upload Final Video &#8594;</button>`;
+  showModal('Upload for: ' + p.title, bodyHtml, () => {});
+  document.getElementById('modal-confirm').textContent = 'Close';
 }
 
 function fEarnings() {
