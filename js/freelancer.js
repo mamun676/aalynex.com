@@ -1,6 +1,6 @@
-/* ════════════════════════════════════════
+/* ========================================
    FREELANCER PAGES
-════════════════════════════════════════ */
+======================================== */
 function fPage(p, el) {
   document.querySelectorAll('#screen-freelancer .nav-item').forEach(n => n.classList.remove('active'));
   if (el) el.classList.add('active');
@@ -93,13 +93,13 @@ function fHome() {
   <div class="page-head"><h2>Dashboard</h2><p>Your freelancing overview</p></div>
   <div class="cards-grid">
     <div class="mc a"><div class="label">Ongoing</div><div class="value">${projs.filter(p => p.status === 'ongoing').length}</div></div>
-    <div class="mc g"><div class="label">Total Earned</div><div class="value">₹${fmt(earned)}</div></div>
+    <div class="mc g"><div class="label">Total Earned</div><div class="value">&#8377;${fmt(earned)}</div></div>
     <div class="mc p"><div class="label">Completed</div><div class="value">${projs.filter(p => p.status === 'completed').length}</div></div>
     <div class="mc b"><div class="label">Requests</div><div class="value">${openProjs.length}</div></div>
   </div>
   <div class="section-title">Your Ongoing Projects</div>
   <div class="project-list">
-    ${projs.filter(p => p.status === 'ongoing').map(p => { const c = DB.users().find(u => u.id === p.creatorId); return `<div class="pc" style="cursor:pointer;" onclick="fViewProject('${p.id}')"><div class="pico">${contentIconSvg(p.contentType)}</div><div class="pinfo"><div class="ptitle">${p.title}</div><div class="pmeta">From ${c?.name || 'Creator'} · ₹${fmt(p.budget)}</div></div><div class="pstatus ${statusClass(p.status)}">${statusLabel(p.status)}</div></div>`; }).join('')
+    ${projs.filter(p => p.status === 'ongoing').map(p => { const c = DB.users().find(u => u.id === p.creatorId); return `<div class="pc" style="cursor:pointer;" onclick="fViewProject('${p.id}')"><div class="pico">${contentIconSvg(p.contentType)}</div><div class="pinfo"><div class="ptitle">${p.title}</div><div class="pmeta">From ${c?.name || 'Creator'} &#183; &#8377;${fmt(p.budget)}</div></div><div class="pstatus ${statusClass(p.status)}">${statusLabel(p.status)}</div></div>`; }).join('')
       || '<div style="color:var(--text-3);font-size:.85rem;padding:16px 0;">No ongoing projects. <a style="color:var(--accent);cursor:pointer;" onclick="fPage(\'browse\',null)">Browse open projects &rarr;</a></div>'}
   </div>
   <div style="margin-top:18px;display:flex;gap:10px;flex-wrap:wrap;">
@@ -122,7 +122,7 @@ function fViewProject(id) {
   const bodyHtml = `
     <div style="display:flex;flex-direction:column;gap:2px;">
       <div class="info-row"><span class="key">Client</span><span>${c?.name || 'Creator'}</span></div>
-      <div class="info-row"><span class="key">Budget</span><span>₹${fmt(p.budget)}</span></div>
+      <div class="info-row"><span class="key">Budget</span><span>&#8377;${fmt(p.budget)}</span></div>
       <div class="info-row"><span class="key">Type</span><span>${p.contentType}</span></div>
       <div class="info-row"><span class="key">Deadline</span><span>${fmtDate(p.deadline)}</span></div>
       <div class="info-row"><span class="key">Priority</span><span>${p.priority || 'Normal'}</span></div>
@@ -144,7 +144,7 @@ function fBrowse() {
             <div class="pico">${contentIconSvg(p.contentType)}</div>
             <div class="pinfo">
               <div class="ptitle">${p.title}</div>
-              <div class="pmeta">By ${c?.name || 'Creator'} · <strong style="color:var(--accent)">₹${fmt(p.budget)}</strong> · Due ${fmtDate(p.deadline)}</div>
+              <div class="pmeta">By ${c?.name || 'Creator'} &#183; <strong style="color:var(--accent)">&#8377;${fmt(p.budget)}</strong> &#183; Due ${fmtDate(p.deadline)}</div>
               <div style="margin-top:5px;display:flex;gap:5px;flex-wrap:wrap;">
                 <span class="tag">${p.contentType}</span><span class="tag b">${p.priority}</span>
               </div>
@@ -192,10 +192,10 @@ async function acceptProject(id) {
         for (const att of atts) {
           if (att.file_url) {
             await sendMsg(CU.id, creatorId, att.file_url, att.file_name,
-              `📁 Project File (uploaded by creator): ${att.file_name}`);
+              `&#128193; Project File (uploaded by creator): ${att.file_name}`);
           }
         }
-        showToast(`Accepted! ${atts.length} raw file(s) sent to chat.`, 'ok', '🎉');
+        showToast(`Accepted! ${atts.length} raw file(s) sent to chat.`, 'ok', '&#127881;');
       } else {
         sendAcceptanceNotificationEmail(creatorId, p?.title, p?.budget, p?.deadline, p?.contentType);
         showToast('Project accepted! Chat activated.', 'ok', '');
@@ -217,7 +217,7 @@ function viewProject(id) {
   const atts = (DB.attachments() || []).filter(a => a.projectId === id);
 ​
   let bodyHtml = `<div style="font-size:0.85rem; color:var(--text-2); margin-bottom:12px;">
-     <strong>Budget:</strong> ₹${fmt(p.budget)}<br/>
+     <strong>Budget:</strong> &#8377;${fmt(p.budget)}<br/>
      <strong>Type:</strong> ${p.contentType}<br/>
      <strong>Deadline:</strong> ${fmtDate(p.deadline)}<br/><br/>
      ${p.description || ''}
@@ -227,11 +227,11 @@ function viewProject(id) {
     bodyHtml += `<div style="border-top:1px solid var(--glass-border); padding-top:12px; margin-top:8px;">
           <div style="font-weight:600;font-size:.85rem;margin-bottom:8px;color:var(--text);">Attached Files Included:</div>
           <div style="display:flex;flex-direction:column;gap:6px;">${atts.map(a => {
-      let icon = '📄'; if (a.type === 'video') icon = '🎬'; else if (a.type === 'image') icon = '🖼️'; else if (a.type === 'audio') icon = '🎵';
+      let icon = '&#128196;'; if (a.type === 'video') icon = '&#127916;'; else if (a.type === 'image') icon = '&#128444;&#65039;'; else if (a.type === 'audio') icon = '&#127925;';
       return `<div style="display:flex;align-items:center;gap:8px;font-size:.8rem;color:var(--text-2); background:var(--bg2); padding:6px 10px; border-radius:6px;">
                        <span>${icon}</span>
                        <span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1;">${a.name}</span>
-                       ${a.duration ? `<span style="color:var(--text-3);font-size:.7rem;font-weight:500;">(⏱ ${a.duration})</span>` : ''}
+                       ${a.duration ? `<span style="color:var(--text-3);font-size:.7rem;font-weight:500;">(&#9201; ${a.duration})</span>` : ''}
                   </div>`;
     }).join('')}
           </div>
@@ -257,7 +257,7 @@ function fOngoing() {
             <h4>${p.title}</h4><div class="pstatus s-on">In Progress</div>
           </div>
           <div class="info-row"><span class="key">Client</span><span>${c?.name || 'Creator'}</span></div>
-          <div class="info-row"><span class="key">Budget</span><span>₹${fmt(p.budget)}</span></div>
+          <div class="info-row"><span class="key">Budget</span><span>&#8377;${fmt(p.budget)}</span></div>
           <div class="info-row"><span class="key">Raw Files</span>
             <span><span class="tag g">Received</span></span>
           </div>
@@ -284,12 +284,12 @@ function fNegotiate() {
     ? projs.map(p => `
         <div class="det-card">
           <h4>${p.title}</h4>
-          <p>Client's offer: <strong>₹${fmt(p.budget)}</strong> &middot; Deadline: ${fmtDate(p.deadline)}</p>
+          <p>Client's offer: <strong>&#8377;${fmt(p.budget)}</strong> &middot; Deadline: ${fmtDate(p.deadline)}</p>
           <div class="two-col" style="margin-top:14px;">
-            <div class="fg"><label>Your Counter-Price (₹)</label><input type="number" id="neg-price-${p.id}" value="${Math.round(p.budget * 1.15)}"/></div>
+            <div class="fg"><label>Your Counter-Price (&#8377;)</label><input type="number" id="neg-price-${p.id}" value="${Math.round(p.budget * 1.15)}"/></div>
             <div class="fg"><label>Proposed Deadline</label><input type="date" id="neg-date-${p.id}" value="${new Date(Date.now() + 7 * 86400000).toISOString().split('T')[0]}"/></div>
           </div>
-          <div class="fg"><label>Message to Client</label><input id="neg-msg-${p.id}" placeholder="I can complete this at the revised price…"/></div>
+          <div class="fg"><label>Message to Client</label><input id="neg-msg-${p.id}" placeholder="I can complete this at the revised price&#8230;"/></div>
           <div style="display:flex;gap:10px;flex-wrap:wrap;">
             <button class="btn btn-primary btn-sm"    onclick="sendCounter('${p.id}')">Send Counter-Offer</button>
             <button class="btn btn-green-btn btn-sm"  onclick="showToast('Accepted at original terms!','ok','')">Accept Original</button>
@@ -308,7 +308,7 @@ function sendCounter(id) {
     sendMsg(CU.id, proj.creatorId, null, null, msg);
   }
 ​
-  showToast(`Counter-offer sent: ₹${fmt(price)}`, 'ok', '');
+  showToast(`Counter-offer sent: &#8377;${fmt(price)}`, 'ok', '');
 }
 ​
 async function acceptNegotiation(btn, projectId, newPrice, newDate, otherId) {
@@ -327,7 +327,7 @@ async function acceptNegotiation(btn, projectId, newPrice, newDate, otherId) {
     await supaClient.from('projects').update({ budget: parseInt(newPrice), deadline: newDate }).eq('id', projectId);
   }
 ​
-  await sendMsg(CU.id, otherId, null, null, `✅ Offer Accepted! New budget: ₹${fmt(newPrice)} by ${fmtDate(newDate)}.`);
+  await sendMsg(CU.id, otherId, null, null, `&#9989; Offer Accepted! New budget: &#8377;${fmt(newPrice)} by ${fmtDate(newDate)}.`);
   showToast('Budget & deadline updated!', 'ok');
 ​
   btn.parentElement.innerHTML = `<span style="font-size:0.8rem; color:var(--green); font-weight:600;">Offer Accepted</span>`;
@@ -338,7 +338,7 @@ function rejectNegotiation(btn, projectId, otherId) {
   btn.innerText = "Processing...";
   if (btn.previousElementSibling) btn.previousElementSibling.style.display = 'none';
 ​
-  sendMsg(CU.id, otherId, null, null, `❌ Offer Rejected. Let's discuss further.`);
+  sendMsg(CU.id, otherId, null, null, `&#10060; Offer Rejected. Let's discuss further.`);
   showToast('Offer rejected', 'info');
 ​
   btn.parentElement.innerHTML = `<span style="font-size:0.8rem; color:var(--red); font-weight:600;">Offer Rejected</span>`;
@@ -384,7 +384,7 @@ async function uploadFinalVideo(pid) {
       if (progFill) progFill.style.width = '20%';
       const s3Key = await s3Upload(file, 'final');   // S3 pe upload
       if (progFill) progFill.style.width = '60%';
-      fileUrl = s3Key;   // ← sendMsg ko key do (signed URL woh khud banayega)
+      fileUrl = s3Key;   // &#8592; sendMsg ko key do (signed URL woh khud banayega)
       if (progFill) progFill.style.width = '80%';
     }
 ​
@@ -426,8 +426,8 @@ function fUpload() {
           <div class="upload-progress-wrap" id="final-progress-wrap-${p.id}">
             <div class="upload-progress-bar"><div class="upload-progress-fill" id="final-progress-fill-${p.id}"></div></div>
           </div>
-          <div class="fg"><label>Version Notes</label><input id="final-note-${p.id}" placeholder="v1 – Color graded, audio synced…"/></div>
-          <button class="btn btn-primary" id="final-video-btn-${p.id}" onclick="uploadFinalVideo('${p.id}')">Upload Final Video →</button>
+          <div class="fg"><label>Version Notes</label><input id="final-note-${p.id}" placeholder="v1 &#8211; Color graded, audio synced&#8230;"/></div>
+          <button class="btn btn-primary" id="final-video-btn-${p.id}" onclick="uploadFinalVideo('${p.id}')">Upload Final Video &#8594;</button>
         </div>`).join('')
     : '<div class="alert alert-i">No projects ready for upload.</div>'}`;
 }
@@ -439,8 +439,8 @@ function fEarnings() {
   return `
   <div class="page-head"><h2>Earnings</h2></div>
   <div class="cards-grid">
-    <div class="mc g"><div class="label">Total Received</div><div class="value">₹${fmt(received)}</div></div>
-    <div class="mc a"><div class="label">Pending Payout</div><div class="value">₹${fmt(pending)}</div></div>
+    <div class="mc g"><div class="label">Total Received</div><div class="value">&#8377;${fmt(received)}</div></div>
+    <div class="mc a"><div class="label">Pending Payout</div><div class="value">&#8377;${fmt(pending)}</div></div>
     <div class="mc"><div class="label">Projects</div><div class="value">${projs.length}</div></div>
   </div>
   <div class="section-title">Transaction History</div>
@@ -449,9 +449,9 @@ function fEarnings() {
       ? projs.map(p => { const c = DB.users().find(u => u.id === p.creatorId); return `
           <div class="pc">
             <div class="pico"><svg class="pico-icon" viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div>
-            <div class="pinfo"><div class="ptitle">${p.title}</div><div class="pmeta">From ${c?.name || 'Creator'} · ${fmtDate(p.createdAt)}</div></div>
+            <div class="pinfo"><div class="ptitle">${p.title}</div><div class="pmeta">From ${c?.name || 'Creator'} &#183; ${fmtDate(p.createdAt)}</div></div>
             <div style="display:flex;align-items:center;gap:8px;">
-              <div style="font-weight:600;font-size:.9rem;">₹${fmt(p.budget)}</div>
+              <div style="font-weight:600;font-size:.9rem;">&#8377;${fmt(p.budget)}</div>
               <div class="pstatus ${p.paid ? 's-co' : 's-pe'}">${p.paid ? 'Received' : 'Pending'}</div>
             </div>
           </div>`; }).join('')
@@ -543,7 +543,7 @@ function fProfile() {
       <div class="det-card">
         <h4>My Skills</h4>
         <div style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:12px;">
-          ${skills.map(s => `<span class="tag pu" style="cursor:pointer;" onclick="removeSkill('${s}')">${s} ×</span>`).join('')}
+          ${skills.map(s => `<span class="tag pu" style="cursor:pointer;" onclick="removeSkill('${s}')">${s} &#215;</span>`).join('')}
         </div>
         <div class="fg" style="display:flex; gap:8px; margin-bottom:12px;">
           <input id="bio-skill-input" placeholder="Add a new skill..." style="flex:1;">
@@ -642,9 +642,9 @@ function saveFProfile() {
     renderF('profile');
   }
 }
-/* ═══════════════════════════════════
+/* ===================================
    PROFILE & UPLOAD HANDLERS
-═══════════════════════════════════ */
+=================================== */
 async function loadFreelancerProfile() {
   if (!supaClient || !CU) return;
   try {
@@ -803,8 +803,8 @@ function checkFProfileCompletion() {
 ​
   const bannerHtml = `
     <div id="fprofile-completion-banner" style="background:linear-gradient(90deg,rgba(224,92,42,.09),rgba(124,58,237,.07));padding:9px 20px;display:flex;align-items:center;justify-content:space-between;font-size:0.82rem;width:100%;gap:12px;flex-shrink:0;">
-      <span>📝 Complete your profile — <strong>${percent}%</strong> done, <strong>${remaining}</strong> item(s) remaining</span>
-      <button class="btn btn-primary btn-sm" onclick="fPage('profile',null)" style="white-space:nowrap;flex-shrink:0;">Complete Profile →</button>
+      <span>&#128221; Complete your profile &#8212; <strong>${percent}%</strong> done, <strong>${remaining}</strong> item(s) remaining</span>
+      <button class="btn btn-primary btn-sm" onclick="fPage('profile',null)" style="white-space:nowrap;flex-shrink:0;">Complete Profile &#8594;</button>
     </div>`;
 ​
   const fMain = document.getElementById('f-main');
