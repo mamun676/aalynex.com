@@ -99,13 +99,37 @@ function fHome() {
   </div>
   <div class="section-title">Your Ongoing Projects</div>
   <div class="project-list">
-    ${projs.filter(p => p.status === 'ongoing').map(p => { const c = DB.users().find(u => u.id === p.creatorId); return pRow(contentIconSvg(p.contentType), p.title, `From ${c?.name || 'Creator'} · ₹${fmt(p.budget)}`, statusClass(p.status), statusLabel(p.status)); }).join('')
+    ${projs.filter(p => p.status === 'ongoing').map(p => { const c = DB.users().find(u => u.id === p.creatorId); return `<div class="pc" style="cursor:pointer;" onclick="fViewProject('${p.id}')"><div class="pico">${contentIconSvg(p.contentType)}</div><div class="pinfo"><div class="ptitle">${p.title}</div><div class="pmeta">From ${c?.name || 'Creator'} &#183; &#8377;${fmt(p.budget)}</div></div><div class="pstatus ${statusClass(p.status)}">${statusLabel(p.status)}</div></div>`; }).join('')
       || '<div style="color:var(--text-3);font-size:.85rem;padding:16px 0;">No ongoing projects. <a style="color:var(--accent);cursor:pointer;" onclick="fPage(\'browse\',null)">Browse open projects &rarr;</a></div>'}
   </div>
   <div style="margin-top:18px;display:flex;gap:10px;flex-wrap:wrap;">
     <button class="btn btn-purple" onclick="fPage('browse',null)">Browse Requests</button>
     <button class="btn btn-ghost"  onclick="fPage('ongoing',null)">Manage Ongoing &rarr;</button>
   </div>`;
+}
+function fOpenChatWith(otherId) {
+  if (!otherId) { showToast('Chat unavailable for this project', 'err', ''); return; }
+  currentChatUserId = otherId;
+  const chatNav = document.querySelector('#screen-freelancer .nav-item[data-page="chat"]');
+  fPage('chat', chatNav);
+}
+
+function fViewProject(id) {
+  const p = DB.projects().find(x => x.id === id);
+  if (!p) return;
+  const c = DB.users().find(u => u.id === p.creatorId);
+  const bodyHtml = `
+    <div style="display:flex;flex-direction:column;gap:2px;">
+      <div class="info-row"><span class="key">Client</span><span>${c?.name || 'Creator'}</span></div>
+      <div class="info-row"><span class="key">Budget</span><span>&#8377;${fmt(p.budget)}</span></div>
+      <div class="info-row"><span class="key">Type</span><span>${p.contentType}</span></div>
+      <div class="info-row"><span class="key">Deadline</span><span>${fmtDate(p.deadline)}</span></div>
+      <div class="info-row"><span class="key">Priority</span><span>${p.priority || 'Normal'}</span></div>
+      <div class="info-row"><span class="key">Status</span><span>${statusLabel(p.status)}</span></div>
+      ${p.description ? `<div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--glass-border);font-size:.85rem;color:var(--text-2);line-height:1.6;">${p.description}</div>` : ''}
+    </div>`;
+  showModal(p.title, bodyHtml, () => { fOpenChatWith(p.creatorId); });
+  document.getElementById('modal-confirm').textContent = 'Chat with Creator';
 }
 
 function fBrowse() {
