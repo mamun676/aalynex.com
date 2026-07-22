@@ -545,6 +545,13 @@ function fViewEarning(id) {
     </div>`;
   showModal(p.title, bodyHtml, () => { currentChatUserId = p.creatorId; fPage('chat', null); });
   document.getElementById('modal-confirm').textContent = 'Chat with Client';
+  if (paid) {
+  showModal(p.title, bodyHtml, () => {});
+  document.getElementById('modal-confirm').textContent = 'Close';
+} else {
+  showModal(p.title, bodyHtml, () => { currentChatUserId = p.creatorId; fPage('chat', null); });
+  document.getElementById('modal-confirm').textContent = 'Chat with Client';
+}
 }
 
 function fProfile() {
