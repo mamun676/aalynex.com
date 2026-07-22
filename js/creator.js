@@ -1039,28 +1039,55 @@ function cChat() {
 function cPayment() {
   const projs   = DB.projects().filter(p => p.creatorId === CU.id);
   const paid    = projs.filter(p => p.paid).reduce((s, p) => s + p.budget, 0);
-  const pending = projs.filter(p => !p.paid && p.status === 'completed').reduce((s, p) => s + p.budget, 0);
+  const pending = projs.filter(p => !p.paid && (p.status === 'completed' || p.editedUploaded)).reduce((s, p) => s + p.budget, 0);
   return `
-  <div class="page-head"><h2>Payments</h2></div>
+  <div class="page-head"><h2>Payments</h2><p>Track every project payment in one place</p></div>
   <div class="cards-grid">
-    <div class="mc a"><div class="label">Pending</div><div class="value">₹${fmt(pending)}</div></div>
-    <div class="mc g"><div class="label">Total Paid</div><div class="value">₹${fmt(paid)}</div></div>
+    <div class="mc a"><div class="label">Pending</div><div class="value">&#8377;${fmt(pending)}</div></div>
+    <div class="mc g"><div class="label">Total Paid</div><div class="value">&#8377;${fmt(paid)}</div></div>
     <div class="mc"><div class="label">Projects</div><div class="value">${projs.length}</div></div>
   </div>
   <div class="section-title">Transactions</div>
   <div class="project-list">
     ${projs.length
-      ? projs.map(p => `
-          <div class="pc">
+      ? projs.map(p => {
+          const f = DB.users().find(u => u.id === p.freelancerId);
+          const payable = !p.paid && (p.status === 'completed' || p.editedUploaded);
+          return `
+          <div class="pc" style="cursor:pointer;" onclick="cViewPayment('${p.id}')">
             <div class="pico"><svg class="pico-icon" viewBox="0 0 24 24"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg></div>
-            <div class="pinfo"><div class="ptitle">${p.title}</div><div class="pmeta">₹${fmt(p.budget)} · ${fmtDate(p.createdAt)}</div></div>
-            <div style="display:flex;align-items:center;gap:8px;">
+            <div class="pinfo"><div class="ptitle">${p.title}</div><div class="pmeta">&#8377;${fmt(p.budget)} &#183; ${f ? f.name : 'No editor yet'} &#183; ${fmtDate(p.createdAt)}</div></div>
+            <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
               <div class="pstatus ${p.paid ? 's-co' : 's-pe'}">${p.paid ? 'Paid' : 'Pending'}</div>
-              ${!p.paid && p.status === 'completed' ? `<button class="btn btn-green-btn btn-xs" onclick="manageProject('${p.id}')">Pay Now</button>` : ''}
+              ${payable ? `<button class="btn btn-green-btn btn-xs" onclick="event.stopPropagation();manageProject('${p.id}')">Pay Now</button>` : ''}
             </div>
-          </div>`).join('')
+          </div>`; }).join('')
       : '<div style="color:var(--text-3);font-size:.85rem;padding:20px 0;">No transactions yet.</div>'}
   </div>`;
+}
+function cViewPayment(id) {
+  const p = DB.projects().find(x => x.id === id);
+  if (!p) return;
+  const f = DB.users().find(u => u.id === p.freelancerId);
+  const payable = !p.paid && (p.status === 'completed' || p.editedUploaded);
+  const rating = (p.rating && p.rating > 0) ? ('&#9733;'.repeat(p.rating) + '&#9734;'.repeat(5 - p.rating)) : 'Not rated yet';
+  const bodyHtml = `
+    <div style="display:flex;flex-direction:column;gap:2px;">
+      <div class="info-row"><span class="key">Payment Status</span><span style="color:${p.paid ? 'var(--green)' : 'var(--yellow)'};font-weight:600;">${p.paid ? 'Paid' : 'Pending'}</span></div>
+      <div class="info-row"><span class="key">Amount</span><span style="font-weight:600;">&#8377;${fmt(p.budget)}</span></div>
+      <div class="info-row"><span class="key">Editor / Payee</span><span>${f ? f.name : 'Not assigned'}</span></div>
+      <div class="info-row"><span class="key">Content Type</span><span>${p.contentType || '-'}</span></div>
+      <div class="info-row"><span class="key">Deadline</span><span>${p.deadline ? fmtDate(p.deadline) : '-'}</span></div>
+      <div class="info-row"><span class="key">Priority</span><span>${p.priority || 'Normal'}</span></div>
+      <div class="info-row"><span class="key">Project Status</span><span>${statusLabel(p.status)}</span></div>
+      <div class="info-row"><span class="key">Final Video</span><span>${p.editedUploaded ? 'Uploaded' : 'Not uploaded yet'}</span></div>
+      <div class="info-row"><span class="key">Your Rating</span><span>${rating}</span></div>
+      <div class="info-row"><span class="key">Created</span><span>${fmtDate(p.createdAt)}</span></div>
+      ${p.description ? `<div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--glass-border);font-size:.85rem;color:var(--text-2);line-height:1.6;">${p.description}</div>` : ''}
+      ${!p.paid ? `<div class="alert alert-i" style="margin-top:12px;">${payable ? 'This project is ready for payment. Click \'Pay Now\' to pay &#8377;' + fmt(p.budget) + ' to ' + (f ? f.name : 'the editor') + '.' : 'Payment unlocks once the editor uploads the final video.'}</div>` : ''}
+    </div>`;
+  showModal(p.title, bodyHtml, () => { if (payable) manageProject(p.id); });
+  document.getElementById('modal-confirm').textContent = payable ? 'Pay Now' : 'Close';
 }
 
 async function submitReview() {
