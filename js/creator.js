@@ -1113,18 +1113,61 @@ async function submitReview() {
 }
 
 function cRate() {
-  const projs = DB.projects().filter(p => p.creatorId === CU.id && p.status === 'completed' && p.rating === 0);
+  const mine = DB.projects().filter(p => p.creatorId === CU.id && p.freelancerId && p.status !== 'open');
+  const toRate   = mine.filter(p => p.paid && (!p.rating || p.rating === 0));
+  const awaiting = mine.filter(p => !p.paid);
+  const rated    = mine.filter(p => p.rating && p.rating > 0);
+  const nameOf = (p) => DB.users().find(u => u.id === p.freelancerId)?.name || 'Freelancer';
+  const stars  = (n) => '&#9733;'.repeat(n) + '&#9734;'.repeat(5 - n);
+
   return `
-  <div class="page-head"><h2>Rate Freelancers</h2></div>
-  ${projs.length
-    ? projs.map(p => `
+  <div class="page-head"><h2>Rate Freelancers</h2><p>Rate your editors after payment is complete</p></div>
+
+  <div class="section-title">Ready to Rate${toRate.length ? ` (${toRate.length})` : ''}</div>
+  ${toRate.length
+    ? toRate.map(p => `
         <div class="det-card">
-          <h4>${p.title}</h4><p>Completed &middot; ₹${fmt(p.budget)}</p>
-          <div class="star-rating" id="sr-${p.id}">${[1, 2, 3, 4, 5].map(n => `<span onclick="rateStar('sr-${p.id}',${n})">★</span>`).join('')}</div>
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+            <h4>${p.title}</h4><div class="pstatus s-co">Paid</div>
+          </div>
+          <p>${nameOf(p)} &middot; &#8377;${fmt(p.budget)} &middot; Completed</p>
+          <div class="star-rating" id="sr-${p.id}">${[1,2,3,4,5].map(n => `<span onclick="rateStar('sr-${p.id}',${n})">&#9733;</span>`).join('')}</div>
           <div class="fg" style="margin-top:10px;"><label>Write a Review</label><input id="rev-${p.id}" placeholder="Great work!"/></div>
           <button class="btn btn-primary btn-sm" onclick="saveRating('${p.id}')">Submit Rating</button>
         </div>`).join('')
-    : '<div class="alert alert-i">You\'ve rated all completed projects!</div>'}`;
+    : '<div class="alert alert-i">No freelancers waiting to be rated right now.</div>'}
+
+  <div class="section-title" style="margin-top:22px;">Awaiting Payment${awaiting.length ? ` (${awaiting.length})` : ''}</div>
+  ${awaiting.length
+    ? awaiting.map(p => `
+        <div class="det-card">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+            <h4>${p.title}</h4><div class="pstatus s-pe">${p.editedUploaded ? 'Payment Pending' : 'In Progress'}</div>
+          </div>
+          <p>${nameOf(p)} &middot; &#8377;${fmt(p.budget)}</p>
+          <div class="alert alert-i" style="margin-top:8px;">
+            ${p.editedUploaded
+              ? `Final video delivered. Complete the payment first - you can rate ${nameOf(p)} right after paying.`
+              : `${nameOf(p)} is still working on this project. You can rate after the work is delivered and payment is complete.`}
+          </div>
+          ${p.editedUploaded && !p.paid
+            ? `<button class="btn btn-primary btn-sm" onclick="manageProject('${p.id}')">Complete Payment</button>`
+            : `<button class="btn btn-ghost btn-sm" onclick="manageProject('${p.id}')">View Project</button>`}
+        </div>`).join('')
+    : '<div class="alert alert-i">No pending payments.</div>'}
+
+  <div class="section-title" style="margin-top:22px;">Rated${rated.length ? ` (${rated.length})` : ''}</div>
+  ${rated.length
+    ? rated.map(p => `
+        <div class="det-card">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+            <h4>${p.title}</h4><div style="color:#f59e0b;font-size:1rem;">${stars(p.rating)}</div>
+          </div>
+          <p>${nameOf(p)} &middot; &#8377;${fmt(p.budget)} &middot; ${p.rating}/5</p>
+          ${p.review ? `<div class="info-row"><span class="key">Your Review</span><span>${escapeHtml(p.review)}</span></div>` : ''}
+        </div>`).join('')
+    : '<div class="alert alert-i">You haven\'t rated any freelancers yet.</div>'}
+  `;
 }
 
 async function saveRating(pid) {
