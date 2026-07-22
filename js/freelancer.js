@@ -313,6 +313,26 @@ function fNegotiate() {
     : '<div class="alert alert-i">No projects to negotiate right now.</div>'}`;
 }
 
+function fViewNegotiate(id) {
+  const p = DB.projects().find(x => x.id === id);
+  if (!p) return;
+  const c = DB.users().find(u => u.id === p.creatorId);
+  const bodyHtml = `
+    <div style="display:flex;flex-direction:column;gap:2px;">
+      <div class="info-row"><span class="key">Client</span><span>${c?.name || 'Creator'}</span></div>
+      <div class="info-row"><span class="key">Client's Offer</span><span style="font-weight:600;">&#8377;${fmt(p.budget)}</span></div>
+      <div class="info-row"><span class="key">Current Deadline</span><span>${p.deadline ? fmtDate(p.deadline) : '-'}</span></div>
+      <div class="two-col" style="margin-top:14px;">
+        <div class="fg"><label>Your Counter-Price (&#8377;)</label><input type="number" id="neg-price-${p.id}" value="${Math.round(p.budget * 1.15)}"/></div>
+        <div class="fg"><label>Proposed Deadline</label><input type="date" id="neg-date-${p.id}" value="${new Date(Date.now() + 7 * 86400000).toISOString().split('T')[0]}"/></div>
+      </div>
+      <div class="fg"><label>Message to Client</label><input id="neg-msg-${p.id}" placeholder="I can complete this at the revised price..."/></div>
+      <button class="btn btn-green-btn btn-sm" style="margin-top:4px;" onclick="closeModal();showToast('Accepted at original terms!','ok','')">Accept Original Terms</button>
+    </div>`;
+  showModal(p.title, bodyHtml, () => { sendCounter(p.id); });
+  document.getElementById('modal-confirm').textContent = 'Send Counter-Offer';
+}
+
 function sendCounter(id) {
   const price = document.getElementById('neg-price-' + id)?.value, date = document.getElementById('neg-date-' + id)?.value;
   if (!price || !date) { showToast('Fill in all fields', 'err', ''); return; }
