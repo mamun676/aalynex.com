@@ -47,7 +47,9 @@ function showModal(title, bodyHtml, onConfirm) {
   document.getElementById('modal-title').textContent = title;
   document.getElementById('modal-body').innerHTML = bodyHtml;
   document.getElementById('modal-bg').classList.add('show');
-  document.getElementById('modal-confirm').onclick = () => { closeModal(); onConfirm(); };
+  const cb = document.getElementById('modal-confirm');
+  cb.textContent = 'Confirm';
+  cb.onclick = () => { closeModal(); onConfirm(); };
 }
 function closeModal() { document.getElementById('modal-bg').classList.remove('show'); }
 
