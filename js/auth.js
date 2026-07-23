@@ -408,3 +408,77 @@ function logout() {
     showToast('Logged out successfully', 'info', '');
   });
 }
+/* ---- FORGOT / RESET PASSWORD ---- */
+async function doForgotPassword() {
+  const email = document.getElementById('login-email').value.trim();
+  const errEl = document.getElementById('login-err');
+  errEl.style.display = 'none';
+  if (!email || !validateEmailFmt(email)) {
+    errEl.textContent = 'Enter your email above first, then click Forgot password.';
+    errEl.style.display = 'flex';
+    return;
+  }
+  if (!supaClient) {
+    errEl.textContent = 'Reset requires a connection. Please try again.';
+    errEl.style.display = 'flex';
+    return;
+  }
+  setBtn('login-btn', true, 'Sending reset link...');
+  try {
+    const { error } = await supaClient.auth.resetPasswordForEmail(email, { redirectTo: window.location.origin });
+    setBtn('login-btn', false);
+    if (error) {
+      errEl.textContent = error.message || 'Could not send reset email.';
+      errEl.style.display = 'flex';
+      return;
+    }
+    showToast('Password reset link sent! Check your email.', 'ok', '');
+  } catch (e) {
+    setBtn('login-btn', false);
+    errEl.textContent = 'Could not send reset email. Please try again.';
+    errEl.style.display = 'flex';
+  }
+}
+
+async function doResetPassword() {
+  const pw  = document.getElementById('recovery-pw')?.value || '';
+  const pw2 = document.getElementById('recovery-pw2')?.value || '';
+  const errEl = document.getElementById('recovery-err');
+  if (errEl) errEl.style.display = 'none';
+  if (pw.length < 6) {
+    if (errEl) { errEl.textContent = 'Password must be at least 6 characters.'; errEl.style.display = 'flex'; }
+    return;
+  }
+  if (pw !== pw2) {
+    if (errEl) { errEl.textContent = 'Passwords do not match.'; errEl.style.display = 'flex'; }
+    return;
+  }
+  try {
+    const { error } = await supaClient.auth.updateUser({ password: pw });
+    if (error) {
+      if (errEl) { errEl.textContent = error.message || 'Could not update password.'; errEl.style.display = 'flex'; }
+      return;
+    }
+    closeModal();
+    await supaClient.auth.signOut();
+    showToast('Password updated! Please log in with your new password.', 'ok', '');
+  } catch (e) {
+    if (errEl) { errEl.textContent = 'Could not update password. Please try again.'; errEl.style.display = 'flex'; }
+  }
+}
+
+(function _initPasswordRecovery() {
+  if (!supaClient || !supaClient.auth || window.__recoveryHooked) return;
+  window.__recoveryHooked = true;
+  supaClient.auth.onAuthStateChange((event) => {
+    if (event === 'PASSWORD_RECOVERY') {
+      const body = `
+        <div class="fg"><label>New Password</label><input type="password" id="recovery-pw" placeholder="At least 6 characters"/></div>
+        <div class="fg"><label>Confirm Password</label><input type="password" id="recovery-pw2" placeholder="Re-enter new password"/></div>
+        <div id="recovery-err" class="alert alert-e" style="display:none;"></div>`;
+      showModal('Set a New Password', body, () => {});
+      const btn = document.getElementById('modal-confirm');
+      if (btn) { btn.textContent = 'Update Password'; btn.onclick = doResetPassword; }
+    }
+  });
+})();
