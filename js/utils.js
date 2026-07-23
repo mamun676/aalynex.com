@@ -183,14 +183,8 @@ function updateThemeIcon() {
 function toggleTheme() {
   const root = document.documentElement;
   const dark = root.getAttribute('data-theme') === 'dark';
-  if (dark) {
-    root.removeAttribute('data-theme');
-    try { localStorage.setItem('aalynex-theme', 'light'); } catch (e) {}
-  } else {
-    root.setAttribute('data-theme', 'dark');
-    try { localStorage.setItem('aalynex-theme', 'dark'); } catch (e) {}
-  }
-  updateThemeIcon();
+  if (dark) { root.removeAttribute('data-theme'); try { localStorage.setItem('aalynex-theme','light'); } catch(e){} }
+  else { root.setAttribute('data-theme','dark'); try { localStorage.setItem('aalynex-theme','dark'); } catch(e){} }
 }
 
 window.addEventListener('DOMContentLoaded', updateThemeIcon);
