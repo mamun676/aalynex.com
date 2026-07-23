@@ -1419,3 +1419,13 @@ h1 em{
 [data-theme="dark"] .nav-item { color: var(--text-2); }
 [data-theme="dark"] .nav-item:hover { background: var(--bg2); color: var(--text); }
 [data-theme="dark"] .sb-section { color: var(--text-3); }
+/* theme icons: light shows moon, dark shows sun */
+.theme-toggle .ic-sun { display: none; }
+.theme-toggle .ic-moon { display: block; }
+[data-theme="dark"] .theme-toggle .ic-moon { display: none; }
+[data-theme="dark"] .theme-toggle .ic-sun { display: block; }
+.theme-toggle svg { width: 18px; height: 18px; display: block; }
+
+/* sidebar name + role visible in dark */
+[data-theme="dark"] .sb-name { color: var(--text); }
+[data-theme="dark"] .sb-role { color: var(--text-3); }
