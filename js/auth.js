@@ -26,8 +26,13 @@ function setSRole(r) {
 function setBtn(id, loading, text) {
   const btn = document.getElementById(id);
   if (!btn) return;
-  if (loading) { btn.classList.add('btn-loading'); btn.disabled = true; btn.textContent = text || '...'; }
-  else         { btn.classList.remove('btn-loading'); btn.disabled = false; }
+  if (loading) {
+    if (!btn.dataset.origText) btn.dataset.origText = btn.innerHTML;
+    btn.classList.add('btn-loading'); btn.disabled = true; btn.textContent = text || '...';
+  } else {
+    btn.classList.remove('btn-loading'); btn.disabled = false;
+    if (btn.dataset.origText) { btn.innerHTML = btn.dataset.origText; delete btn.dataset.origText; }
+  }
 }
 
 async function doLogin() {
@@ -404,10 +409,12 @@ function logout() {
     isSubscribing = false;
     CU = null; activeManageProjectId = null; currentChatUserId = null;
     DB.logout();
-    showScreen('screen-landing');
+        showScreen('screen-landing');
     showToast('Logged out successfully', 'info', '');
   });
+  document.getElementById('modal-confirm').textContent = 'Log Out';
 }
+
 /* ---- FORGOT PASSWORD (OTP based) ---- */
 let _resetEmail = '';
 
