@@ -33,7 +33,7 @@ async function fetchAndRenderDevelopers() {
           <img src="${dev.image_url || 'https://api.dicebear.com/7.x/notionists/svg?seed=' + encodeURIComponent(dev.name)}"
                alt="${dev.name}"
                class="team-card-img"
-               onerror="this.src='https://api.dicebear.com/7.x/notionists/svg?seed=${encodeURIComponent(dev.name)}'"/>
+               onerror="this.onerror=null;this.src='https://api.dicebear.com/7.x/notionists/svg?seed=${encodeURIComponent(dev.name)}'"/>
         </div>
         <div class="team-card-name">${dev.name}</div>
         <div class="team-card-role">${dev.role}</div>
