@@ -14,7 +14,6 @@
 </head>
 <body>
     <body>
-<button id="theme-toggle" class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme"></button>
 <div class="toast-wrap" id="toast-wrap"></div>
 
 <div id="screen-landing" class="screen active">
@@ -24,6 +23,8 @@
       <span class="logo-text" draggable="false" id="logoDrag">Aalynex</span>
     </div>
     <div class="nav-right">
+  <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme"></button>
+  <button class="btn btn-ghost btn-sm" onclick="goAuth('login')">Login</button>
       <button class="btn btn-ghost btn-sm" onclick="goAuth('login')">Login</button>
       <button class="btn btn-primary btn-sm" onclick="goAuth('signup')">Get Started</button>
     </div>
@@ -195,6 +196,8 @@
       <span class="logo-text" draggable="false" id="logoDrag">Aalynex</span>
     </div>
     <div class="nav-right">
+  <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme"></button>
+  <button class="btn btn-ghost btn-sm" onclick="showScreen('screen-landing')">&larr; Back</button>
       <button class="btn btn-ghost btn-sm" onclick="showScreen('screen-landing')">&larr; Back</button>
     </div>
   </nav>
@@ -259,6 +262,8 @@
       <span class="logo-text" draggable="false" id="logoDrag">Aalynex</span>
     </div>
     <div class="nav-right">
+  <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme"></button>
+  <span class="nav-greeting" id="c-nav-greeting">Hi, <strong id="c-nav-name"></strong></span>
       <span class="nav-greeting" id="c-nav-greeting">Hi, <strong id="c-nav-name"></strong></span>
       <div class="hamburger" id="c-hamburger" onclick="toggleSidebar('creator')">
         <span></span><span></span><span></span>
@@ -334,6 +339,8 @@
       <span class="logo-text" draggable="false" id="logoDrag">Aalynex</span>
     </div>
     <div class="nav-right">
+  <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme"></button>
+  <span class="nav-greeting nav-greeting-f" id="f-nav-greeting">Hi, <strong id="f-nav-name"></strong></span>
       <span class="nav-greeting nav-greeting-f" id="f-nav-greeting">Hi, <strong id="f-nav-name"></strong></span>
       <div class="hamburger" id="f-hamburger" onclick="toggleSidebar('freelancer')">
         <span></span><span></span><span></span>
