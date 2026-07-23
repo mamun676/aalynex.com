@@ -1369,4 +1369,55 @@ h1 em{
   }
   .chat-back:active { background: var(--bg2); }
 }
-https://app.notion.com/p/AI-YouTube-Channel-Analyzer-Project-Summary-063e1a6c6b3e46588c78fb7d2b1ecce7?source=copy_link
+/* ============ DARK MODE ============ */
+[data-theme="dark"] {
+  --bg: #191817;
+  --bg2: #211F1D;
+  --surface: #201E1C;
+  --surface2: #272420;
+  --glass: rgba(32,30,28,0.72);
+  --glass-strong: rgba(32,30,28,0.92);
+  --glass-border: rgba(255,255,255,0.09);
+  --glass-border-strong: rgba(255,255,255,0.16);
+  --accent-glow: rgba(224,92,42,0.30);
+  --accent-soft: rgba(224,92,42,0.16);
+  --accent2-soft: rgba(124,58,237,0.20);
+  --green-soft: rgba(22,163,74,0.20);
+  --blue-soft: rgba(29,78,216,0.22);
+  --text: #F5F3EF;
+  --text-2: rgba(245,243,239,0.68);
+  --text-3: rgba(245,243,239,0.45);
+  --text-4: rgba(245,243,239,0.24);
+  --shadow-xs: 0 1px 3px rgba(0,0,0,0.40);
+  --shadow-sm: 0 2px 8px rgba(0,0,0,0.45);
+  --shadow-md: 0 4px 16px rgba(0,0,0,0.50);
+  --shadow-lg: 0 8px 32px rgba(0,0,0,0.55);
+  --shadow-xl: 0 16px 48px rgba(0,0,0,0.60);
+}
+/* fix hardcoded light backgrounds under dark */
+[data-theme="dark"] .fg input,
+[data-theme="dark"] .fg select,
+[data-theme="dark"] .fg textarea { background: var(--surface2); color: var(--text); }
+[data-theme="dark"] .fg input:focus,
+[data-theme="dark"] .fg select:focus,
+[data-theme="dark"] .fg textarea:focus { background: var(--surface2); }
+[data-theme="dark"] .fg select option { background: var(--surface2); color: var(--text); }
+[data-theme="dark"] .chat-inp:focus { background: var(--surface2); }
+[data-theme="dark"] .bottom-nav { background: rgba(25,24,23,0.95); box-shadow: 0 -4px 20px rgba(0,0,0,0.50); }
+[data-theme="dark"] .logo-icon { background: linear-gradient(135deg,#2c2926,#211f1d); }
+/* floating theme toggle (all pages) */
+.theme-toggle {
+  position: fixed; left: 18px; bottom: 18px; z-index: 300;
+  width: 44px; height: 44px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--surface); color: var(--text);
+  border: 1px solid var(--glass-border-strong);
+  box-shadow: var(--shadow-md); cursor: pointer;
+  transition: transform .2s ease, background .2s ease;
+}
+.theme-toggle:hover { transform: scale(1.08); }
+.theme-toggle svg { width: 20px; height: 20px; display: block; }
+@media (max-width: 768px) {
+  .theme-toggle { bottom: 78px; left: 12px; width: 40px; height: 40px; }
+  .theme-toggle svg { width: 18px; height: 18px; }
+}
