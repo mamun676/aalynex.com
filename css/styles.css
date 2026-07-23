@@ -1405,19 +1405,17 @@ h1 em{
 [data-theme="dark"] .chat-inp:focus { background: var(--surface2); }
 [data-theme="dark"] .bottom-nav { background: rgba(25,24,23,0.95); box-shadow: 0 -4px 20px rgba(0,0,0,0.50); }
 [data-theme="dark"] .logo-icon { background: linear-gradient(135deg,#2c2926,#211f1d); }
-/* floating theme toggle (all pages) */
+/* theme toggle (in nav, top-right) */
 .theme-toggle {
-  position: fixed; left: 18px; bottom: 18px; z-index: 300;
-  width: 44px; height: 44px; border-radius: 50%;
-  display: flex; align-items: center; justify-content: center;
-  background: var(--surface); color: var(--text);
+  width: 36px; height: 36px; border-radius: 50%;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: transparent; color: var(--text-2);
   border: 1px solid var(--glass-border-strong);
-  box-shadow: var(--shadow-md); cursor: pointer;
-  transition: transform .2s ease, background .2s ease;
+  cursor: pointer; flex-shrink: 0; padding: 0;
+  transition: transform .2s ease, color .2s ease, background .2s ease;
 }
-.theme-toggle:hover { transform: scale(1.08); }
-.theme-toggle svg { width: 20px; height: 20px; display: block; }
-@media (max-width: 768px) {
-  .theme-toggle { bottom: 78px; left: 12px; width: 40px; height: 40px; }
-  .theme-toggle svg { width: 18px; height: 18px; }
-}
+.theme-toggle:hover { transform: scale(1.08); color: var(--accent); background: var(--bg2); }
+.theme-toggle svg { width: 18px; height: 18px; display: block; }
+[data-theme="dark"] .nav-item { color: var(--text-2); }
+[data-theme="dark"] .nav-item:hover { background: var(--bg2); color: var(--text); }
+[data-theme="dark"] .sb-section { color: var(--text-3); }
