@@ -408,7 +408,9 @@ function logout() {
     showToast('Logged out successfully', 'info', '');
   });
 }
-/* ---- FORGOT / RESET PASSWORD ---- */
+/* ---- FORGOT PASSWORD (OTP based) ---- */
+let _resetEmail = '';
+
 async function doForgotPassword() {
   const email = document.getElementById('login-email').value.trim();
   const errEl = document.getElementById('login-err');
@@ -423,62 +425,59 @@ async function doForgotPassword() {
     errEl.style.display = 'flex';
     return;
   }
-  setBtn('login-btn', true, 'Sending reset link...');
+  setBtn('login-btn', true, 'Sending OTP...');
   try {
-    const { error } = await supaClient.auth.resetPasswordForEmail(email, { redirectTo: window.location.origin });
+    const { error } = await supaClient.auth.signInWithOtp({
+      email,
+      options: { shouldCreateUser: false }
+    });
     setBtn('login-btn', false);
     if (error) {
-      errEl.textContent = error.message || 'Could not send reset email.';
+      errEl.textContent = error.message || 'Could not send OTP. Check the email address.';
       errEl.style.display = 'flex';
       return;
     }
-    showToast('Password reset link sent! Check your email.', 'ok', '');
+    _resetEmail = email;
+    showToast('OTP sent to your email!', 'ok', '');
+    const body = `
+      <p style="font-size:.85rem;color:var(--text-3);margin-bottom:12px;">Enter the OTP sent to <b>${email}</b> and set a new password.</p>
+      <div class="fg"><label>OTP Code</label><input id="reset-otp" type="text" inputmode="numeric" placeholder="6-digit code"/></div>
+      <div class="fg"><label>New Password</label><input type="password" id="reset-pw" placeholder="At least 6 characters"/></div>
+      <div class="fg"><label>Confirm Password</label><input type="password" id="reset-pw2" placeholder="Re-enter new password"/></div>
+      <div id="reset-err" class="alert alert-e" style="display:none;"></div>`;
+    showModal('Reset Your Password', body, () => {});
+    const btn = document.getElementById('modal-confirm');
+    if (btn) { btn.textContent = 'Reset Password'; btn.onclick = doResetVerifyOTP; }
   } catch (e) {
     setBtn('login-btn', false);
-    errEl.textContent = 'Could not send reset email. Please try again.';
+    errEl.textContent = 'Could not send OTP. Please try again.';
     errEl.style.display = 'flex';
   }
 }
 
-async function doResetPassword() {
-  const pw  = document.getElementById('recovery-pw')?.value || '';
-  const pw2 = document.getElementById('recovery-pw2')?.value || '';
-  const errEl = document.getElementById('recovery-err');
+async function doResetVerifyOTP() {
+  const otp = (document.getElementById('reset-otp')?.value || '').trim();
+  const pw  = document.getElementById('reset-pw')?.value || '';
+  const pw2 = document.getElementById('reset-pw2')?.value || '';
+  const errEl = document.getElementById('reset-err');
+  const showErr = (m) => { if (errEl) { errEl.textContent = m; errEl.style.display = 'flex'; } };
   if (errEl) errEl.style.display = 'none';
-  if (pw.length < 6) {
-    if (errEl) { errEl.textContent = 'Password must be at least 6 characters.'; errEl.style.display = 'flex'; }
-    return;
-  }
-  if (pw !== pw2) {
-    if (errEl) { errEl.textContent = 'Passwords do not match.'; errEl.style.display = 'flex'; }
-    return;
-  }
+  if (!otp)          { showErr('Please enter the OTP code.'); return; }
+  if (pw.length < 6) { showErr('Password must be at least 6 characters.'); return; }
+  if (pw !== pw2)    { showErr('Passwords do not match.'); return; }
   try {
-    const { error } = await supaClient.auth.updateUser({ password: pw });
-    if (error) {
-      if (errEl) { errEl.textContent = error.message || 'Could not update password.'; errEl.style.display = 'flex'; }
-      return;
-    }
+    const { data, error } = await supaClient.auth.verifyOtp({
+      email: _resetEmail,
+      token: otp,
+      type: 'email'
+    });
+    if (error || !data.user) { showErr('Invalid or expired OTP. Please try again.'); return; }
+    const { error: pwErr } = await supaClient.auth.updateUser({ password: pw });
+    if (pwErr) { showErr(pwErr.message || 'Could not update password.'); return; }
     closeModal();
     await supaClient.auth.signOut();
     showToast('Password updated! Please log in with your new password.', 'ok', '');
   } catch (e) {
-    if (errEl) { errEl.textContent = 'Could not update password. Please try again.'; errEl.style.display = 'flex'; }
+    showErr('Something went wrong. Please try again.');
   }
 }
-
-(function _initPasswordRecovery() {
-  if (!supaClient || !supaClient.auth || window.__recoveryHooked) return;
-  window.__recoveryHooked = true;
-  supaClient.auth.onAuthStateChange((event) => {
-    if (event === 'PASSWORD_RECOVERY') {
-      const body = `
-        <div class="fg"><label>New Password</label><input type="password" id="recovery-pw" placeholder="At least 6 characters"/></div>
-        <div class="fg"><label>Confirm Password</label><input type="password" id="recovery-pw2" placeholder="Re-enter new password"/></div>
-        <div id="recovery-err" class="alert alert-e" style="display:none;"></div>`;
-      showModal('Set a New Password', body, () => {});
-      const btn = document.getElementById('modal-confirm');
-      if (btn) { btn.textContent = 'Update Password'; btn.onclick = doResetPassword; }
-    }
-  });
-})();
