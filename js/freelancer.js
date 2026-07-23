@@ -573,6 +573,27 @@ function fProfile() {
         <button class="btn btn-primary" onclick="saveFProfile()">Save Changes</button>
       </div>
 
+      ${u.is_managed_editor ? `
+      <div class="det-card" style="border:1px solid var(--accent);background:linear-gradient(180deg,rgba(224,92,42,.05),transparent);">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+          <h4 style="margin:0;">🏆 Managed Editor</h4>
+          <span class="tag pu" style="font-size:.65rem;">${u.managed_id || 'Verified'}</span>
+        </div>
+        <p style="font-size:.75rem;color:var(--text-3);margin:0 0 12px;">You're a verified Managed Editor. Set your specialization &amp; minimum pricing — creators see this on your card.</p>
+        <div class="fg"><label>Specialization</label><input id="me-spec" placeholder="e.g. Long-form documentary edits" value="${u.specialization || ''}"/></div>
+        <div style="display:flex;gap:10px;">
+          <div class="fg" style="flex:1;"><label>Min Price — Long-form (₹)</label><input id="me-lf" type="number" min="0" placeholder="5000" value="${u.min_price_longform != null ? u.min_price_longform : ''}"/></div>
+          <div class="fg" style="flex:1;"><label>Min Price — Reel/Short (₹)</label><input id="me-reel" type="number" min="0" placeholder="800" value="${u.min_price_reel != null ? u.min_price_reel : ''}"/></div>
+        </div>
+        <button class="btn btn-primary btn-sm" onclick="saveManagedProfile()">Save Managed Profile</button>
+      </div>
+      ` : `
+      <div class="det-card">
+        <h4>🏆 Managed Editor Program</h4>
+        <p style="font-size:.78rem;color:var(--text-3);margin:0;">Managed Editors are hand-picked, verified pros who get premium visibility &amp; pricing. Keep your ratings high — admins promote top editors.</p>
+      </div>
+      `}
+
       <div class="det-card">
         <h4>Account Details</h4>
         <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
@@ -738,6 +759,31 @@ function saveFProfile() {
     renderF('profile');
   }
 }
+
+async function saveManagedProfile() {
+  const specialization = document.getElementById('me-spec')?.value?.trim() || '';
+  const lfRaw = document.getElementById('me-lf')?.value;
+  const reelRaw = document.getElementById('me-reel')?.value;
+  const min_price_longform = lfRaw ? parseInt(lfRaw, 10) : null;
+  const min_price_reel = reelRaw ? parseInt(reelRaw, 10) : null;
+
+  CU.specialization = specialization;
+  CU.min_price_longform = min_price_longform;
+  CU.min_price_reel = min_price_reel;
+  DB.setCurrentUser(CU);
+
+  if (supaClient && CU.id) {
+    const { error } = await supaClient.from('profiles')
+      .update({ specialization, min_price_longform, min_price_reel })
+      .eq('id', CU.id);
+    if (error) { showToast('Save failed: ' + error.message, 'err', ''); return; }
+    showToast('Managed editor profile saved!', 'ok', '');
+    renderF('profile');
+  } else {
+    showToast('Saved locally', 'ok', '');
+    renderF('profile');
+  }
+}
 /* ═══════════════════════════════════
    PROFILE & UPLOAD HANDLERS
 ═══════════════════════════════════ */
@@ -751,6 +797,14 @@ async function loadFreelancerProfile() {
       CU.resume_url = data.resume_url || '';
       CU.photo_url = data.photo_url || '';
       CU.experience = data.experience || [];
+      CU.specialization = data.specialization || '';
+      CU.min_price_longform = (data.min_price_longform != null ? data.min_price_longform : null);
+      CU.min_price_reel = (data.min_price_reel != null ? data.min_price_reel : null);
+      try {
+        const { data: me } = await supaClient.from('managed_editors').select('unique_id').eq('freelancer_id', CU.id).maybeSingle();
+        CU.is_managed_editor = !!me;
+        CU.managed_id = me ? me.unique_id : '';
+      } catch (e) { /* managed optional */ }
       // SECURITY: bank/UPI ab alag 'freelancer_payout' table me hai (sirf owner read kar sakta hai)
       try {
         const { data: pay } = await supaClient.from('freelancer_payout').select('*').eq('freelancer_id', CU.id).maybeSingle();

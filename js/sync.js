@@ -23,12 +23,51 @@ async function syncFromSupabase(u, opts = {}) {
           upi_id: p.upi_id || '',
           bank_account_name: p.bank_account_name || '',
           bank_account_number: p.bank_account_number || '',
-          ifsc_code: p.ifsc_code || ''
+          ifsc_code: p.ifsc_code || '',
+          specialization: p.specialization || '',
+          min_price_longform: (p.min_price_longform != null ? p.min_price_longform : null),
+          min_price_reel: (p.min_price_reel != null ? p.min_price_reel : null),
+          is_managed_editor: false,
+          managed_id: ''
         };
         if (!exists) localUsers.push(mapped); else Object.assign(exists, mapped);
       });
       DB.saveUsers(localUsers);
+
+      // ── Managed Editors (admin-controlled) — mark which freelancers are managed ──
+      try {
+        const { data: managed } = await supaClient.from('managed_editors').select('freelancer_id, unique_id');
+        const mSet = {};
+        (managed || []).forEach(m => { mSet[m.freelancer_id] = m.unique_id; });
+        const usersNow = DB.users();
+        usersNow.forEach(x => {
+          x.is_managed_editor = !!mSet[x.id];
+          x.managed_id = mSet[x.id] || '';
+        });
+        DB.saveUsers(usersNow);
+      } catch (e) { /* managed_editors optional */ }
     }
+
+    // ── Premium subscription status (creator access to Managed Editing) ──
+    try {
+      const { data: subs } = await supaClient
+        .from('subscriptions')
+        .select('status, current_period_end, trial_ends_at')
+        .eq('user_id', u.id)
+        .in('status', ['active', 'trialing']);
+      const _pnow = Date.now();
+      window._premiumActive = (subs || []).some(s => {
+        const end = s.current_period_end || s.trial_ends_at;
+        return !end || new Date(end).getTime() > _pnow;
+      });
+    } catch (e) { if (typeof window._premiumActive === 'undefined') window._premiumActive = false; }
+
+    // ── Premium plan (admin-controlled price → shown live on main site) ──
+    try {
+      const { data: _plan } = await supaClient.from('subscription_plans')
+        .select('id, name, price, trial_days, features').eq('plan_key', 'aalynex_premium').maybeSingle();
+      if (_plan) window._premiumPlan = _plan;
+    } catch (e) {}
 
     const { data: projects } = await supaClient.from('projects').select('*');
     if (projects && projects.length) {

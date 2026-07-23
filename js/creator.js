@@ -70,6 +70,7 @@ function renderC(p) {
   else if (p === 'rate')     m.innerHTML = cRate();
   else if (p === 'profile')  m.innerHTML = cProfile();
   else if (p === 'browse')   m.innerHTML = cBrowseFreelancers();
+  else if (p === 'managed')  m.innerHTML = cManagedEditing();
 
   if (p !== 'chat') {
     m.classList.remove('fade-in'); void m.offsetWidth; m.classList.add('fade-in');
@@ -389,6 +390,14 @@ function cHome() {
       <div class="sub" style="color:var(--accent2);font-weight:500;margin-top:2px;">Top talent available →</div>
     </div>
   </div>${fRow}
+  <div onclick="cPage('managed',document.querySelector('[data-page=managed]'))" style="cursor:pointer;display:flex;align-items:center;gap:14px;background:linear-gradient(135deg,rgba(224,92,42,.12),rgba(124,58,237,.1));border:1.5px solid rgba(224,92,42,.3);border-radius:var(--radius-lg);padding:16px 18px;margin-bottom:24px;">
+    <div style="font-size:1.8rem;">🏆</div>
+    <div style="flex:1;">
+      <div style="font-family:'Outfit',sans-serif;font-weight:800;font-size:.95rem;color:var(--text);">Managed Editing <span style="font-size:.6rem;background:var(--accent);color:#fff;padding:2px 7px;border-radius:99px;vertical-align:middle;">PREMIUM</span></div>
+      <div style="font-size:.78rem;color:var(--text-2);margin-top:2px;">Hand-picked verified pro editors. Unlock with Aalynex Premium — free for ${premiumTrialDays()} days, then ₹${premiumPrice()}/mo.</div>
+    </div>
+    <div style="font-weight:700;color:var(--accent);font-size:.85rem;white-space:nowrap;">Explore →</div>
+  </div>
   <div class="section-title">Recent Projects</div>
   <div class="project-list">
     ${recent.length
@@ -1264,8 +1273,12 @@ function saveProfile() {
 // ────────────────────────────────────────
 let _browseSearch = '';
 let _browseSort = 'best'; // 'best' | 'rating' | 'projects' | 'newest'
+let _browseManagedOnly = false;
 let _directReqFreelancerId = null;
 let _directReqFreelancerName = null;
+let _pendingManagedId = null;
+let _pendingManagedName = null;
+if (typeof window !== 'undefined' && typeof window._premiumActive === 'undefined') window._premiumActive = false;
 
 function fisherYatesShuffle(arr) {
   const a = [...arr];
@@ -1299,6 +1312,10 @@ function cBrowseFreelancers() {
     );
   }
 
+  if (_browseManagedOnly) {
+    list = list.filter(f => f.is_managed_editor);
+  }
+
   const statOf = (f) => {
     const completed = DB.projects().filter(p => p.freelancerId === f.id && p.status === 'completed');
     const rated = completed.filter(p => p.rating && p.rating > 0);
@@ -1322,6 +1339,7 @@ function cBrowseFreelancers() {
   <div class="page-head"><h2>Browse Editors</h2><p>${list.length} editor${list.length !== 1 ? 's' : ''} available</p></div>
   <div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;align-items:center;">
     <input id="browse-search" class="browse-search" placeholder="Search by name, skill, or profession…" value="${_browseSearch || ''}" oninput="cBrowseSearch(this.value)" style="flex:1;min-width:200px;padding:10px 14px;border:1px solid var(--glass-border);border-radius:var(--radius-sm);background:var(--surface);color:var(--text);"/>
+    <button class="btn btn-sm ${_browseManagedOnly ? 'btn-primary' : 'btn-ghost'}" onclick="cBrowseToggleManaged()">🏆 Managed only</button>
     <div style="position:relative;">
       <button class="btn btn-ghost btn-sm" onclick="toggleSortDropdown(event)">Sort: ${sortLabels[_browseSort] || 'Best Match'} ▾</button>
       <div id="browse-sort-dropdown" style="display:none;position:absolute;right:0;top:110%;background:var(--surface);border:1px solid var(--glass-border);border-radius:var(--radius-sm);box-shadow:var(--shadow);z-index:50;min-width:160px;overflow:hidden;">
@@ -1339,10 +1357,11 @@ function cBrowseFreelancers() {
       return `
       <div class="f-card">
         <div class="f-avatar" style="${f.photo_url ? 'background:transparent;' : ''}">${f.photo_url ? `<img src="${f.photo_url}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">` : (f.avatar || 'F')}</div>
-        <div class="f-name">${escapeHtml(f.name)}</div>
+        <div class="f-name">${escapeHtml(f.name)}${f.is_managed_editor ? ` <span class="tag" style="background:var(--accent);color:#fff;font-size:.58rem;vertical-align:middle;">🏆 Managed</span>` : ''}</div>
         <div class="stars">${stars}</div>
         <div class="f-rate">${ratingDisplay} &middot; ${st.completedCount} Projects</div>
-        <div class="f-spec">${escapeHtml(f.profession || 'Editor')}</div>
+        <div class="f-spec">${escapeHtml(f.is_managed_editor && f.specialization ? f.specialization : (f.profession || 'Editor'))}</div>
+        ${f.is_managed_editor && (f.min_price_longform || f.min_price_reel) ? `<div style="font-size:.68rem;color:var(--accent);font-weight:600;margin-top:2px;">${f.min_price_longform ? 'Long-form from ₹' + f.min_price_longform : ''}${f.min_price_longform && f.min_price_reel ? ' · ' : ''}${f.min_price_reel ? 'Reel from ₹' + f.min_price_reel : ''}</div>` : ''}
         <div style="display:flex;flex-direction:column;gap:6px;width:100%;margin-top:10px;">
           <button class="btn btn-outline-f btn-xs full-btn" onclick="viewFreelancerPortfolio('${f.id}')">View Portfolio</button>
           <button class="btn btn-primary btn-xs full-btn" onclick="openSendRequestModal('${f.id}','${f.name.replace(/'/g, "\\'")}')">Send Request →</button>
@@ -1365,6 +1384,12 @@ function cBrowseSearch(val) {
 function cBrowseSort(key) {
   _browseSort = key;
   closeSortDropdown();
+  const m = document.getElementById('c-main');
+  if (m) m.innerHTML = cBrowseFreelancers();
+}
+
+function cBrowseToggleManaged() {
+  _browseManagedOnly = !_browseManagedOnly;
   const m = document.getElementById('c-main');
   if (m) m.innerHTML = cBrowseFreelancers();
 }
@@ -1394,6 +1419,11 @@ function closeSortDropdown() {
 }
 
 function openSendRequestModal(freelancerId, freelancerName) {
+  const _mgd = DB.users().find(u => u.id === freelancerId);
+  if (_mgd && _mgd.is_managed_editor && !isPremiumCreator()) {
+    openPremiumModal(freelancerId, freelancerName);
+    return;
+  }
   _directReqFreelancerId = freelancerId;
   _directReqFreelancerName = freelancerName;
 
@@ -1453,4 +1483,169 @@ async function submitDirectRequest() {
   _directReqFreelancerId = null;
   _directReqFreelancerName = null;
   cPage('projects', document.querySelector('[data-page=projects]'));
+}
+
+
+/* ═══════════════════════════════════════════════
+   MANAGED EDITING — premium-gated dedicated section (creator)
+   ═══════════════════════════════════════════════ */
+function isPremiumCreator() { return !!window._premiumActive; }
+function premiumPrice() { return (window._premiumPlan && window._premiumPlan.price != null) ? Number(window._premiumPlan.price) : 99; }
+function premiumTrialDays() { return (window._premiumPlan && window._premiumPlan.trial_days != null) ? Number(window._premiumPlan.trial_days) : 7; }
+
+function cManagedEditing() {
+  const editors = DB.users().filter(u => u.role === 'freelancer' && u.is_managed_editor);
+  const premium = isPremiumCreator();
+
+  const banner = premium
+    ? `<div style="display:flex;align-items:center;gap:10px;background:linear-gradient(135deg,rgba(22,163,74,.12),rgba(22,163,74,.05));border:1.5px solid rgba(22,163,74,.3);border-radius:var(--radius-lg);padding:14px 16px;margin-bottom:18px;">
+         <div style="font-size:1.3rem;">✅</div>
+         <div><div style="font-weight:700;color:var(--green);font-size:.9rem;">Premium Active</div>
+         <div style="font-size:.75rem;color:var(--text-3);">You can send unlimited requests to Managed Editors.</div></div>
+       </div>`
+    : `<div style="background:linear-gradient(135deg,rgba(224,92,42,.1),rgba(124,58,237,.08));border:1.5px solid rgba(224,92,42,.3);border-radius:var(--radius-lg);padding:18px;margin-bottom:18px;">
+         <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+           <span style="font-size:1.3rem;">🏆</span>
+           <span style="font-weight:800;font-size:1rem;color:var(--text);">Aalynex Premium — ₹${premiumPrice()}<span style="font-size:.7rem;color:var(--text-3);font-weight:600;">/month</span></span>
+         </div>
+         <div style="font-size:.8rem;color:var(--text-2);margin-bottom:10px;">Unlock <b>Managed Editors</b> — hand-picked, verified pros. View portfolios for free; go Premium to send requests.</div>
+         <button class="btn btn-primary btn-sm" onclick="openPremiumModal()">Unlock Premium →</button>
+       </div>`;
+
+  const cards = editors.length ? editors.map(f => {
+    const completed = DB.projects().filter(p => p.freelancerId === f.id && p.status === 'completed');
+    const rated = completed.filter(p => p.rating && p.rating > 0);
+    const avg = rated.length ? (rated.reduce((s, p) => s + p.rating, 0) / rated.length) : 0;
+    const ratingDisplay = avg > 0 ? avg.toFixed(1) : 'New';
+    const stars = avg > 0
+      ? Array.from({ length: 5 }, (_, i) => `<span style="color:${i < Math.round(avg) ? 'var(--yellow)' : 'rgba(0,0,0,0.12)'}">&#9733;</span>`).join('')
+      : `<span style="color:var(--text-3);font-size:.65rem;">No ratings yet</span>`;
+    const priceLine = (f.min_price_longform || f.min_price_reel)
+      ? `<div style="font-size:.68rem;color:var(--accent);font-weight:600;margin-top:2px;">${f.min_price_longform ? 'Long-form from ₹' + f.min_price_longform : ''}${f.min_price_longform && f.min_price_reel ? ' · ' : ''}${f.min_price_reel ? 'Reel from ₹' + f.min_price_reel : ''}</div>`
+      : '';
+    return `
+    <div class="f-card">
+      <div class="f-avatar" style="${f.photo_url ? 'background:transparent;' : ''}">${f.photo_url ? `<img src="${f.photo_url}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">` : (f.avatar || 'F')}</div>
+      <div class="f-name">${escapeHtml(f.name)} <span class="tag" style="background:var(--accent);color:#fff;font-size:.58rem;vertical-align:middle;">🏆 Managed</span></div>
+      <div class="stars">${stars}</div>
+      <div class="f-rate">${ratingDisplay} &middot; ${completed.length} Projects</div>
+      <div class="f-spec">${escapeHtml(f.specialization || f.profession || 'Managed Editor')}</div>
+      ${priceLine}
+      <div style="display:flex;flex-direction:column;gap:6px;width:100%;margin-top:10px;">
+        <button class="btn btn-outline-f btn-xs full-btn" onclick="viewFreelancerPortfolio('${f.id}')">View Portfolio</button>
+        <button class="btn btn-primary btn-xs full-btn" onclick="requestManagedEditor('${f.id}')">${premium ? 'Send Request →' : '🔒 Send Request'}</button>
+      </div>
+    </div>`;
+  }).join('') : `<div style="color:var(--text-3);font-size:.85rem;grid-column:1/-1;padding:32px 0;text-align:center;">No Managed Editors available yet. Check back soon! 🏆</div>`;
+
+  return `
+  <div class="page-head"><h2>🏆 Managed Editing</h2><p>Hand-picked, verified pro editors — premium quality, managed by Aalynex</p></div>
+  ${banner}
+  <div class="f-grid">${cards}</div>`;
+}
+
+function requestManagedEditor(id) {
+  const u = DB.users().find(x => x.id === id);
+  const name = u ? u.name : 'Editor';
+  if (isPremiumCreator()) {
+    openSendRequestModal(id, name);
+  } else {
+    openPremiumModal(id, name);
+  }
+}
+
+function openPremiumModal(pendingId, pendingName) {
+  _pendingManagedId = pendingId || null;
+  _pendingManagedName = pendingName || null;
+  const feats = ['Send requests to Managed Editors (hand-picked pros)', 'Priority delivery & verified quality', 'Unlimited managed-editor requests', 'Cancel anytime'];
+  const bodyHtml = `
+    <div style="text-align:center;margin-bottom:6px;">
+      <div style="font-size:2rem;">🏆</div>
+      <div style="font-family:'Outfit',sans-serif;font-weight:800;font-size:1.4rem;color:var(--text);">Aalynex Premium</div>
+      <div style="font-size:1.6rem;font-weight:800;color:var(--accent);">₹0 <span style="font-size:.85rem;color:var(--text-3);font-weight:600;">today</span></div>
+      <div style="font-size:.78rem;color:var(--text-3);margin-top:2px;">Free for ${premiumTrialDays()} days, then ₹${premiumPrice()}/month · cancel anytime</div>
+    </div>
+    <div style="background:var(--bg2);border:1px solid var(--glass-border);border-radius:12px;padding:14px 16px;margin:12px 0;">
+      ${feats.map(x => `<div style="display:flex;align-items:center;gap:8px;font-size:.82rem;color:var(--text-2);margin:6px 0;"><span style="color:var(--green);font-weight:700;">✓</span> ${x}</div>`).join('')}
+    </div>
+    ${pendingName ? `<div style="font-size:.78rem;color:var(--text-3);text-align:center;">After unlocking, your request to <b>${escapeHtml(pendingName)}</b> will continue automatically.</div>` : ''}`;
+  showModal('Unlock Premium', bodyHtml, startPremiumCheckout);
+  const cb = document.getElementById('modal-confirm');
+  if (cb) cb.textContent = 'Start Free Trial →';
+}
+
+async function startPremiumCheckout() {
+  if (!supaClient || !CU) { showToast('Please log in again', 'err', ''); return; }
+  if (!window.Razorpay) { showToast('Payment SDK not loaded', 'err', ''); return; }
+
+  const pendId = _pendingManagedId, pendName = _pendingManagedName;
+  const cb = document.getElementById('modal-confirm');
+  if (cb) { cb.disabled = true; cb.textContent = 'Starting…'; }
+
+  try {
+    // 1) Ask our edge function to create a Razorpay SUBSCRIPTION (with free trial).
+    const { data: { session } } = await supaClient.auth.getSession();
+    const res = await fetch(
+      'https://sfzbrygqpodjinhpagaz.supabase.co/functions/v1/premium-subscribe',
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
+        body: JSON.stringify({})
+      }
+    );
+    const data = await res.json();
+    if (!res.ok || !data.subscription_id) throw new Error(data.error || 'Could not start subscription');
+
+    const trialDays = (data.trial_days != null) ? data.trial_days : premiumTrialDays();
+    const price = (data.price != null) ? data.price : premiumPrice();
+
+    // 2) Open Razorpay in SUBSCRIPTION mode (₹0/₹1 auth now, ₹price after trial).
+    const options = {
+      key: data.key_id || 'rzp_live_SitBK030b3i8Ol',
+      subscription_id: data.subscription_id,
+      name: 'Aalynex Premium',
+      description: `${trialDays}-day free trial, then ₹${price}/month`,
+      image: 'aalynex-logo.png',
+      prefill: { name: CU.name, email: CU.email || '', contact: CU.phone || '' },
+      theme: { color: '#E05C2A' },
+      handler: async function (response) {
+        try {
+          const nowIso = new Date().toISOString();
+          const trialEndIso = new Date(Date.now() + trialDays * 24 * 60 * 60 * 1000).toISOString();
+          const { error } = await supaClient.from('subscriptions').insert({
+            user_id: CU.id,
+            plan_id: data.plan_db_id || null,
+            status: trialDays > 0 ? 'trialing' : 'active',
+            autopay: true,
+            trial_ends_at: trialDays > 0 ? trialEndIso : null,
+            current_period_start: nowIso,
+            current_period_end: trialEndIso,
+            razorpay_subscription_id: response.razorpay_subscription_id || data.subscription_id
+          });
+          if (error) { showToast('Trial started but saving failed: ' + error.message + '. Contact support.', 'err', ''); return; }
+          window._premiumActive = true;
+          showToast(`🎉 Premium active! Free for ${trialDays} days, then ₹${price}/mo (auto).`, 'ok', '');
+          if (pendId) {
+            _pendingManagedId = null; _pendingManagedName = null;
+            setTimeout(() => openSendRequestModal(pendId, pendName), 400);
+          } else {
+            renderC('managed');
+          }
+        } catch (e) {
+          showToast('Activation error: ' + e.message, 'err', '');
+        }
+      },
+      modal: {
+        ondismiss: function () {
+          showToast('Subscription cancelled.', 'info', '');
+          if (cb) { cb.disabled = false; cb.textContent = 'Start Free Trial →'; }
+        }
+      }
+    };
+    new window.Razorpay(options).open();
+    if (cb) { cb.disabled = false; cb.textContent = 'Start Free Trial →'; }
+  } catch (e) {
+    showToast('Could not start: ' + e.message, 'err', '');
+    if (cb) { cb.disabled = false; cb.textContent = 'Start Free Trial →'; }
+  }
 }
