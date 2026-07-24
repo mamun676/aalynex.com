@@ -212,7 +212,9 @@ nav.scrolled{
 }
 .nav-link:hover{background:var(--bg2);color:var(--text);}
 .how-section,.why-section{scroll-margin-top:90px;}
-@media(max-width:768px){ .nav-center{display:flex;gap:0;} }
+.mob-only{display:none;}
+.desk-only{display:inline;}
+@media(max-width:768px){ .nav-center{display:flex;gap:0;} .mob-only{display:inline;} .desk-only{display:none;} }
 
 /* ── BUTTONS ── */
 .btn{
