@@ -1452,19 +1452,23 @@ h1 em{
   background: transparent; color: var(--text-2);
   border: 1px solid var(--glass-border-strong);
   cursor: pointer; flex-shrink: 0; padding: 0;
+  position: relative; overflow: hidden;
   transition: transform .2s ease, color .2s ease, background .2s ease;
 }
 .theme-toggle:hover { transform: scale(1.08); color: var(--accent); background: var(--bg2); }
-.theme-toggle svg { width: 18px; height: 18px; display: block; }
+.theme-toggle svg {
+  width: 18px; height: 18px;
+  position: absolute; top: 50%; left: 50%;
+  transition: opacity .35s ease, transform .45s cubic-bezier(.4,0,.2,1);
+}
 [data-theme="dark"] .nav-item { color: var(--text-2); }
 [data-theme="dark"] .nav-item:hover { background: var(--bg2); color: var(--text); }
 [data-theme="dark"] .sb-section { color: var(--text-3); }
-/* theme icons: light shows moon, dark shows sun */
-.theme-toggle .ic-sun { display: none; }
-.theme-toggle .ic-moon { display: block; }
-[data-theme="dark"] .theme-toggle .ic-moon { display: none; }
-[data-theme="dark"] .theme-toggle .ic-sun { display: block; }
-.theme-toggle svg { width: 18px; height: 18px; display: block; }
+/* theme icons: light = moon, dark = sun — rotate + fade animation */
+.theme-toggle .ic-moon { opacity: 1; transform: translate(-50%,-50%) rotate(0deg) scale(1); }
+.theme-toggle .ic-sun  { opacity: 0; transform: translate(-50%,-50%) rotate(-90deg) scale(.3); }
+[data-theme="dark"] .theme-toggle .ic-moon { opacity: 0; transform: translate(-50%,-50%) rotate(90deg) scale(.3); }
+[data-theme="dark"] .theme-toggle .ic-sun  { opacity: 1; transform: translate(-50%,-50%) rotate(0deg) scale(1); }
 
 /* sidebar name + role visible in dark */
 [data-theme="dark"] .sb-name { color: var(--text); }
