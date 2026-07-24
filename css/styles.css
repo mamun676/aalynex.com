@@ -642,7 +642,9 @@ h1 em{
   .logo-icon{width:28px;height:28px;font-size:.82rem;}
   .nav-greeting{display:none !important;}
   .logo-text{display:none !important;}
-.nav-right .btn-primary{display:inline-flex !important;font-size:0 !important;width:32px;height:32px;padding:0;border-radius:50%;flex-shrink:0;}
+.nav-right .btn-primary{display:inline-flex !important;align-items:center;justify-content:center;width:32px;height:32px;padding:0;border-radius:50%;flex-shrink:0;}
+.nav-right .btn-primary .btn-text{display:none;}
+.nav-right .btn-primary .btn-arrow{display:inline;font-size:1.1rem;color:#fff;line-height:1;}
 .nav-right .btn-ghost,.nav-right .btn-light{display:none !important;}
 .theme-toggle{width:30px;height:30px;font-size:.8rem;flex-shrink:0;}
 .hamburger{display:none;}
