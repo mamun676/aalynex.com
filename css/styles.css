@@ -333,8 +333,8 @@ h1 em{
 
 /* HOW IT WORKS */
 .how-section{padding:64px 24px 48px;text-align:center;animation:fadeUp .7s .35s ease both;}
-.section-heading{font-family:'Outfit',sans-serif;font-size:clamp(1.55rem,3.5vw,2.2rem);font-weight:800;letter-spacing:-.5px;margin-bottom:10px;color:var(--text);}
-.section-heading em{font-style:normal;background:linear-gradient(135deg,var(--accent),#F07A45);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.section-heading{font-family:'Outfit',sans-serif;font-size:clamp(1.55rem,3.5vw,2.2rem);font-weight:600;letter-spacing:-.3px;margin-bottom:10px;color:var(--text);}
+.section-heading em{font-style:normal;color:inherit;background:none;-webkit-text-fill-color:currentColor;}
 .section-sub{color:var(--text-3);font-size:.88rem;margin-bottom:36px;}
 .how-cards{display:flex;gap:18px;justify-content:center;flex-wrap:wrap;max-width:1120px;margin:0 auto;position:relative;}
 .how-card{
