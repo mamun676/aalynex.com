@@ -50,26 +50,27 @@ body{
 body::before{
   content:'';position:fixed;inset:0;z-index:-2;
   background:
-    radial-gradient(ellipse 60% 45% at 15% 0%,   var(--accent-glow) 0%, transparent 55%),
-    radial-gradient(ellipse 55% 40% at 85% 100%, rgba(124,58,237,.14) 0%, transparent 55%),
-    radial-gradient(ellipse 45% 55% at 50% 50%,  rgba(29,78,216,.08) 0%, transparent 65%),
+    radial-gradient(ellipse 50% 40% at 10% 5%,   var(--accent-glow) 0%, transparent 52%),
+    radial-gradient(ellipse 45% 40% at 90% 12%,  rgba(124,58,237,.20) 0%, transparent 52%),
+    radial-gradient(ellipse 50% 45% at 82% 92%,  rgba(224,92,42,.16) 0%, transparent 55%),
+    radial-gradient(ellipse 45% 45% at 18% 88%,  rgba(29,78,216,.14) 0%, transparent 55%),
+    radial-gradient(ellipse 42% 42% at 55% 48%,  rgba(22,163,74,.07) 0%, transparent 60%),
     var(--bg);
   pointer-events:none;
-  animation: bgFloat 18s ease-in-out infinite alternate;
+  animation: bgFloat 16s ease-in-out infinite alternate;
 }
 @keyframes bgFloat{
-  0%   { transform: translate3d(0,0,0)   scale(1); }
-  100% { transform: translate3d(0,-2%,0) scale(1.05); }
+  0%   { transform: translate3d(0,0,0)        scale(1); }
+  50%  { transform: translate3d(2%,-1.5%,0)   scale(1.06); }
+  100% { transform: translate3d(-1.5%,1%,0)   scale(1.03); }
 }
 body::after{
   content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;
-  background-image:
-    linear-gradient(var(--glass-border) 1px, transparent 1px),
-    linear-gradient(90deg, var(--glass-border) 1px, transparent 1px);
-  background-size: 44px 44px;
-  -webkit-mask-image: radial-gradient(ellipse 80% 60% at 50% 30%, #000 0%, transparent 75%);
-          mask-image: radial-gradient(ellipse 80% 60% at 50% 30%, #000 0%, transparent 75%);
-  opacity:.5;
+  background-image: radial-gradient(var(--glass-border-strong) 1.3px, transparent 1.3px);
+  background-size: 30px 30px;
+  -webkit-mask-image: radial-gradient(ellipse 90% 70% at 50% 25%, #000 0%, transparent 80%);
+          mask-image: radial-gradient(ellipse 90% 70% at 50% 25%, #000 0%, transparent 80%);
+  opacity:.6;
 }
 
 /* ── SVG ICON SYSTEM ── */
