@@ -149,8 +149,8 @@ nav{
   background:transparent;
   border:1px solid transparent;
   border-radius:999px;
-  position:sticky;top:16px;z-index:200;
-  margin:16px auto 6px;
+  position:sticky;top:4px;z-index:200;
+margin:4px auto 6px;
   width:calc(100% - 48px);max-width:1320px;
   flex-shrink:0;gap:8px;
   box-shadow:none;
@@ -158,7 +158,7 @@ nav{
 }
 nav.scrolled{
   max-width:1240px;
-  top:10px;
+  top:4px;
   background:
     linear-gradient(120deg, var(--accent-glow), rgba(124,58,237,.10)),
     rgba(255,255,255,0.42);
