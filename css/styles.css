@@ -151,13 +151,13 @@ nav{
   border-radius:999px;
   position:sticky;top:16px;z-index:200;
   margin:16px auto 6px;
-  width:calc(100% - 40px);max-width:1200px;
+  width:calc(100% - 48px);max-width:1320px;
   flex-shrink:0;gap:8px;
   box-shadow:none;
   transition:max-width .35s ease, box-shadow .35s ease, top .35s ease, background .35s ease, border-color .35s ease;
 }
 nav.scrolled{
-  max-width:960px;
+max-width:1040px;
   top:10px;
   background:var(--glass);
   backdrop-filter:blur(24px) saturate(180%);-webkit-backdrop-filter:blur(24px) saturate(180%);
