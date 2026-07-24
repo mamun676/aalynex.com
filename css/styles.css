@@ -288,13 +288,14 @@ nav.scrolled{
 h1{
   font-family:'Outfit',sans-serif;
   font-size:clamp(2.2rem,5.5vw,4.4rem);
-  font-weight:800;line-height:1.05;letter-spacing:-2px;
+  font-weight:600;line-height:1.08;letter-spacing:-1px;
   margin-bottom:18px;animation:fadeDown .6s .08s ease both;color:var(--text);
 }
 h1 em{
   font-style:normal;
-  background:linear-gradient(135deg,var(--accent),#F07A45);
-  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  color:inherit;
+  background:none;
+  -webkit-text-fill-color:currentColor;
 }
 .hero-sub{color:var(--text-2);font-size:1rem;max-width:500px;line-height:1.7;margin-bottom:36px;animation:fadeDown .6s .16s ease both;}
 .hero-cta{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;animation:fadeDown .6s .22s ease both;margin-bottom:48px;}
