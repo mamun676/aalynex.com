@@ -175,7 +175,7 @@ nav.scrolled{
   font-family:'Outfit',sans-serif;font-size:1.22rem;font-weight:800;
   letter-spacing:-.5px;display:flex;align-items:center;gap:10px;flex-shrink:0;
 }
-.logo-img{height:40px;width:auto;object-fit:contain;padding:0;background:transparent;border:none;}
+.logo-img{height:34px;width:auto;object-fit:contain;padding:0;background:transparent;border:none;}
 .logo-icon{
   width:32px;height:32px;border-radius:9px;
   background:linear-gradient(135deg,#fff,#f3f3f3);
