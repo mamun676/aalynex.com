@@ -50,11 +50,26 @@ body{
 body::before{
   content:'';position:fixed;inset:0;z-index:-2;
   background:
-    radial-gradient(ellipse 70% 50% at 15% -5%, rgba(224,92,42,.06) 0%,transparent 60%),
-    radial-gradient(ellipse 60% 40% at 85% 105%, rgba(124,58,237,.05) 0%,transparent 60%),
-    radial-gradient(ellipse 40% 60% at 50% 50%, rgba(29,78,216,.03) 0%,transparent 70%),
+    radial-gradient(ellipse 60% 45% at 15% 0%,   var(--accent-glow) 0%, transparent 55%),
+    radial-gradient(ellipse 55% 40% at 85% 100%, rgba(124,58,237,.14) 0%, transparent 55%),
+    radial-gradient(ellipse 45% 55% at 50% 50%,  rgba(29,78,216,.08) 0%, transparent 65%),
     var(--bg);
   pointer-events:none;
+  animation: bgFloat 18s ease-in-out infinite alternate;
+}
+@keyframes bgFloat{
+  0%   { transform: translate3d(0,0,0)   scale(1); }
+  100% { transform: translate3d(0,-2%,0) scale(1.05); }
+}
+body::after{
+  content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;
+  background-image:
+    linear-gradient(var(--glass-border) 1px, transparent 1px),
+    linear-gradient(90deg, var(--glass-border) 1px, transparent 1px);
+  background-size: 44px 44px;
+  -webkit-mask-image: radial-gradient(ellipse 80% 60% at 50% 30%, #000 0%, transparent 75%);
+          mask-image: radial-gradient(ellipse 80% 60% at 50% 30%, #000 0%, transparent 75%);
+  opacity:.5;
 }
 
 /* ── SVG ICON SYSTEM ── */
@@ -225,9 +240,10 @@ nav{
   position:relative;overflow:hidden;
 }
 .hero-glow{
-  position:absolute;width:560px;height:560px;border-radius:50%;
-  background:radial-gradient(circle,rgba(224,92,42,.08) 0%,transparent 70%);
-  top:-100px;left:50%;transform:translateX(-50%);pointer-events:none;
+  position:absolute;width:680px;height:680px;border-radius:50%;
+  background:radial-gradient(circle,var(--accent-glow) 0%,transparent 70%);
+  top:-120px;left:50%;transform:translateX(-50%);pointer-events:none;
+  filter:blur(30px);
 }
 .badge{
   display:inline-flex;align-items:center;gap:6px;padding:5px 14px;
@@ -252,6 +268,15 @@ h1 em{
 .hero-sub{color:var(--text-2);font-size:1rem;max-width:500px;line-height:1.7;margin-bottom:36px;animation:fadeDown .6s .16s ease both;}
 .hero-cta{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;animation:fadeDown .6s .22s ease both;margin-bottom:48px;}
 .hero-btn{padding:13px 28px;font-size:.95rem;border-radius:12px;}
+@media(min-width:900px){
+  .hero{
+    display:grid; grid-template-columns:1.1fr .9fr;
+    align-items:center; text-align:left;
+    max-width:1180px; margin:0 auto; gap:40px;
+  }
+  .hero-sub{ margin-left:0; }
+  .hero-cta, .role-cards{ justify-content:flex-start; }
+}
 
 /* Role Cards */
 .role-cards{display:flex;gap:16px;justify-content:center;flex-wrap:wrap;animation:fadeUp .7s .3s ease both;}
@@ -288,7 +313,7 @@ h1 em{
 .section-heading{font-family:'Outfit',sans-serif;font-size:clamp(1.55rem,3.5vw,2.2rem);font-weight:800;letter-spacing:-.5px;margin-bottom:10px;color:var(--text);}
 .section-heading em{font-style:normal;background:linear-gradient(135deg,var(--accent),#F07A45);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
 .section-sub{color:var(--text-3);font-size:.88rem;margin-bottom:36px;}
-.how-cards{display:flex;gap:18px;justify-content:center;flex-wrap:wrap;max-width:860px;margin:0 auto;position:relative;}
+.how-cards{display:flex;gap:18px;justify-content:center;flex-wrap:wrap;max-width:1120px;margin:0 auto;position:relative;}
 .how-card{
   background:var(--surface);border:1px solid var(--glass-border);
   border-radius:var(--radius-lg);padding:28px 24px 24px;flex:1;min-width:190px;max-width:240px;
@@ -311,7 +336,7 @@ h1 em{
 
 /* WHY AALYNEX */
 .why-section{padding:0 24px 64px;animation:fadeUp .7s .42s ease both;}
-.why-inner{max-width:860px;margin:0 auto;}
+.why-inner{max-width:1120px;margin:0 auto;}
 .why-cards{display:flex;gap:14px;flex-direction:column;}
 .why-card{
   animation:fadeUp .6s ease both;background:var(--surface);border:1px solid var(--glass-border);
