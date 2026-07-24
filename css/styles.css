@@ -268,15 +268,6 @@ h1 em{
 .hero-sub{color:var(--text-2);font-size:1rem;max-width:500px;line-height:1.7;margin-bottom:36px;animation:fadeDown .6s .16s ease both;}
 .hero-cta{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;animation:fadeDown .6s .22s ease both;margin-bottom:48px;}
 .hero-btn{padding:13px 28px;font-size:.95rem;border-radius:12px;}
-@media(min-width:900px){
-  .hero{
-    display:grid; grid-template-columns:1.1fr .9fr;
-    align-items:center; text-align:left;
-    max-width:1180px; margin:0 auto; gap:40px;
-  }
-  .hero-sub{ margin-left:0; }
-  .hero-cta, .role-cards{ justify-content:flex-start; }
-}
 
 /* Role Cards */
 .role-cards{display:flex;gap:16px;justify-content:center;flex-wrap:wrap;animation:fadeUp .7s .3s ease both;}
