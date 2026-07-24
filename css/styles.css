@@ -231,6 +231,8 @@ nav.scrolled{
 .btn-primary:hover{background:linear-gradient(135deg,#CB5224,#E36A35);box-shadow:0 4px 18px rgba(224,92,42,.30);transform:translateY(-1px);}
 .btn-ghost{background:var(--surface);backdrop-filter:var(--blur-sm);border:1px solid var(--glass-border-strong);color:var(--text);box-shadow:var(--shadow-xs);}
 .btn-ghost:hover{border-color:rgba(0,0,0,.18);background:var(--surface2);box-shadow:var(--shadow-sm);}
+.btn-light{background:#ffffff;color:#141414;border:1px solid rgba(0,0,0,0.08);box-shadow:var(--shadow-xs);}
+.btn-light:hover{background:#f1efeb;box-shadow:var(--shadow-sm);transform:translateY(-1px);}
 .btn-green-btn{background:var(--green);color:#fff;font-weight:600;box-shadow:0 2px 8px rgba(22,163,74,.18);}
 .btn-green-btn:hover{background:#15803D;box-shadow:0 4px 14px rgba(22,163,74,.22);}
 .btn-purple{background:var(--accent2);color:#fff;box-shadow:0 2px 8px rgba(124,58,237,.18);}
@@ -299,7 +301,7 @@ h1 em{
 }
 .hero-sub{color:var(--text-2);font-size:1rem;max-width:500px;line-height:1.7;margin-bottom:36px;animation:fadeDown .6s .16s ease both;}
 .hero-cta{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;animation:fadeDown .6s .22s ease both;margin-bottom:48px;}
-.hero-btn{padding:13px 28px;font-size:.95rem;border-radius:12px;}
+.hero-btn{padding:13px 30px;font-size:.95rem;border-radius:999px;}
 
 /* Role Cards */
 .role-cards{display:flex;gap:16px;justify-content:center;flex-wrap:wrap;animation:fadeUp .7s .3s ease both;}
