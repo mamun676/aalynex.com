@@ -157,7 +157,7 @@ nav{
   transition:max-width .35s ease, box-shadow .35s ease, top .35s ease, background .35s ease, border-color .35s ease;
 }
 nav.scrolled{
-max-width:1040px;
+max-width:1240px;
   top:10px;
   background:var(--glass);
   backdrop-filter:blur(24px) saturate(180%);-webkit-backdrop-filter:blur(24px) saturate(180%);
