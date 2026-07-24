@@ -102,7 +102,7 @@ async function doLogin() {
       role: profile.role,
       profession: profile.profession || '',
       platform: profile.platform || '',
-      avatar: profile.name || email.charAt(0).toUpperCase(),
+      avatar: (profile.name || email).charAt(0).toUpperCase(),
       createdAt: new Date(profile.created_at).getTime(),
       skills: profile.skills || [],
       portfolio_links: profile.portfolio_links || {},
