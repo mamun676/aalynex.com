@@ -91,3 +91,14 @@ var Tawk_API = Tawk_API || {}, Tawk_LoadStart = new Date();
     }
   });
 })();
+/* ── TUF-style floating nav: scroll pe compact ── */
+(function initNavScroll(){
+  const onScroll = () => {
+    const y = window.scrollY || document.documentElement.scrollTop;
+    document.querySelectorAll('nav').forEach(n => {
+      n.classList.toggle('scrolled', y > 20);
+    });
+  };
+  window.addEventListener('scroll', onScroll, { passive:true });
+  onScroll();
+})();

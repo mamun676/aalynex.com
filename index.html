@@ -29,12 +29,18 @@
 <div class="toast-wrap" id="toast-wrap"></div>
 
 <div id="screen-landing" class="screen active">
-  <nav>
-    <div class="logo">
-      <img src="aalynex-logo.png" class="logo-img" draggable="false" alt="Logo">
-      <span class="logo-text" draggable="false" id="logoDrag">Aalynex</span>
-    </div>
-    <div class="nav-right">
+<nav>
+  <div class="logo">
+    <img src="aalynex-logo.png" class="logo-img" draggable="false" alt="Logo">
+    <span class="logo-text" draggable="false" id="logoDrag">Aal<span class="logo-accent">y</span>nex</span>
+  </div>
+  <div class="nav-center">
+    <a href="#" class="nav-link" onclick="window.scrollTo({top:0,behavior:'smooth'});return false;">Home</a>
+    <a href="#how-it-works" class="nav-link">How It Works</a>
+    <a href="#why-aalynex" class="nav-link">Why Aalynex</a>
+    <a href="#" class="nav-link" onclick="openTeamModal();return false;">Team</a>
+  </div>
+  <div class="nav-right">
       <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme"><svg class="ic-moon" viewBox="0 0 24 24" fill="currentColor"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg><svg class="ic-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4.5"/><path d="M12 1.5v3M12 19.5v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M1.5 12h3M19.5 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/></svg></button>
   <button class="btn btn-ghost btn-sm" onclick="goAuth('login')">Login</button>
       <button class="btn btn-primary btn-sm" onclick="goAuth('signup')">Get Started</button>
@@ -47,7 +53,7 @@
     <p class="hero-sub">Post Your Video Project, Find Expert Freelance Editors, Chat In Real-Time And Get Polished Content — Delivered Fast.</p>
     <div class="hero-cta">
       <button class="btn btn-primary hero-btn" onclick="goAuth('signup','creator')">I'm a Creator &rarr;</button>
-      <button class="btn btn-ghost hero-btn" style="border-color:rgba(124,58,237,.3);color:var(--freelancer);" onclick="goAuth('signup','freelancer')">I'm a Freelancer &rarr;</button>
+      <button class="btn btn-light hero-btn" onclick="goAuth('signup','freelancer')">I'm a Freelancer &rarr;</button>
     </div>
     <div class="role-cards">
       <div class="role-card cc" onclick="goAuth('signup','creator')">
@@ -67,7 +73,7 @@
     </div>
   </div>
 
-  <section class="how-section">
+  <section class="how-section" id="how-it-works">
     <div class="section-heading">How <em>Aalynex</em> Works</div>
     <p class="section-sub">Three Simple Steps To Get Your Video Edited By A Pro</p>
     <div class="how-cards">
@@ -98,7 +104,7 @@
     </div>
   </section>
 
-  <section class="why-section">
+  <section class="why-section" id="why-aalynex">
     <div class="why-inner">
       <div class="section-heading" style="text-align:center;margin-bottom:8px;">Why <em>Aalynex</em>?</div>
       <p class="section-sub" style="text-align:center;">Built For Creators Who Move Fast And Editors Who Deliver Quality</p>
@@ -187,7 +193,7 @@
   <nav>
     <div class="logo">
       <img src="aalynex-logo.png" class="logo-img" draggable="false" alt="Logo"/>
-      <span class="logo-text" draggable="false">Aalynex</span>
+      <span class="logo-text" draggable="false">Aal<span class="logo-accent">y</span>nex</span>
     </div>
     <div class="nav-right">
       <button class="btn btn-primary btn-sm" onclick="showScreen('screen-landing')">Join Aalynex →</button>
@@ -204,7 +210,7 @@
   <nav>
     <div class="logo">
       <img src="aalynex-logo.png" class="logo-img" draggable="false" alt="Logo">
-      <span class="logo-text" draggable="false" id="logoDrag">Aalynex</span>
+      <span class="logo-text" draggable="false" id="logoDrag">Aal<span class="logo-accent">y</span>nex</span>
     </div>
     <div class="nav-right">
   <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme"><svg class="ic-moon" viewBox="0 0 24 24" fill="currentColor"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg><svg class="ic-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4.5"/><path d="M12 1.5v3M12 19.5v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M1.5 12h3M19.5 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/></svg></button>
@@ -269,7 +275,7 @@
   <nav>
     <div class="logo">
       <img src="aalynex-logo.png" class="logo-img" draggable="false" alt="Logo">
-      <span class="logo-text" draggable="false" id="logoDrag">Aalynex</span>
+      <span class="logo-text" draggable="false" id="logoDrag">Aal<span class="logo-accent">y</span>nex</span>
     </div>
     <div class="nav-right">
   <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme"><svg class="ic-moon" viewBox="0 0 24 24" fill="currentColor"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg><svg class="ic-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4.5"/><path d="M12 1.5v3M12 19.5v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M1.5 12h3M19.5 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/></svg></button>
@@ -349,7 +355,7 @@
   <nav>
     <div class="logo">
       <img src="aalynex-logo.png" class="logo-img" draggable="false" alt="Logo">
-      <span class="logo-text" draggable="false" id="logoDrag">Aalynex</span>
+      <span class="logo-text" draggable="false" id="logoDrag">Aal<span class="logo-accent">y</span>nex</span>
     </div>
     <div class="nav-right">
   <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme"><svg class="ic-moon" viewBox="0 0 24 24" fill="currentColor"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg><svg class="ic-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4.5"/><path d="M12 1.5v3M12 19.5v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M1.5 12h3M19.5 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/></svg></button>
