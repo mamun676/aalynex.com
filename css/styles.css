@@ -159,17 +159,13 @@ margin:4px auto 6px;
 nav.scrolled{
   max-width:1240px;
   top:4px;
-  background:
-    linear-gradient(120deg, var(--accent-glow), rgba(124,58,237,.10)),
-    rgba(255,255,255,0.42);
+  background:rgba(247,246,243,0.72);
   backdrop-filter:blur(22px) saturate(180%);-webkit-backdrop-filter:blur(22px) saturate(180%);
   border-color:var(--glass-border-strong);
   box-shadow:var(--shadow-lg);
 }
 [data-theme="dark"] nav.scrolled{
-  background:
-    linear-gradient(120deg, var(--accent-glow), rgba(124,58,237,.16)),
-    rgba(28,26,24,0.42);
+  background:rgba(25,24,23,0.72);
 }
 .logo{
   font-family:'Outfit',sans-serif;font-size:1.22rem;font-weight:800;
