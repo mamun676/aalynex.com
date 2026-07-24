@@ -621,7 +621,7 @@ h1 em{
 .social-btn{display:flex;align-items:center;gap:8px;padding:8px 16px;border-radius:999px;border:1px solid var(--glass-border-strong);background:var(--surface);font-size:.85rem;color:var(--text-2);text-decoration:none;transition:all .25s ease;box-shadow:var(--shadow-xs);}
 .social-btn svg{width:16px;height:16px;}
 .social-btn:hover{transform:translateY(-3px) scale(1.04);border-color:rgba(224,92,42,.4);color:var(--accent);background:rgba(224,92,42,.06);box-shadow:0 8px 22px rgba(224,92,42,.12), var(--shadow-sm);}
-.follow-section{margin-top:40px;border-top:1px solid var(--glass-border);text-align:center;padding:40px 20px;background:var(--surface);}
+.follow-section{margin-top:40px;border-top:1px solid var(--glass-border);text-align:center;padding:40px 20px;background:transparent;}
 .follow-title{font-family:'Outfit',sans-serif;font-size:1.4rem;font-weight:700;margin-bottom:18px;color:var(--text);}
 .social-links{display:flex;justify-content:center;gap:18px;flex-wrap:wrap;margin-bottom:18px;}
 .social-links a{padding:8px 16px;border-radius:999px;border:1px solid var(--glass-border-strong);background:var(--surface);font-size:.85rem;color:var(--text-2);cursor:pointer;transition:all .2s;text-decoration:none;box-shadow:var(--shadow-xs);}
