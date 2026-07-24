@@ -146,20 +146,22 @@ body::after{
 nav{
   display:flex;align-items:center;justify-content:space-between;
   padding:0 14px 0 18px;height:var(--nav-h);
-  background:var(--glass);
-  backdrop-filter:blur(24px) saturate(180%);-webkit-backdrop-filter:blur(24px) saturate(180%);
-  border:1px solid var(--glass-border-strong);
+  background:transparent;
+  border:1px solid transparent;
   border-radius:999px;
   position:sticky;top:16px;z-index:200;
   margin:16px auto 6px;
   width:calc(100% - 40px);max-width:1200px;
   flex-shrink:0;gap:8px;
-  box-shadow:var(--shadow-md);
-  transition:max-width .35s ease, box-shadow .35s ease, top .35s ease;
+  box-shadow:none;
+  transition:max-width .35s ease, box-shadow .35s ease, top .35s ease, background .35s ease, border-color .35s ease;
 }
 nav.scrolled{
   max-width:960px;
   top:10px;
+  background:var(--glass);
+  backdrop-filter:blur(24px) saturate(180%);-webkit-backdrop-filter:blur(24px) saturate(180%);
+  border-color:var(--glass-border-strong);
   box-shadow:var(--shadow-lg);
 }
 .logo{
@@ -192,6 +194,18 @@ nav.scrolled{
 .hamburger.open span:nth-child(1){transform:rotate(45deg) translate(4px,4px);}
 .hamburger.open span:nth-child(2){opacity:0;transform:scaleX(0);}
 .hamburger.open span:nth-child(3){transform:rotate(-45deg) translate(4px,-4px);}
+.nav-center{
+  display:flex;align-items:center;gap:4px;
+  position:absolute;left:50%;transform:translateX(-50%);
+}
+.nav-link{
+  font-size:.9rem;font-weight:500;color:var(--text-2);
+  text-decoration:none;padding:8px 14px;border-radius:999px;
+  transition:background .2s, color .2s;white-space:nowrap;
+}
+.nav-link:hover{background:var(--bg2);color:var(--text);}
+.how-section,.why-section{scroll-margin-top:90px;}
+@media(max-width:768px){ .nav-center{display:none;} }
 
 /* ── BUTTONS ── */
 .btn{
