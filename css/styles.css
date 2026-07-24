@@ -639,11 +639,13 @@ h1 em{
   .logo{font-size:1.1rem;}
   .logo-icon{width:28px;height:28px;font-size:.82rem;}
   .nav-greeting{display:none !important;}
-  .nav-right .btn-primary{display:inline-flex !important;padding:5px 10px;font-size:.7rem;}
   .nav-right .btn-ghost,.nav-right .btn-light{display:none !important;}
   .theme-toggle{width:30px;height:30px;font-size:.8rem;}
-  .hamburger{display:none;}
-  .nav-center .nav-link{font-size:.62rem;padding:3px 5px;letter-spacing:0;white-space:nowrap;}
+  .logo-text{display:none !important;}
+.nav-right .btn-primary{display:inline-flex !important;font-size:0 !important;width:32px;height:32px;padding:0;border-radius:50%;}
+.hamburger{display:none;}
+.nav-center .nav-link{font-size:.65rem;padding:3px 6px;...}
+.nav-center .nav-link:nth-child(3){display:none;}
   .sidebar{position:fixed;top:0;left:0;bottom:0;transform:translateX(-100%);padding-top:calc(var(--nav-h) + 10px);box-shadow:4px 0 24px rgba(0,0,0,.12);}
   .sidebar.mobile-open{transform:translateX(0);}
   .sidebar-overlay{display:none;}
