@@ -205,7 +205,10 @@ nav.scrolled{
   display:flex;align-items:center;gap:4px;
   position:absolute;left:50%;transform:translateX(-50%);
 }
-.nav-link{
+.nav-link,
+.nav-link:link,
+.nav-link:visited,
+.nav-link:active{
   font-size:.9rem;font-weight:500;color:var(--text-2);
   text-decoration:none;padding:8px 14px;border-radius:999px;
   transition:background .2s, color .2s;white-space:nowrap;
