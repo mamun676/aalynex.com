@@ -1497,3 +1497,22 @@ transition: transform .2s ease, color .2s ease, background .2s ease;
 /* sidebar name + role visible in dark */
 [data-theme="dark"] .sb-name { color: var(--text); }
 [data-theme="dark"] .sb-role { color: var(--text-3); }
+/* ── Creator & Freelancer dashboard nav: edge-aligned (landing page unaffected) ── */
+#screen-creator nav,
+#screen-freelancer nav{
+  width:100%;max-width:100%;
+  margin:0 0 6px;padding:0 20px;
+  border-radius:0;top:0;
+}
+#screen-creator nav.scrolled,
+#screen-freelancer nav.scrolled{
+  max-width:100%;border-radius:0;top:0;
+}
+#screen-creator nav .logo,
+#screen-freelancer nav .logo{margin-right:auto;}
+#screen-creator nav .nav-right,
+#screen-freelancer nav .nav-right{margin-left:auto;}
+@media(max-width:768px){
+  #screen-creator nav,
+  #screen-freelancer nav{padding:0 12px;}
+}
