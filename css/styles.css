@@ -1544,4 +1544,17 @@ transition: transform .2s ease, color .2s ease, background .2s ease;
 #screen-freelancer nav .nav-greeting{font-size:.75rem;padding:4px 10px;}
 #screen-creator nav .theme-toggle,
 #screen-freelancer nav .theme-toggle{width:30px;height:30px;}
-
+/* ── Mobile: restore hamburger + greeting on creator/freelancer dashboards only ── */
+@media(max-width:768px){
+  #screen-creator .hamburger,
+  #screen-freelancer .hamburger{
+    display:flex !important;width:34px;height:34px;padding:8px;
+  }
+  #screen-creator .nav-greeting,
+  #screen-freelancer .nav-greeting{
+    display:inline-block !important;font-size:.7rem;padding:4px 9px;
+    max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  }
+  #screen-creator nav .nav-right,
+  #screen-freelancer nav .nav-right{gap:6px;}
+}
