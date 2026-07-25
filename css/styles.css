@@ -1544,3 +1544,20 @@ transition: transform .2s ease, color .2s ease, background .2s ease;
 #screen-freelancer nav .nav-greeting{font-size:.75rem;padding:4px 10px;}
 #screen-creator nav .theme-toggle,
 #screen-freelancer nav .theme-toggle{width:30px;height:30px;}
+/* ── Dashboard: content must not peek behind nav while scrolling ── */
+#screen-creator,
+#screen-freelancer{background:var(--bg);}
+#screen-creator nav,
+#screen-freelancer nav{
+  position:sticky;top:0;z-index:400;
+  background:var(--bg) !important;
+  backdrop-filter:none !important;-webkit-backdrop-filter:none !important;
+  opacity:1;
+}
+#screen-creator .dash-layout,
+#screen-freelancer .dash-layout{background:var(--bg);}
+#screen-creator .dash-main,
+#screen-freelancer .dash-main{
+  background:var(--bg);
+  padding-top:18px;
+  -webkit-mask-image:linear-
