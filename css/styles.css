@@ -1516,3 +1516,31 @@ transition: transform .2s ease, color .2s ease, background .2s ease;
   #screen-creator nav,
   #screen-freelancer nav{padding:0 12px;}
 }
+/* ── Dashboard nav: slimmer + solid bg on scroll (creator/freelancer only) ── */
+#screen-creator nav,
+#screen-freelancer nav{
+  height:50px;margin:0;top:0;
+  background:var(--bg);
+  border:none;border-bottom:1px solid var(--glass-border);
+  box-shadow:none;
+}
+#screen-creator nav.scrolled,
+#screen-freelancer nav.scrolled{
+  height:50px;top:0;
+  background:var(--bg);
+  backdrop-filter:none;-webkit-backdrop-filter:none;
+  border:none;border-bottom:1px solid var(--glass-border);
+  box-shadow:0 1px 8px rgba(0,0,0,.06);
+}
+[data-theme="dark"] #screen-creator nav,
+[data-theme="dark"] #screen-freelancer nav,
+[data-theme="dark"] #screen-creator nav.scrolled,
+[data-theme="dark"] #screen-freelancer nav.scrolled{background:var(--bg);}
+#screen-creator nav .logo,
+#screen-freelancer nav .logo{font-size:1.05rem;}
+#screen-creator nav .logo-img,
+#screen-freelancer nav .logo-img{height:26px;}
+#screen-creator nav .nav-greeting,
+#screen-freelancer nav .nav-greeting{font-size:.75rem;padding:4px 10px;}
+#screen-creator nav .theme-toggle,
+#screen-freelancer nav .theme-toggle{width:30px;height:30px;}
