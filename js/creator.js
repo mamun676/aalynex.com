@@ -1655,3 +1655,4 @@ async function startPremiumCheckout() {
     if (cb) { cb.disabled = false; cb.textContent = 'Start Free Trial →'; }
   }
 }
+
