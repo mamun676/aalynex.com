@@ -162,7 +162,7 @@ async function openProjectFile(key) {
 function deleteProjectConfirm(pid) {
   const p = DB.projects().find(x => x.id === pid);
   if (!p) return;
-  if (confirm(`"${p.title}" project ko hataana chahte ho? Ye wapas nahi aayega.`)) deleteProject(pid);
+  if (confirm(`"${p.title}" Do you want to remove the project?`)) deleteProject(pid);
 }
 
 async function deleteProject(pid) {
