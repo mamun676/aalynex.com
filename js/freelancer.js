@@ -15,12 +15,17 @@ if (supaClient && CU) {
     // a newer nav click landed while this sync was in flight - drop the repaint
     if (_navStale(_navT) || currentFreelancerPage !== p) return;
     if (p === 'chat') {
-        const el = document.getElementById('chat-msgs-el');
-        if (el && currentChatUserId) {
-          const key = [CU.id, currentChatUserId].sort().join('_');
-          el.innerHTML = renderMsgs(DB.messages()[key] || [], CU.id);
-          el.scrollTop = el.scrollHeight;
-        }
+      const el = document.getElementById('chat-msgs-el');
+if (el && currentChatUserId) {
+  const key = [CU.id, currentChatUserId].sort().join('_');
+  const msgHtml = renderMsgs(DB.messages()[key] || [], CU.id);
+  // only touch the thread when a message actually arrived, otherwise
+  // this rewrite flashed the whole conversation on every sync
+  if (_paintChanged('c:msgs:' + key, msgHtml)) {
+    el.innerHTML = msgHtml;
+    el.scrollTop = el.scrollHeight;
+  }
+}
         updateChatSidebarPreviews();
       } else {
         renderF(p);
@@ -43,12 +48,17 @@ if (supaClient && CU) {
     // a newer nav click landed while this sync was in flight - drop the repaint
     if (_navStale(_navT) || currentFreelancerPage !== p) return;
     if (p === 'chat') {
-        const el = document.getElementById('chat-msgs-el');
-        if (el && currentChatUserId) {
-          const key = [CU.id, currentChatUserId].sort().join('_');
-          el.innerHTML = renderMsgs(DB.messages()[key] || [], CU.id);
-          el.scrollTop = el.scrollHeight;
-        }
+      const el = document.getElementById('chat-msgs-el');
+if (el && currentChatUserId) {
+  const key = [CU.id, currentChatUserId].sort().join('_');
+  const msgHtml = renderMsgs(DB.messages()[key] || [], CU.id);
+  // only touch the thread when a message actually arrived, otherwise
+  // this rewrite flashed the whole conversation on every sync
+  if (_paintChanged('c:msgs:' + key, msgHtml)) {
+    el.innerHTML = msgHtml;
+    el.scrollTop = el.scrollHeight;
+  }
+}
         updateChatSidebarPreviews();
       } else {
         renderF(p);
