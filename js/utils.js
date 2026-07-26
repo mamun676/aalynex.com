@@ -1,4 +1,4 @@
-
+// ═══════════════════════════════════════════════
 //  UTILS — formatters, toasts, modals, screen, icons, email
 // ═══════════════════════════════════════════════
 
@@ -92,6 +92,33 @@ function showScreen(id) {
   else if (id === 'screen-creator')     _pushNav({ view: 'creator',    page: (typeof currentCreatorPage   !== 'undefined' ? currentCreatorPage   : 'home') });
   else if (id === 'screen-freelancer')  _pushNav({ view: 'freelancer',  page: (typeof currentFreelancerPage !== 'undefined' ? currentFreelancerPage : 'home') });
 }
+/* Clicking the Aalynex logo or name anywhere on the site lands on the first
+   (landing) page, scrolled to the top. Every close/reset step is wrapped in
+   try/catch because this also fires from screens where those elements do not
+   exist (for example the shared public-profile page). */
+function goHome(e) {
+  if (e) { if (e.preventDefault) e.preventDefault(); if (e.stopPropagation) e.stopPropagation(); }
+  try { if (typeof closeTeamModal === 'function') closeTeamModal(); } catch (err) {}
+  try { if (typeof closeModal === 'function') closeModal(); } catch (err) {}
+  try { closeSidebar('creator'); } catch (err) {}
+  try { closeSidebar('freelancer'); } catch (err) {}
+  document.body.style.overflow = '';
+  window.isPublicProfileView = false;
+  // a shared link carries ?profile=<id>; drop it so a later refresh does not
+  // bounce back to that profile instead of the landing page
+  try {
+    if (window.location.search) history.replaceState(null, '', window.location.pathname);
+  } catch (err) {}
+  showScreen('screen-landing');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  return false;
+}
+// keyboard parity: the lockups are role="link" tabindex="0", so Enter/Space act like a click
+document.addEventListener('keydown', function (e) {
+  if (e.key !== 'Enter' && e.key !== ' ') return;
+  var el = document.activeElement;
+  if (el && el.classList && el.classList.contains('logo-home')) goHome(e);
+});
 function goAuth(tab, role) {
   showScreen('screen-auth');
   switchTab(tab);
