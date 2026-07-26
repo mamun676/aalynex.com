@@ -578,7 +578,7 @@ async function wfContent() {
 
   if (wfStep === 1) return `
     <h3>Choose Content Type</h3>
-    <div class="ct-list" style="margin-bottom:18px;">${['YouTube Long-form', 'Instagram Reel', 'YouTube Shorts', 'TikTok', 'LinkedIn Video', 'Brand Video', 'Documentary', 'Podcast Edit']
+    <div class="ct-list" style="margin-bottom:18px;">${['YouTube Long-form', 'Instagram Reel', 'YouTube Shorts', 'LinkedIn Video', 'Brand Video', 'Documentary', 'Podcast Edit']
       .map(t => `<div class="ct-pill${t === selContent ? ' active' : ''}" onclick="selCT('${t}')">${t}</div>`).join('')}</div>
     ${selContent ? `<div class="alert alert-s">Selected: <strong>${selContent}</strong></div>` : ''}
     <div style="display:flex;gap:10px;flex-wrap:wrap;">
@@ -1251,7 +1251,7 @@ function cProfile() {
         <div class="fg"><label>Email</label><input value="${u.email}" disabled style="opacity:.5;"/></div>
         <div class="fg"><label>Phone</label><input id="prof-phone" value="${u.phone || ''}"/></div>
         <div class="fg"><label>Primary Platform</label>
-          <select id="prof-platform">${['YouTube', 'Instagram', 'TikTok', 'LinkedIn', 'Multiple'].map(p => `<option ${u.platform === p ? 'selected' : ''}>${p}</option>`).join('')}</select>
+          <select id="prof-platform">${['YouTube', 'Instagram', 'LinkedIn', 'Multiple'].map(p => `<option ${u.platform === p ? 'selected' : ''}>${p}</option>`).join('')}</select>
         </div>
         <button class="btn btn-primary" onclick="saveProfile()">Save Changes</button>
       </div>
@@ -1469,7 +1469,7 @@ function openSendRequestModal(freelancerId, freelancerName) {
     <div class="fg"><label>Project Title</label><input id="dr-title" placeholder="e.g. YouTube Vlog Edit – EP12"/></div>
     <div class="fg"><label>Description</label><textarea id="dr-desc" placeholder="Describe what you need edited…"></textarea></div>
     <div class="fg"><label>Content Type</label>
-      <select id="dr-content">${['YouTube Long-form', 'Instagram Reel', 'YouTube Shorts', 'TikTok', 'LinkedIn Video', 'Brand Video', 'Documentary', 'Podcast Edit'].map(t => `<option>${t}</option>`).join('')}</select>
+      <select id="dr-content">${['YouTube Long-form', 'Instagram Reel', 'YouTube Shorts', 'LinkedIn Video', 'Brand Video', 'Documentary', 'Podcast Edit'].map(t => `<option>${t}</option>`).join('')}</select>
     </div>
     <div class="fg"><label>Budget (₹)</label><input id="dr-budget" type="number" min="1" placeholder="200"/></div>
     <div class="fg"><label>Deadline</label><input id="dr-deadline" type="date" min="${new Date().toISOString().split('T')[0]}"/></div>`;
