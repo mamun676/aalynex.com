@@ -97,11 +97,11 @@ body::after{
 
 /* Role card icons */
 .role-icon-wrap {
-  width:56px;height:56px;border-radius:16px;
-  margin:0 auto 12px;
+  width:64px;height:64px;border-radius:18px;
+  margin:0 auto 14px;
   display:flex;align-items:center;justify-content:center;
 }
-.role-icon-wrap svg {width:28px;height:28px;stroke:currentColor;fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;}
+.role-icon-wrap svg {width:32px;height:32px;stroke:currentColor;fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;}
 
 /* How-card icons */
 .how-card-icon-wrap {
@@ -271,7 +271,7 @@ nav.scrolled{
 /* ── LANDING ── */
 .hero{
   flex:1;display:flex;flex-direction:column;align-items:center;
-  justify-content:center;text-align:center;padding:72px 20px 48px;
+  justify-content:center;text-align:center;padding:72px 20px 0;
   position:relative;overflow:hidden;
 }
 .hero-glow{
@@ -306,13 +306,14 @@ h1 em{
 .hero-btn{padding:13px 30px;font-size:.95rem;border-radius:999px;}
 
 /* Role Cards */
-.role-cards{display:flex;gap:16px;justify-content:center;flex-wrap:wrap;animation:fadeUp .7s .3s ease both;}
+.role-cards{display:flex;gap:18px;justify-content:center;flex-wrap:wrap;animation:fadeUp .7s .3s ease both;}
 .role-card{
   background:var(--surface);
   border:1px solid var(--glass-border);
   border-radius:var(--radius-lg);
-  padding:28px 28px 22px;
-  min-width:190px;
+  padding:34px 34px 28px;
+  min-width:248px;
+  max-width:300px;
   text-align:center;
   cursor:pointer;
   box-shadow:var(--shadow-sm);
@@ -328,15 +329,15 @@ h1 em{
 .role-card:active{
   transform: scale(0.97);
 }
-.role-card h3{font-family:'Outfit',sans-serif;font-size:.95rem;font-weight:600;margin-bottom:5px;color:var(--text);}
-.role-card p{color:var(--text-3);font-size:.79rem;line-height:1.5;}
+.role-card h3{font-family:'Outfit',sans-serif;font-size:1.05rem;font-weight:600;margin-bottom:7px;color:var(--text);}
+.role-card p{color:var(--text-3);font-size:.85rem;line-height:1.55;}
 .role-card.cc .role-icon-wrap{background:rgba(22,163,74,.1);border:1px solid rgba(22,163,74,.2);color:var(--creator);}
 .role-card.fc .role-icon-wrap{background:rgba(124,58,237,.1);border:1px solid rgba(124,58,237,.2);color:var(--freelancer);}
 .role-card.cc:hover{border-color:rgba(22,163,74,.3);transform:translateY(-5px);box-shadow:0 12px 32px rgba(22,163,74,.12), var(--shadow-md);}
 .role-card.fc:hover{border-color:rgba(124,58,237,.3);transform:translateY(-5px);box-shadow:0 12px 32px rgba(124,58,237,.12), var(--shadow-md);}
 
 /* HOW IT WORKS */
-.how-section{padding:64px 24px 48px;text-align:center;animation:fadeUp .7s .35s ease both;}
+.how-section{padding:48px 24px 48px;text-align:center;animation:fadeUp .7s .35s ease both;}
 .section-heading{font-family:'Outfit',sans-serif;font-size:clamp(1.55rem,3.5vw,2.2rem);font-weight:600;letter-spacing:-.3px;margin-bottom:10px;color:var(--text);}
 .section-heading em{font-style:normal;color:inherit;background:none;-webkit-text-fill-color:currentColor;}
 .section-sub{color:var(--text-3);font-size:.88rem;margin-bottom:36px;}
@@ -446,6 +447,8 @@ h1 em{
 }
 .nav-item .ni{font-size:.95rem;width:18px;text-align:center;color:inherit;}
 .nav-badge{margin-left:auto;background:var(--accent);color:#fff;font-size:.65rem;font-weight:700;padding:2px 6px;border-radius:99px;min-width:18px;text-align:center;}
+/* soft "PRO" pill used by the AI feature rows in the sidebar */
+.nav-badge-pro{background:var(--accent-soft);color:var(--accent);letter-spacing:.3px;}
 .sb-logout{display:flex;align-items:center;gap:9px;padding:9px 11px;border-radius:var(--radius-sm);cursor:pointer;color:var(--red);font-size:.85rem;font-weight:500;transition:all .2s;margin-top:auto;border:1px solid rgba(220,38,38,.15);background:linear-gradient(rgba(220,38,38,.04),rgba(220,38,38,.04)),var(--surface);position:sticky;bottom:8px;box-shadow:0 -8px 16px -6px rgba(0,0,0,.10);}
 .sb-logout:hover{background:rgba(220,38,38,.08);border-color:rgba(220,38,38,.25);}
 
@@ -623,12 +626,63 @@ h1 em{
 .social-btn{display:flex;align-items:center;gap:8px;padding:8px 16px;border-radius:999px;border:1px solid var(--glass-border-strong);background:var(--surface);font-size:.85rem;color:var(--text-2);text-decoration:none;transition:all .25s ease;box-shadow:var(--shadow-xs);}
 .social-btn svg{width:16px;height:16px;}
 .social-btn:hover{transform:translateY(-3px) scale(1.04);border-color:rgba(224,92,42,.4);color:var(--accent);background:rgba(224,92,42,.06);box-shadow:0 8px 22px rgba(224,92,42,.12), var(--shadow-sm);}
-.follow-section{margin-top:40px;border-top:1px solid var(--glass-border);text-align:center;padding:40px 20px;background:transparent;}
-.follow-title{font-family:'Outfit',sans-serif;font-size:1.4rem;font-weight:700;margin-bottom:18px;color:var(--text);}
-.social-links{display:flex;justify-content:center;gap:18px;flex-wrap:wrap;margin-bottom:18px;}
-.social-links a{padding:8px 16px;border-radius:999px;border:1px solid var(--glass-border-strong);background:var(--surface);font-size:.85rem;color:var(--text-2);cursor:pointer;transition:all .2s;text-decoration:none;box-shadow:var(--shadow-xs);}
-.social-links a:hover{border-color:rgba(224,92,42,.3);color:var(--accent);background:rgba(224,92,42,.05);box-shadow:var(--shadow-sm);}
-.follow-bottom{font-size:.8rem;color:var(--text-3);}
+/* ============================================================
+   SITE FOOTER  (takeuforward-style: logo | links | socials)
+   Works in both light and dark theme via CSS variables.
+   ============================================================ */
+.site-footer{border-top:1px solid var(--glass-border);background:transparent;padding:26px 24px 20px;}
+.foot-inner{max-width:1180px;margin:0 auto;}
+.foot-top{display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap;}
+
+/* Footer logo reuses the navbar's .logo / .logo-img / .logo-text so that the
+   mark, the wordmark, the accent colour and the dark-theme white-logo swap
+   ([data-theme="dark"] .logo-img) are all identical to the header. */
+.foot-logo{text-decoration:none;flex:0 0 auto;}
+/* the navbar hides .logo-text below 768px - keep it visible in the footer */
+.foot-logo .logo-text{display:inline-block !important;}
+
+.foot-links{display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;flex:1 1 auto;}
+.foot-link{font-size:.82rem;color:var(--text-2);text-decoration:none;transition:color .2s ease;}
+.foot-link:hover{color:var(--accent);}
+.foot-sep{color:var(--text-4);font-size:.8rem;user-select:none;}
+
+.foot-socials{display:flex;align-items:center;gap:9px;flex:0 0 auto;}
+.foot-soc{width:25px;height:25px;border-radius:7px;display:flex;align-items:center;justify-content:center;color:#fff;text-decoration:none;flex-shrink:0;box-shadow:0 1px 2px rgba(0,0,0,.12);transition:transform .2s ease,box-shadow .2s ease;}
+.foot-soc svg{width:14px;height:14px;display:block;}
+.foot-soc:hover{transform:translateY(-2px);box-shadow:0 5px 13px rgba(0,0,0,.2);}
+
+/* official brand colours + per-mark optical sizing */
+.foot-soc-ig{background:radial-gradient(circle at 30% 107%,#fdf497 0%,#fdf497 5%,#fd5949 45%,#d6249f 60%,#285aeb 90%);}
+.foot-soc-ig svg{width:15px;height:15px;}
+.foot-soc-x{background:#000;border-radius:50%;}
+.foot-soc-x svg{width:11px;height:11px;}
+.foot-soc-fb{background:#1877f2;border-radius:50%;}
+.foot-soc-fb svg{width:15px;height:15px;}
+.foot-soc-yt{background:#ff0000;}
+.foot-soc-yt svg{width:16px;height:16px;margin-left:1px;}
+
+/* on the dark background a pure-black X badge would disappear */
+[data-theme="dark"] .foot-soc-x{border:1px solid rgba(255,255,255,.25);}
+
+.foot-divider{height:1px;background:var(--glass-border);margin:20px 0 14px;}
+.foot-copy{text-align:center;font-size:.76rem;color:var(--text-3);}
+
+
+@media(max-width:860px){
+  .foot-top{flex-direction:column;gap:16px;text-align:center;}
+  .foot-links{order:2;}
+  .foot-socials{order:3;}
+}
+@media(max-width:520px){
+  .site-footer{padding:22px 16px 18px;}
+  .foot-sep{display:none;}
+  .foot-links{gap:10px 18px;}
+  .foot-link{font-size:.8rem;}
+  .foot-copy{font-size:.72rem;}
+}
+@media(prefers-reduced-motion:reduce){
+  .foot-soc,.foot-soc:hover{transition:none;transform:none;}
+}
 
 /* ── BOTTOM NAV ICON SIZING ── */
 .bn-icon-svg {display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;}
@@ -648,9 +702,17 @@ h1 em{
 .nav-right .btn-ghost,.nav-right .btn-light{display:none !important;}
 .theme-toggle{width:30px;height:30px;font-size:.8rem;flex-shrink:0;}
 .hamburger{display:none;}
-.nav-center{flex-shrink:1;overflow:hidden;gap:4px;}
-.nav-center .nav-link{font-size:.65rem;padding:4px 9px;letter-spacing:0;white-space:nowrap;background:var(--surface);border-radius:7px;border:1px solid var(--glass-border);color:var(--text);}
-.nav-center .nav-link:nth-child(3){display:none;}
+/* landing navbar on mobile: flatten the three wrappers with display:contents so
+   the logo, the links, the theme toggle and the CTA become direct flex children
+   of <nav> and sit on ONE evenly-spaced rhythm instead of three clumps */
+#screen-landing nav{display:flex;align-items:center;justify-content:space-between;gap:0;padding:0 12px;}
+#screen-landing .nav-center,
+#screen-landing .nav-right{display:contents;}
+#screen-landing .logo{flex:0 0 auto;margin:0;}
+#screen-landing .nav-center .nav-link{flex:0 0 auto;display:flex;align-items:center;justify-content:center;text-align:center;font-size:.68rem;padding:5px 8px;letter-spacing:0;white-space:nowrap;background:var(--surface);border-radius:7px;border:1px solid var(--glass-border);color:var(--text);}
+/* these two are too long for a phone - reachable from the footer instead */
+#screen-landing .nav-center .nav-link[href="#why-aalynex"],
+#screen-landing .nav-center .nav-link[href="#faq"]{display:none;}
   .sidebar{position:fixed;top:0;left:0;bottom:0;transform:translateX(-100%);padding-top:calc(var(--nav-h) + 10px);box-shadow:4px 0 24px rgba(0,0,0,.12);}
   .sidebar.mobile-open{transform:translateX(0);}
   .sidebar-overlay{display:none;}
@@ -728,7 +790,7 @@ h1 em{
   .toast{min-width:unset;}
   .wf-body{padding:18px 14px;}
   .msg-video-player{max-width:200px;}
-  .how-section{padding:44px 16px 32px;}
+  .how-section{padding:32px 16px 32px;}
   .why-section{padding:0 16px 44px;}
   .how-cards{gap:12px;}
   .how-card{min-width:140px;max-width:100%;padding:20px 16px 18px;}
@@ -755,18 +817,18 @@ h1 em{
   border-color: rgba(224,92,42,.35) !important;
 }
 
-/* Overlay — full viewport, proper stacking */
 #team-modal-overlay {
   display: none;
   position: fixed;
   inset: 0;
-  z-index: 500;
-  background: rgba(0, 0, 0, 0.55);
-  backdrop-filter: blur(10px) saturate(140%);
-  -webkit-backdrop-filter: blur(10px) saturate(140%);
+  z-index: 9999;
+  background: rgba(0, 0, 0, 0.15);
+  backdrop-filter: blur(18px) saturate(140%);
+  -webkit-backdrop-filter: blur(18px) saturate(140%);
   align-items: center;
   justify-content: center;
   padding: 20px;
+  overflow-y: auto;
 }
 #team-modal-overlay.team-open {
   display: flex;
@@ -774,6 +836,10 @@ h1 em{
 
 /* Modal box */
 #team-modal-box {
+  /* explicit vertical stack: header on top, cards underneath, always */
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
   background: var(--surface);
   border: 1px solid var(--glass-border-strong);
   border-radius: var(--radius-lg);
@@ -814,10 +880,20 @@ h1 em{
 
 /* Header */
 #team-modal-header {
+  /* full-width centred band; the resets below make the header immune to any
+     inherited multi-column / float / flex layout coming from other CSS layers */
+  display: block;
+  width: 100%;
+  max-width: none;
+  flex: 0 0 auto;
+  float: none;
+  columns: auto;
+  column-count: auto;
   text-align: center;
-  margin-bottom: 28px;
+  margin: 0 0 28px;
 }
 #team-modal-title {
+  margin: 0 0 6px;
   font-family: 'Outfit', sans-serif;
   font-size: 1.6rem;
   font-weight: 800;
@@ -826,6 +902,7 @@ h1 em{
   margin-bottom: 6px;
 }
 #team-modal-sub {
+  margin: 0 0 14px;
   font-size: .9rem;
   color: var(--text-3);
   margin-bottom: 14px;
@@ -841,8 +918,26 @@ h1 em{
 /* Cards grid */
 #team-modal-cards {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  /* auto-fit + minmax = cards reflow on their own at every width, so the grid
+     can never end up with a half-empty or overflowing row */
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
   gap: 18px;
+  align-items: stretch;
+  justify-content: center;
+  width: 100%;
+  max-width: none;
+  flex: 0 0 auto;
+  float: none;
+  columns: auto;
+  column-count: auto;
+}
+
+#team-modal-loading {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--text-3);
+  font-size: .85rem;
 }
 
 /* Individual card */
@@ -854,6 +949,11 @@ h1 em{
   text-align: center;
   transition: transform .25s ease, box-shadow .25s ease, border-color .25s ease;
   box-shadow: var(--shadow-xs);
+  /* column layout so every card is the same height and the social row always
+     sits flush at the bottom, however long the bio is */
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
 }
 .team-card:hover {
   transform: translateY(-6px);
@@ -892,6 +992,7 @@ h1 em{
   color: var(--text-3);
   line-height: 1.6;
   margin-bottom: 16px;
+  flex: 1 1 auto;   /* absorbs the height difference between short and long bios */
 }
 .team-card-links {
   display: flex;
@@ -919,10 +1020,7 @@ h1 em{
 
 /* ── TABLET: 2 columns ── */
 @media (max-width: 860px) {
-  #team-modal-cards {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 14px;
-  }
+  #team-modal-cards { gap: 14px; }
 }
 
 /* ── MOBILE: Bottom Sheet ── */
@@ -966,12 +1064,7 @@ h1 em{
   user-select: none;
 }
 
-#team-modal-overlay {
-  backdrop-filter: blur(18px) !important;
-  -webkit-backdrop-filter: blur(18px) !important;
-  background: rgba(0, 0, 0, 0.15);
-  z-index: 9999;
-}/* ═══════════════════════════════════════════════════════════════
+/* ═══════════════════════════════════════════════════════════════
    AALYNEX — PREMIUM CHAT UI LAYER
    Paste this entire block at the very END of your <style> tag,
    right before . Nothing else needs to change.
@@ -1484,11 +1577,11 @@ transition: transform .2s ease, color .2s ease, background .2s ease;
 [data-theme="dark"] .nav-item { color: var(--text-2); }
 [data-theme="dark"] .nav-item:hover { background: var(--bg2); color: var(--text); }
 [data-theme="dark"] .sb-section { color: var(--text-3); }
-/* LIGHT theme = moon dikhe | DARK theme = sun dikhe */
-.theme-toggle .ic-moon  { display: none; }
-.theme-toggle .ic-sun { display: block; animation: iconSwap .4s ease; }
-[data-theme="dark"] .theme-toggle .ic-sun { display: none; }
-[data-theme="dark"] .theme-toggle .ic-moon  { display: block; animation: iconSwap .4s ease; }
+/* LIGHT theme = moon dikhe (click -> dark) | DARK theme = sun dikhe (click -> light) */
+.theme-toggle .ic-sun  { display: none; }
+.theme-toggle .ic-moon { display: block; animation: iconSwap .4s ease; }
+[data-theme="dark"] .theme-toggle .ic-moon { display: none; }
+[data-theme="dark"] .theme-toggle .ic-sun  { display: block; animation: iconSwap .4s ease; }
 @keyframes iconSwap {
   from { opacity: 0; transform: rotate(-120deg) scale(.35); }
   to   { opacity: 1; transform: rotate(0deg) scale(1); }
@@ -1558,3 +1651,142 @@ transition: transform .2s ease, color .2s ease, background .2s ease;
   #screen-creator nav .nav-right,
   #screen-freelancer nav .nav-right{gap:6px;}
 }
+/* ============================================================
+   FAQ SECTION  (takeuforward-style: category rail + accordion)
+   Works in both light and dark theme via CSS variables.
+   ============================================================ */
+.faq-section{padding:48px 24px 0;scroll-margin-top:90px;animation:fadeUp .7s .48s ease both;}
+.faq-inner{max-width:1120px;margin:0 auto;}
+
+.faq-layout{
+  display:grid;
+  grid-template-columns:236px minmax(0,1fr);
+  gap:26px;
+  align-items:start;
+  margin-top:8px;
+}
+
+/* ---- left category rail ---- */
+.faq-cats{
+  display:flex;flex-direction:column;gap:8px;
+  position:sticky;top:88px;
+}
+.faq-cat{
+  font-family:'DM Sans',system-ui,sans-serif;
+  text-align:left;
+  font-size:.82rem;font-weight:500;line-height:1.35;
+  color:var(--text-2);
+  background:var(--glass);
+  border:1px solid var(--glass-border);
+  border-radius:999px;
+  padding:10px 16px;
+  cursor:pointer;
+  transition:background .22s,color .22s,border-color .22s,transform .22s,box-shadow .22s;
+  -webkit-backdrop-filter:var(--blur-sm);backdrop-filter:var(--blur-sm);
+}
+.faq-cat:hover{color:var(--text);border-color:var(--glass-border-strong);transform:translateX(3px);}
+.faq-cat.active{
+  background:var(--surface);
+  color:var(--text);
+  font-weight:600;
+  border-color:var(--glass-border-strong);
+  box-shadow:var(--shadow-sm);
+}
+
+/* ---- right accordion ---- */
+.faq-list{
+  background:var(--surface);
+  border:1px solid var(--glass-border);
+  border-radius:var(--radius-lg);
+  box-shadow:var(--shadow-sm);
+  overflow:hidden;
+}
+.faq-item{border-bottom:1px solid var(--glass-border);}
+.faq-item:last-child{border-bottom:none;}
+.faq-q{
+  width:100%;
+  display:flex;align-items:center;gap:16px;justify-content:space-between;
+  background:transparent;border:none;
+  padding:19px 22px;
+  cursor:pointer;text-align:left;
+  font-family:'DM Sans',system-ui,sans-serif;
+  font-size:.88rem;font-weight:500;line-height:1.45;
+  color:var(--text);
+  transition:background .2s,color .2s;
+}
+.faq-q:hover{background:var(--surface2);}
+.faq-q-text{flex:1;min-width:0;}
+.faq-chev{
+  width:17px;height:17px;flex:0 0 auto;
+  color:var(--text-3);
+  transition:transform .3s cubic-bezier(.4,0,.2,1),color .25s;
+}
+.faq-item.open > .faq-q{color:var(--accent);font-weight:600;}
+.faq-item.open > .faq-q .faq-chev{transform:rotate(180deg);color:var(--accent);}
+
+.faq-a{
+  max-height:0;overflow:hidden;
+  transition:max-height .34s cubic-bezier(.4,0,.2,1);
+}
+.faq-a-in{
+  padding:0 52px 20px 22px;
+  color:var(--text-2);
+  font-size:.83rem;line-height:1.68;
+}
+
+.faq-foot{
+  margin-top:26px;text-align:center;
+  font-size:.83rem;color:var(--text-3);
+}
+.faq-foot-link{
+  color:var(--accent);font-weight:600;text-decoration:none;margin-left:6px;
+}
+.faq-foot-link:hover{text-decoration:underline;}
+
+/* ---- dark theme touch-ups ---- */
+[data-theme="dark"] .faq-cat{background:var(--glass);}
+[data-theme="dark"] .faq-cat.active{background:var(--surface2);}
+[data-theme="dark"] .faq-q:hover{background:rgba(255,255,255,.035);}
+[data-theme="dark"] .faq-list{background:var(--surface);}
+
+/* ---- responsive: rail becomes a horizontal chip row ---- */
+@media(max-width:900px){
+  .faq-layout{grid-template-columns:1fr;gap:18px;}
+  .faq-cats{
+    position:static;
+    flex-direction:row;flex-wrap:nowrap;
+    overflow-x:auto;overflow-y:hidden;
+    gap:8px;padding-bottom:6px;
+    scrollbar-width:none;-ms-overflow-style:none;
+  }
+  .faq-cats::-webkit-scrollbar{display:none;}
+  .faq-cat{white-space:nowrap;flex:0 0 auto;font-size:.78rem;padding:9px 15px;}
+  .faq-cat:hover{transform:none;}
+}
+@media(max-width:640px){
+  .faq-section{padding:32px 16px 0;}
+  .faq-q{padding:16px 16px;font-size:.845rem;gap:12px;}
+  .faq-a-in{padding:0 40px 17px 16px;font-size:.8rem;}
+}
+@media(prefers-reduced-motion:reduce){
+  .faq-a{transition:none;}
+  .faq-chev{transition:none;}
+}
+/* TUF-style "Welcome to Aalynex" band - reuses .logo so the mark, the wordmark,
+   the orange accent and the dark-theme white-logo swap all match the navbar */
+#team-modal-welcome {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 4px 10px;
+  margin-bottom: 20px;
+}
+#team-welcome-kicker {
+  font-size: .95rem;
+  color: var(--text-2);
+}
+#team-modal-welcome .logo { font-size: 1.5rem; gap: 8px; }
+#team-modal-welcome .logo-img { height: 30px; }
+/* the navbar hides .logo-text under 768px - keep it visible here */
+#team-modal-welcome .logo-text { display: inline-block !important; font-weight: 600; }

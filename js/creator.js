@@ -146,8 +146,8 @@ function cProjectDetail(pid) {
 
 <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:8px;">
   <button class="btn btn-ghost" onclick="cPage('projects', document.querySelector('[data-page=projects]'))">← Back</button>
-  <button class="btn btn-primary" onclick="cProjectEdit('${p.id}')">✏️ Edit Project</button>
-  <button class="btn" style="background:#e5484d;color:#fff;margin-left:auto;" onclick="deleteProjectConfirm('${p.id}')">🗑 Remove Project</button>
+  <button class="btn btn-primary" onclick="cProjectEdit('${p.id}')"> Edit Project</button>
+  <button class="btn" style="background:#e5484d;color:#fff;margin-left:auto;" onclick="deleteProjectConfirm('${p.id}')"> Remove Project</button>
 </div>`;
 }
 
@@ -162,7 +162,7 @@ async function openProjectFile(key) {
 function deleteProjectConfirm(pid) {
   const p = DB.projects().find(x => x.id === pid);
   if (!p) return;
-  if (confirm(`"${p.title}" project ko hataana chahte ho? Ye wapas nahi aayega.`)) deleteProject(pid);
+  if (confirm(`"${p.title}" Do you want to remove the project?`)) deleteProject(pid);
 }
 
 async function deleteProject(pid) {

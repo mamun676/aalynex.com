@@ -102,3 +102,103 @@ var Tawk_API = Tawk_API || {}, Tawk_LoadStart = new Date();
   window.addEventListener('scroll', onScroll, { passive:true });
   onScroll();
 })();
+/* ============================================================
+   FAQ accordion + category filter  (landing page)
+   ============================================================ */
+(function () {
+  function initFAQ() {
+    var rail = document.getElementById('faq-cats');
+    var list = document.getElementById('faq-list');
+    if (!rail || !list) return;
+
+    function closeItem(it) {
+      it.classList.remove('open');
+      var a = it.querySelector('.faq-a');
+      if (a) a.style.maxHeight = '';
+      var q = it.querySelector('.faq-q');
+      if (q) q.setAttribute('aria-expanded', 'false');
+    }
+
+    function openItem(it) {
+      it.classList.add('open');
+      var a = it.querySelector('.faq-a');
+      if (a) a.style.maxHeight = a.scrollHeight + 'px';
+      var q = it.querySelector('.faq-q');
+      if (q) q.setAttribute('aria-expanded', 'true');
+    }
+
+    function showCat(cat) {
+      var btns = rail.querySelectorAll('.faq-cat');
+      for (var i = 0; i < btns.length; i++) {
+        var on = btns[i].getAttribute('data-cat') === cat;
+        btns[i].classList.toggle('active', on);
+        btns[i].setAttribute('aria-selected', on ? 'true' : 'false');
+      }
+      var items = list.querySelectorAll('.faq-item');
+      for (var j = 0; j < items.length; j++) {
+        var vis = items[j].getAttribute('data-cat') === cat;
+        items[j].style.display = vis ? '' : 'none';
+        if (!vis) closeItem(items[j]);
+      }
+    }
+
+    rail.addEventListener('click', function (e) {
+      var b = e.target.closest ? e.target.closest('.faq-cat') : null;
+      if (!b) return;
+      showCat(b.getAttribute('data-cat'));
+      list.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    });
+
+    list.addEventListener('click', function (e) {
+      var q = e.target.closest ? e.target.closest('.faq-q') : null;
+      if (!q) return;
+      var it = q.parentElement;
+      var willOpen = !it.classList.contains('open');
+      var opened = list.querySelectorAll('.faq-item.open');
+      for (var i = 0; i < opened.length; i++) closeItem(opened[i]);
+      if (willOpen) openItem(it);
+    });
+
+    // keep the open panel correctly sized on resize
+    var t = null;
+    window.addEventListener('resize', function () {
+      clearTimeout(t);
+      t = setTimeout(function () {
+        var it = list.querySelector('.faq-item.open');
+        if (!it) return;
+        var a = it.querySelector('.faq-a');
+        if (a) { a.style.maxHeight = 'none'; a.style.maxHeight = a.scrollHeight + 'px'; }
+      }, 140);
+    });
+
+    // "Talk to our support team" -> open the Tawk widget if it is loaded
+    var sup = document.getElementById('faq-support-link');
+    if (sup) {
+      sup.addEventListener('click', function (e) {
+        e.preventDefault();
+        if (window.Tawk_API && typeof window.Tawk_API.maximize === 'function') {
+          window.Tawk_API.maximize();
+        }
+      });
+    }
+
+    var first = rail.querySelector('.faq-cat');
+    if (first) showCat(first.getAttribute('data-cat'));
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initFAQ);
+  } else {
+    initFAQ();
+  }
+})();
+/* ============================================================
+   Support chat helper (used by the footer "Contact Us" link)
+   ============================================================ */
+function openSupportChat() {
+  if (window.Tawk_API && typeof window.Tawk_API.maximize === 'function') {
+    window.Tawk_API.maximize();
+    return;
+  }
+  window.location.href = 'mailto:support@aalynex.com';
+}
