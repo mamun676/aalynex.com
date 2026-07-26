@@ -60,6 +60,19 @@ function closeModal() { document.getElementById('modal-bg').classList.remove('sh
    Each click now takes a ticket; a callback only repaints if its ticket is still
    the newest one. */
 window._navSeq = 0;
+/* ── PAINT SIGNATURE ──
+   Remembers the markup string each page produced last time it was painted.
+   Do NOT compare against element.innerHTML instead: the browser re-serializes
+   the DOM (attribute quoting/order, entity encoding, self-closing tags), so
+   reading it back never equals the string we generated, and a "has it changed?"
+   check written that way always reports "changed" and repaints for nothing.
+   Same generator + unchanged data = byte-identical string, so this compares. */
+window._paintSig = {};
+function _paintChanged(key, html) {
+  if (window._paintSig[key] === html) return false;
+  window._paintSig[key] = html;
+  return true;
+}
 function _navTicket() { return ++window._navSeq; }
 function _navStale(t) { return t !== window._navSeq; }
 /* ── SCREEN + SIDEBAR ── */
