@@ -8,10 +8,13 @@ function fPage(p, el) {
   currentFreelancerPage = p;
   _pushNav({ view: 'freelancer', page: p });
 
-  renderF(p);
-  if (supaClient && CU) {
-    syncFromSupabase(CU).then(() => {
-      if (p === 'chat') {
+const _navT = _navTicket();
+renderF(p);
+if (supaClient && CU) {
+  syncFromSupabase(CU).then(() => {
+    // a newer nav click landed while this sync was in flight - drop the repaint
+    if (_navStale(_navT) || currentFreelancerPage !== p) return;
+    if (p === 'chat') {
         const el = document.getElementById('chat-msgs-el');
         if (el && currentChatUserId) {
           const key = [CU.id, currentChatUserId].sort().join('_');
@@ -33,10 +36,13 @@ function fPageMobile(p, el) {
   currentFreelancerPage = p;
   _pushNav({ view: 'freelancer', page: p });
 
-  renderF(p);
-  if (supaClient && CU) {
-    syncFromSupabase(CU).then(() => {
-      if (p === 'chat') {
+const _navT = _navTicket();
+renderF(p);
+if (supaClient && CU) {
+  syncFromSupabase(CU).then(() => {
+    // a newer nav click landed while this sync was in flight - drop the repaint
+    if (_navStale(_navT) || currentFreelancerPage !== p) return;
+    if (p === 'chat') {
         const el = document.getElementById('chat-msgs-el');
         if (el && currentChatUserId) {
           const key = [CU.id, currentChatUserId].sort().join('_');
