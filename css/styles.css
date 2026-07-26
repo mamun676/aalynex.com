@@ -768,24 +768,24 @@ height:100%;min-height:0;
 .foot-link:hover{color:var(--accent);}
 .foot-sep{color:var(--text-4);font-size:.8rem;user-select:none;}
 
-.foot-socials{display:flex;align-items:center;gap:11px;flex:0 0 auto;}
-.foot-soc{width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;color:#fff;text-decoration:none;flex-shrink:0;box-shadow:0 1px 3px rgba(0,0,0,.14);transition:transform .2s ease,box-shadow .2s ease;}
-.foot-soc svg{width:19px;height:19px;display:block;}
+.foot-socials{display:flex;align-items:center;gap:9px;flex:0 0 auto;}
+.foot-soc{width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#fff;text-decoration:none;flex-shrink:0;box-shadow:0 1px 3px rgba(0,0,0,.14);transition:transform .2s ease,box-shadow .2s ease;}
+.foot-soc svg{width:17px;height:17px;display:block;}
 .foot-soc:hover{transform:translateY(-2px);box-shadow:0 6px 15px rgba(0,0,0,.22);}
 
 /* official brand colours + per-mark optical sizing */
-.foot-soc-ig{background:radial-gradient(circle at 30% 107%,#fdf497 0%,#fdf497 5%,#fd5949 45%,#d6249f 60%,#285aeb 90%);border-radius:10px;}
-.foot-soc-ig svg{width:20px;height:20px;}
+.foot-soc-ig{background:radial-gradient(circle at 30% 107%,#fdf497 0%,#fdf497 5%,#fd5949 45%,#d6249f 60%,#285aeb 90%);border-radius:9px;}
+.foot-soc-ig svg{width:18px;height:18px;}
 /* X and Facebook are circular marks */
 .foot-soc-x{background:#000;border-radius:50%;}
-.foot-soc-x svg{width:15px;height:15px;}
+.foot-soc-x svg{width:13px;height:13px;}
 .foot-soc-fb{background:#1877f2;border-radius:50%;}
-.foot-soc-fb svg{width:20px;height:20px;}
+.foot-soc-fb svg{width:18px;height:18px;}
 /* YouTube's mark is a wide rounded tile, not a square */
-.foot-soc-yt{background:#ff0000;width:42px;height:30px;border-radius:9px;}
-.foot-soc-yt svg{width:21px;height:21px;margin-left:1px;}
-.foot-soc-li{background:#0a66c2;border-radius:8px;}
-.foot-soc-li svg{width:19px;height:19px;}
+.foot-soc-yt{background:#ff0000;width:37px;height:27px;border-radius:8px;}
+.foot-soc-yt svg{width:19px;height:19px;margin-left:1px;}
+.foot-soc-li{background:#0a66c2;border-radius:7px;}
+.foot-soc-li svg{width:17px;height:17px;}
 
 /* on the dark background a pure-black X badge would disappear */
 [data-theme="dark"] .foot-soc-x{border:1px solid rgba(255,255,255,.25);}
@@ -802,19 +802,19 @@ height:100%;min-height:0;
 @media(max-width:520px){
   .site-footer{padding:22px 16px 18px;}
   /* slightly smaller tiles so five badges never crowd a narrow phone */
-  .foot-socials{gap:10px;}
-  .foot-soc{width:30px;height:30px;border-radius:8px;}
-  /* the line above resets every tile, so the round marks must be restated */
-  .foot-soc-x,
-  .foot-soc-fb{border-radius:50%;}
-  .foot-soc-ig{border-radius:9px;}
-  .foot-soc svg{width:17px;height:17px;}
-  .foot-soc-ig svg{width:18px;height:18px;}
-  .foot-soc-fb svg{width:18px;height:18px;}
-  .foot-soc-x svg{width:13px;height:13px;}
-  .foot-soc-yt{width:37px;height:27px;}
-  .foot-soc-yt svg{width:19px;height:19px;}
-  .foot-soc-li svg{width:17px;height:17px;}
+.foot-socials{gap:8px;}
+.foot-soc{width:27px;height:27px;border-radius:7px;}
+/* the line above resets every tile, so the round marks must be restated */
+.foot-soc-x,
+.foot-soc-fb{border-radius:50%;}
+.foot-soc-ig{border-radius:8px;}
+.foot-soc svg{width:15px;height:15px;}
+.foot-soc-ig svg{width:16px;height:16px;}
+.foot-soc-fb svg{width:16px;height:16px;}
+.foot-soc-x svg{width:12px;height:12px;}
+.foot-soc-yt{width:33px;height:24px;}
+.foot-soc-yt svg{width:17px;height:17px;}
+.foot-soc-li svg{width:15px;height:15px;}
   .foot-sep{display:none;}
   .foot-links{gap:10px 18px;}
   .foot-link{font-size:.8rem;}
@@ -1145,7 +1145,7 @@ height:100%;min-height:0;
   gap: 10px;
 }
 .team-card-link {
-  width: 32px; height: 32px;
+  width: 29px; height: 29px;
   border-radius: 50%;
   border: 1px solid var(--glass-border-strong);
   background: var(--surface);
@@ -1170,10 +1170,10 @@ height:100%;min-height:0;
 .team-card-link.team-soc-li,
 .team-card-link.team-soc-ig{color:#fff;border-color:transparent;}
 /* rounded-square tiles, identical treatment to the footer badges */
-.team-card-link.team-soc-li{background:#0a66c2;border-radius:9px;}
-.team-card-link.team-soc-li svg{width:19px;height:19px;}
-.team-card-link.team-soc-ig{background:radial-gradient(circle at 30% 107%,#fdf497 0%,#fdf497 5%,#fd5949 45%,#d6249f 60%,#285aeb 90%);border-radius:10px;}
-.team-card-link.team-soc-ig svg{width:20px;height:20px;}
+.team-card-link.team-soc-li{background:#0a66c2;border-radius:8px;}
+.team-card-link.team-soc-li svg{width:17px;height:17px;}
+.team-card-link.team-soc-ig{background:radial-gradient(circle at 30% 107%,#fdf497 0%,#fdf497 5%,#fd5949 45%,#d6249f 60%,#285aeb 90%);border-radius:9px;}
+.team-card-link.team-soc-ig svg{width:18px;height:18px;}
 .team-card-link.team-soc-li:hover,
 .team-card-link.team-soc-ig:hover{color:#fff;border-color:transparent;transform:translateY(-2px) scale(1.06);box-shadow:0 6px 15px rgba(0,0,0,.22);}
 .team-card-link.team-soc-li:hover{background:#0a66c2;}
