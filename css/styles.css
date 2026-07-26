@@ -700,9 +700,11 @@ h1 em{
 .nav-right .btn-ghost,.nav-right .btn-light{display:none !important;}
 .theme-toggle{width:30px;height:30px;font-size:.8rem;flex-shrink:0;}
 .hamburger{display:none;}
-.nav-center{flex-shrink:1;overflow:hidden;gap:4px;}
-.nav-center .nav-link{font-size:.65rem;padding:4px 9px;letter-spacing:0;white-space:nowrap;background:var(--surface);border-radius:7px;border:1px solid var(--glass-border);color:var(--text);}
-.nav-center .nav-link:nth-child(3){display:none;}
+/* landing navbar on mobile: drop the two long links and space the rest evenly */
+#screen-landing .nav-center{flex:1 1 auto;min-width:0;margin:0 8px;display:flex;align-items:center;justify-content:space-between;gap:6px;overflow:hidden;}
+#screen-landing .nav-center .nav-link{flex:1 1 0;min-width:0;display:flex;align-items:center;justify-content:center;text-align:center;font-size:.68rem;padding:5px 4px;letter-spacing:0;white-space:nowrap;background:var(--surface);border-radius:7px;border:1px solid var(--glass-border);color:var(--text);}
+#screen-landing .nav-center .nav-link[href="#why-aalynex"],
+#screen-landing .nav-center .nav-link[href="#faq"]{display:none;}
   .sidebar{position:fixed;top:0;left:0;bottom:0;transform:translateX(-100%);padding-top:calc(var(--nav-h) + 10px);box-shadow:4px 0 24px rgba(0,0,0,.12);}
   .sidebar.mobile-open{transform:translateX(0);}
   .sidebar-overlay{display:none;}
