@@ -14,10 +14,13 @@ function cPage(p, el) {
     activeManageProjectId = null;
   }
 
-  renderC(p);
-  if (supaClient && CU) {
-    syncFromSupabase(CU).then(() => {
-      if (p === 'chat') {
+const _navT = _navTicket();
+renderC(p);
+if (supaClient && CU) {
+  syncFromSupabase(CU).then(() => {
+    // a newer nav click landed while this sync was in flight - drop the repaint
+    if (_navStale(_navT) || currentCreatorPage !== p) return;
+    if (p === 'chat') {
         const el = document.getElementById('chat-msgs-el');
         if (el && currentChatUserId) {
           const key = [CU.id, currentChatUserId].sort().join('_');
@@ -42,10 +45,13 @@ function cPageMobile(p, el) {
   if (p === 'new' && !activeManageProjectId) { wfStep = 0; selContent = ''; selFreelancerIds = []; newProjectDraft = {}; newProjectFiles = []; }
   if (p !== 'new') activeManageProjectId = null;
 
-  renderC(p);
-  if (supaClient && CU) {
-    syncFromSupabase(CU).then(() => {
-      if (p === 'chat') {
+const _navT = _navTicket();
+renderC(p);
+if (supaClient && CU) {
+  syncFromSupabase(CU).then(() => {
+    // a newer nav click landed while this sync was in flight - drop the repaint
+    if (_navStale(_navT) || currentCreatorPage !== p) return;
+    if (p === 'chat') {
         const el = document.getElementById('chat-msgs-el');
         if (el && currentChatUserId) {
           const key = [CU.id, currentChatUserId].sort().join('_');
