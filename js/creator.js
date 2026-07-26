@@ -60,7 +60,11 @@ if (supaClient && CU) {
   syncFromSupabase(CU).then(() => {
     // a newer nav click landed while this sync was in flight - drop the repaint
     if (_navStale(_navT) || currentCreatorPage !== p) return;
-    if (p === 'chat') {
+// These AI pages hold their own state (typed input, generated results)
+// and read nothing from the synced project data, so a background
+// repaint would only blink and wipe the user's work.
+if (p === 'aisuggest' || p === 'analyzer' || p === 'thumbnail') return;
+if (p === 'chat') {
       const el = document.getElementById('chat-msgs-el');
 if (el && currentChatUserId) {
   const key = [CU.id, currentChatUserId].sort().join('_');
@@ -99,12 +103,10 @@ function renderC(p, quiet) {
   // quiet = background repaint after a sync finished. If the freshly built
   // markup is identical to what is already on screen, writing innerHTML would
   // only cause a visible flash, so leave the DOM completely alone.
-  const changed = _paintChanged('c:' + p, html);
+    const changed = _paintChanged('c:' + p, html);
 if (quiet && !changed) { checkFProfileCompletion(); return; }
 
 m.innerHTML = html;
-
-  m.innerHTML = html;
 
   // Only a click-driven render animates. A background repaint must NOT restart
   // fadeIn - that restart from opacity:0 was the one-second blink after clicks.
