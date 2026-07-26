@@ -192,3 +192,13 @@ var Tawk_API = Tawk_API || {}, Tawk_LoadStart = new Date();
     initFAQ();
   }
 })();
+/* ============================================================
+   Support chat helper (used by the footer "Contact Us" link)
+   ============================================================ */
+function openSupportChat() {
+  if (window.Tawk_API && typeof window.Tawk_API.maximize === 'function') {
+    window.Tawk_API.maximize();
+    return;
+  }
+  window.location.href = 'mailto:support@aalynex.com';
+}
