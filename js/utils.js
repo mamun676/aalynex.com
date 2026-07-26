@@ -169,23 +169,28 @@ function sendPaymentDoneEmail(freelancerId, title, amount, rating) {
     `<p>Payment of ₹${fmt(amount)} for <b>${title}</b> is complete.${rating ? ` Rating: ${rating}★` : ''}</p>`);
 }
 /* ---- THEME (dark / light) ---- */
-const _MOON_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>';
-const _SUN_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>';
+/* The two icons live in the markup as <svg class="ic-moon"> and <svg class="ic-sun">
+   and are swapped purely by CSS on [data-theme="dark"]. JS must NOT rewrite the
+   button's innerHTML - that strips the classes and breaks the swap. */
 
-function updateThemeIcon() {
-  const dark = document.documentElement.getAttribute('data-theme') === 'dark';
+function updateThemeLabel() {
+  var dark = document.documentElement.getAttribute('data-theme') === 'dark';
+  var label = dark ? 'Switch to light mode' : 'Switch to dark mode';
   document.querySelectorAll('.theme-toggle').forEach(function (btn) {
-    btn.innerHTML = dark ? _SUN_SVG : _MOON_SVG;
-    btn.title = dark ? 'Switch to light mode' : 'Switch to dark mode';
+    btn.title = label;
+    btn.setAttribute('aria-label', label);
   });
 }
+
+/* kept as an alias so any older call site keeps working */
+var updateThemeIcon = updateThemeLabel;
 
 function toggleTheme() {
   const root = document.documentElement;
   const dark = root.getAttribute('data-theme') === 'dark';
   if (dark) { root.removeAttribute('data-theme'); try { localStorage.setItem('aalynex-theme','light'); } catch(e){} }
   else { root.setAttribute('data-theme','dark'); try { localStorage.setItem('aalynex-theme','dark'); } catch(e){} }
+  updateThemeLabel();
 }
 
-window.addEventListener('DOMContentLoaded', updateThemeIcon);
-updateThemeIcon();
+window.addEventListener('DOMContentLoaded', updateThemeLabel);
