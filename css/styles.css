@@ -97,11 +97,11 @@ body::after{
 
 /* Role card icons */
 .role-icon-wrap {
-  width:56px;height:56px;border-radius:16px;
-  margin:0 auto 12px;
+  width:64px;height:64px;border-radius:18px;
+  margin:0 auto 14px;
   display:flex;align-items:center;justify-content:center;
 }
-.role-icon-wrap svg {width:28px;height:28px;stroke:currentColor;fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;}
+.role-icon-wrap svg {width:32px;height:32px;stroke:currentColor;fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;}
 
 /* How-card icons */
 .how-card-icon-wrap {
@@ -271,7 +271,7 @@ nav.scrolled{
 /* ── LANDING ── */
 .hero{
   flex:1;display:flex;flex-direction:column;align-items:center;
-  justify-content:center;text-align:center;padding:72px 20px 48px;
+  justify-content:center;text-align:center;padding:72px 20px 0;
   position:relative;overflow:hidden;
 }
 .hero-glow{
@@ -306,13 +306,14 @@ h1 em{
 .hero-btn{padding:13px 30px;font-size:.95rem;border-radius:999px;}
 
 /* Role Cards */
-.role-cards{display:flex;gap:16px;justify-content:center;flex-wrap:wrap;animation:fadeUp .7s .3s ease both;}
+.role-cards{display:flex;gap:18px;justify-content:center;flex-wrap:wrap;animation:fadeUp .7s .3s ease both;}
 .role-card{
   background:var(--surface);
   border:1px solid var(--glass-border);
   border-radius:var(--radius-lg);
-  padding:28px 28px 22px;
-  min-width:190px;
+  padding:34px 34px 28px;
+  min-width:248px;
+  max-width:300px;
   text-align:center;
   cursor:pointer;
   box-shadow:var(--shadow-sm);
@@ -328,15 +329,15 @@ h1 em{
 .role-card:active{
   transform: scale(0.97);
 }
-.role-card h3{font-family:'Outfit',sans-serif;font-size:.95rem;font-weight:600;margin-bottom:5px;color:var(--text);}
-.role-card p{color:var(--text-3);font-size:.79rem;line-height:1.5;}
+.role-card h3{font-family:'Outfit',sans-serif;font-size:1.05rem;font-weight:600;margin-bottom:7px;color:var(--text);}
+.role-card p{color:var(--text-3);font-size:.85rem;line-height:1.55;}
 .role-card.cc .role-icon-wrap{background:rgba(22,163,74,.1);border:1px solid rgba(22,163,74,.2);color:var(--creator);}
 .role-card.fc .role-icon-wrap{background:rgba(124,58,237,.1);border:1px solid rgba(124,58,237,.2);color:var(--freelancer);}
 .role-card.cc:hover{border-color:rgba(22,163,74,.3);transform:translateY(-5px);box-shadow:0 12px 32px rgba(22,163,74,.12), var(--shadow-md);}
 .role-card.fc:hover{border-color:rgba(124,58,237,.3);transform:translateY(-5px);box-shadow:0 12px 32px rgba(124,58,237,.12), var(--shadow-md);}
 
 /* HOW IT WORKS */
-.how-section{padding:64px 24px 48px;text-align:center;animation:fadeUp .7s .35s ease both;}
+.how-section{padding:48px 24px 48px;text-align:center;animation:fadeUp .7s .35s ease both;}
 .section-heading{font-family:'Outfit',sans-serif;font-size:clamp(1.55rem,3.5vw,2.2rem);font-weight:600;letter-spacing:-.3px;margin-bottom:10px;color:var(--text);}
 .section-heading em{font-style:normal;color:inherit;background:none;-webkit-text-fill-color:currentColor;}
 .section-sub{color:var(--text-3);font-size:.88rem;margin-bottom:36px;}
@@ -728,7 +729,7 @@ h1 em{
   .toast{min-width:unset;}
   .wf-body{padding:18px 14px;}
   .msg-video-player{max-width:200px;}
-  .how-section{padding:44px 16px 32px;}
+  .how-section{padding:32px 16px 32px;}
   .why-section{padding:0 16px 44px;}
   .how-cards{gap:12px;}
   .how-card{min-width:140px;max-width:100%;padding:20px 16px 18px;}
@@ -1557,4 +1558,125 @@ transition: transform .2s ease, color .2s ease, background .2s ease;
   }
   #screen-creator nav .nav-right,
   #screen-freelancer nav .nav-right{gap:6px;}
+}
+/* ============================================================
+   FAQ SECTION  (takeuforward-style: category rail + accordion)
+   Works in both light and dark theme via CSS variables.
+   ============================================================ */
+.faq-section{padding:48px 24px 0;scroll-margin-top:90px;animation:fadeUp .7s .48s ease both;}
+.faq-inner{max-width:1120px;margin:0 auto;}
+
+.faq-layout{
+  display:grid;
+  grid-template-columns:236px minmax(0,1fr);
+  gap:26px;
+  align-items:start;
+  margin-top:8px;
+}
+
+/* ---- left category rail ---- */
+.faq-cats{
+  display:flex;flex-direction:column;gap:8px;
+  position:sticky;top:88px;
+}
+.faq-cat{
+  font-family:'DM Sans',system-ui,sans-serif;
+  text-align:left;
+  font-size:.82rem;font-weight:500;line-height:1.35;
+  color:var(--text-2);
+  background:var(--glass);
+  border:1px solid var(--glass-border);
+  border-radius:999px;
+  padding:10px 16px;
+  cursor:pointer;
+  transition:background .22s,color .22s,border-color .22s,transform .22s,box-shadow .22s;
+  -webkit-backdrop-filter:var(--blur-sm);backdrop-filter:var(--blur-sm);
+}
+.faq-cat:hover{color:var(--text);border-color:var(--glass-border-strong);transform:translateX(3px);}
+.faq-cat.active{
+  background:var(--surface);
+  color:var(--text);
+  font-weight:600;
+  border-color:var(--glass-border-strong);
+  box-shadow:var(--shadow-sm);
+}
+
+/* ---- right accordion ---- */
+.faq-list{
+  background:var(--surface);
+  border:1px solid var(--glass-border);
+  border-radius:var(--radius-lg);
+  box-shadow:var(--shadow-sm);
+  overflow:hidden;
+}
+.faq-item{border-bottom:1px solid var(--glass-border);}
+.faq-item:last-child{border-bottom:none;}
+.faq-q{
+  width:100%;
+  display:flex;align-items:center;gap:16px;justify-content:space-between;
+  background:transparent;border:none;
+  padding:19px 22px;
+  cursor:pointer;text-align:left;
+  font-family:'DM Sans',system-ui,sans-serif;
+  font-size:.88rem;font-weight:500;line-height:1.45;
+  color:var(--text);
+  transition:background .2s,color .2s;
+}
+.faq-q:hover{background:var(--surface2);}
+.faq-q-text{flex:1;min-width:0;}
+.faq-chev{
+  width:17px;height:17px;flex:0 0 auto;
+  color:var(--text-3);
+  transition:transform .3s cubic-bezier(.4,0,.2,1),color .25s;
+}
+.faq-item.open > .faq-q{color:var(--accent);font-weight:600;}
+.faq-item.open > .faq-q .faq-chev{transform:rotate(180deg);color:var(--accent);}
+
+.faq-a{
+  max-height:0;overflow:hidden;
+  transition:max-height .34s cubic-bezier(.4,0,.2,1);
+}
+.faq-a-in{
+  padding:0 52px 20px 22px;
+  color:var(--text-2);
+  font-size:.83rem;line-height:1.68;
+}
+
+.faq-foot{
+  margin-top:26px;text-align:center;
+  font-size:.83rem;color:var(--text-3);
+}
+.faq-foot-link{
+  color:var(--accent);font-weight:600;text-decoration:none;margin-left:6px;
+}
+.faq-foot-link:hover{text-decoration:underline;}
+
+/* ---- dark theme touch-ups ---- */
+[data-theme="dark"] .faq-cat{background:var(--glass);}
+[data-theme="dark"] .faq-cat.active{background:var(--surface2);}
+[data-theme="dark"] .faq-q:hover{background:rgba(255,255,255,.035);}
+[data-theme="dark"] .faq-list{background:var(--surface);}
+
+/* ---- responsive: rail becomes a horizontal chip row ---- */
+@media(max-width:900px){
+  .faq-layout{grid-template-columns:1fr;gap:18px;}
+  .faq-cats{
+    position:static;
+    flex-direction:row;flex-wrap:nowrap;
+    overflow-x:auto;overflow-y:hidden;
+    gap:8px;padding-bottom:6px;
+    scrollbar-width:none;-ms-overflow-style:none;
+  }
+  .faq-cats::-webkit-scrollbar{display:none;}
+  .faq-cat{white-space:nowrap;flex:0 0 auto;font-size:.78rem;padding:9px 15px;}
+  .faq-cat:hover{transform:none;}
+}
+@media(max-width:640px){
+  .faq-section{padding:32px 16px 0;}
+  .faq-q{padding:16px 16px;font-size:.845rem;gap:12px;}
+  .faq-a-in{padding:0 40px 17px 16px;font-size:.8rem;}
+}
+@media(prefers-reduced-motion:reduce){
+  .faq-a{transition:none;}
+  .faq-chev{transition:none;}
 }
