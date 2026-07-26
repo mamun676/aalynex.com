@@ -1,4 +1,4 @@
-​
+
 :root {
   --bg: #F7F6F3;
   --bg2: #EFEDE8;
@@ -38,7 +38,7 @@
   --shadow-lg: 0 8px 32px rgba(0,0,0,0.10), 0 3px 10px rgba(0,0,0,0.06);
   --shadow-xl: 0 16px 48px rgba(0,0,0,0.11), 0 6px 16px rgba(0,0,0,0.06);
 }
-​
+
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
 html{scroll-behavior:smooth;}
 body{
@@ -72,21 +72,21 @@ body::after{
           mask-image: radial-gradient(ellipse 90% 70% at 50% 25%, #000 0%, transparent 80%);
   opacity:.6;
 }
-​
+
 /* ── SVG ICON SYSTEM ── */
 .icon-svg {
   display:inline-flex;align-items:center;justify-content:center;
   flex-shrink:0;
 }
 .icon-svg svg {width:100%;height:100%;}
-​
+
 /* Nav icon container */
 .ni-icon {
   width:18px;height:18px;
   display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;
 }
 .ni-icon svg {width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;}
-​
+
 /* Section card icons */
 .card-icon-img {
   width:52px;height:52px;border-radius:14px;
@@ -94,7 +94,7 @@ body::after{
   flex-shrink:0;
 }
 .card-icon-img svg {width:26px;height:26px;stroke:currentColor;fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;}
-​
+
 /* Role card icons */
 .role-icon-wrap {
   width:64px;height:64px;border-radius:18px;
@@ -102,7 +102,7 @@ body::after{
   display:flex;align-items:center;justify-content:center;
 }
 .role-icon-wrap svg {width:32px;height:32px;stroke:currentColor;fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;}
-​
+
 /* How-card icons */
 .how-card-icon-wrap {
   width:56px;height:56px;border-radius:16px;
@@ -112,7 +112,7 @@ body::after{
   margin:0 auto 14px;position:relative;z-index:1;
 }
 .how-card-icon-wrap svg {width:26px;height:26px;stroke:var(--accent);fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;}
-​
+
 /* Why card icons */
 .why-icon-wrap {
   width:44px;height:44px;border-radius:12px;
@@ -122,7 +122,7 @@ body::after{
 .why-icon-wrap.ic-1{background:rgba(224,92,42,.1);border:1px solid rgba(224,92,42,.18);color:var(--accent);}
 .why-icon-wrap.ic-2{background:rgba(29,78,216,.08);border:1px solid rgba(29,78,216,.15);color:var(--blue);}
 .why-icon-wrap.ic-3{background:rgba(22,163,74,.08);border:1px solid rgba(22,163,74,.15);color:var(--green);}
-​
+
 /* f-avatar icon override */
 .f-card-icon {
   width:44px;height:44px;border-radius:50%;
@@ -130,13 +130,13 @@ body::after{
   margin:0 auto 8px;display:flex;align-items:center;justify-content:center;
   font-weight:700;font-size:.95rem;font-family:'Outfit',sans-serif;color:#fff;
 }
-​
+
 /* project icon images */
 .pico-icon {width:22px;height:22px;stroke:var(--text-3);fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;}
-​
+
 /* Social icons */
 .social-btn-icon {width:16px;height:16px;flex-shrink:0;}
-​
+
 .screen{display:none;min-height:100vh;flex-direction:column;}
 .screen.active{display:flex;}
 /* dashboards are app shells, not documents: lock them to one viewport so the
@@ -145,7 +145,7 @@ body::after{
 #screen-freelancer.active{height:100vh;height:100dvh;max-height:100vh;max-height:100dvh;overflow:hidden;}
 .glass{background:var(--glass);backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);border:1px solid var(--glass-border);}
 .glass-strong{background:var(--glass-strong);backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);border:1px solid var(--glass-border-strong);}
-​
+
 /* ── NAV ── */
 nav{
   display:flex;align-items:center;justify-content:space-between;
@@ -219,7 +219,7 @@ nav.scrolled{
 .mob-only{display:none;}
 .desk-only{display:inline;}
 @media(max-width:768px){ .nav-center{display:flex;gap:0;} .mob-only{display:inline;} .desk-only{display:none;} }
-​
+
 /* ── BUTTONS ── */
 .btn{
   display:inline-flex;align-items:center;justify-content:center;gap:6px;
@@ -252,7 +252,7 @@ nav.scrolled{
 .btn-sm{padding:7px 16px;font-size:.8rem;border-radius:999px;}
 .btn-xs{padding:5px 11px;font-size:.75rem;}
 .full-btn{width:100%;}
-​
+
 /* ── FORMS ── */
 .fg{margin-bottom:16px;position:relative;}
 .fg label{display:block;font-size:.75rem;color:var(--text-2);margin-bottom:6px;font-weight:500;letter-spacing:.02em;}
@@ -271,7 +271,7 @@ nav.scrolled{
 .input-error{border-color:rgba(220,38,38,.4)!important;}
 .field-err{font-size:.72rem;color:var(--red);margin-top:3px;}
 .otp-note{font-size:.72rem;color:var(--green);margin-top:3px;display:flex;align-items:center;gap:4px;}
-​
+
 /* ── LANDING ── */
 .hero{
   flex:1;display:flex;flex-direction:column;align-items:center;
@@ -292,7 +292,7 @@ nav.scrolled{
 }
 .badge-dot{width:6px;height:6px;border-radius:50%;background:var(--accent);animation:pulse 2s infinite;}
 @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.35;}}
-​
+
 h1{
   font-family:'Outfit',sans-serif;
   font-size:clamp(2.2rem,5.5vw,4.4rem);
@@ -308,7 +308,7 @@ h1 em{
 .hero-sub{color:var(--text-2);font-size:1rem;max-width:500px;line-height:1.7;margin-bottom:36px;animation:fadeDown .6s .16s ease both;}
 .hero-cta{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;animation:fadeDown .6s .22s ease both;margin-bottom:48px;}
 .hero-btn{padding:13px 30px;font-size:.95rem;border-radius:999px;}
-​
+
 /* Role Cards */
 .role-cards{display:flex;gap:18px;justify-content:center;flex-wrap:wrap;animation:fadeUp .7s .3s ease both;}
 .role-card{
@@ -321,15 +321,15 @@ h1 em{
   text-align:center;
   cursor:pointer;
   box-shadow:var(--shadow-sm);
-​
+
   transition: transform .25s ease, box-shadow .25s ease;
 }
-​
+
 .role-card:hover{
   transform: translateY(-8px) scale(1.03);
   box-shadow: 0 16px 40px rgba(0,0,0,0.25),0 0 20px rgba(224,92,42,0.2);
 }
-​
+
 .role-card:active{
   transform: scale(0.97);
 }
@@ -339,7 +339,7 @@ h1 em{
 .role-card.fc .role-icon-wrap{background:rgba(124,58,237,.1);border:1px solid rgba(124,58,237,.2);color:var(--freelancer);}
 .role-card.cc:hover{border-color:rgba(22,163,74,.3);transform:translateY(-5px);box-shadow:0 12px 32px rgba(22,163,74,.12), var(--shadow-md);}
 .role-card.fc:hover{border-color:rgba(124,58,237,.3);transform:translateY(-5px);box-shadow:0 12px 32px rgba(124,58,237,.12), var(--shadow-md);}
-​
+
 /* HOW IT WORKS */
 .how-section{padding:48px 24px 48px;text-align:center;animation:fadeUp .7s .35s ease both;}
 .section-heading{font-family:'Outfit',sans-serif;font-size:clamp(1.55rem,3.5vw,2.2rem);font-weight:600;letter-spacing:-.3px;margin-bottom:10px;color:var(--text);}
@@ -365,7 +365,7 @@ h1 em{
   position:absolute;top:14px;right:16px;
   box-shadow:0 2px 8px var(--accent-glow);
 }
-​
+
 /* WHY AALYNEX */
 .why-section{padding:0 24px 64px;animation:fadeUp .7s .42s ease both;}
 .why-inner{max-width:1120px;margin:0 auto;}
@@ -388,39 +388,7 @@ h1 em{
 .stat:last-child{border-right:none;}
 .stat strong{display:block;font-family:'Outfit',sans-serif;font-size:1.4rem;font-weight:700;background:linear-gradient(135deg,var(--accent),#F07A45);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
 .stat span{color:var(--text-3);font-size:.75rem;}
-​
-/* ── AUTH BACKGROUND ──
-   takeuforward puts a faint circuit-board line drawing behind its login card.
-   Same idea here, but drawn from OUR platform's motifs instead of circuits:
-   film strips, play buttons, an edit timeline with keyframe diamonds, an audio
-   waveform and crop/aspect-ratio framing marks - i.e. a video edit bay.
-   Two sparse clusters (top-right + bottom-left) exactly like TUF.
-​
-   Pure CSS: the art lives in ::before / ::after as inline SVG data URIs, so
-   index.html needs no new markup at all.
-   No negative offsets and no overflow:hidden on purpose - the tall Sign Up
-   form still has to be able to scroll, and a negatively-offset absolute layer
-   would have added a stray scrollbar. */
-#screen-auth{position:relative;}
-#screen-auth::before,
-#screen-auth::after{
-  content:'';position:absolute;pointer-events:none;z-index:0;
-  background-repeat:no-repeat;
-}
-#screen-auth::before{top:0;right:0;width:min(50vw,600px);height:min(48vh,440px);background-position:top right;background-size:contain;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 600 440' fill='none' stroke='rgba(26,25,23,0.13)' stroke-width='1.5' stroke-linejoin='round'%3E%3Cpath d='M600 54 H470 V112 H392'/%3E%3Crect x='386' y='106' width='12' height='12' rx='2' fill='rgba(26,25,23,0.05)'/%3E%3Cpath d='M600 152 H540 V104'/%3E%3Crect x='535' y='99' width='10' height='10' rx='2' fill='rgba(26,25,23,0.05)'/%3E%3Cpath d='M600 386 H452 V330 H374'/%3E%3Crect x='368' y='324' width='12' height='12' rx='2' fill='rgba(26,25,23,0.05)'/%3E%3Cpath d='M600 250 H556'/%3E%3Crect x='551' y='245' width='10' height='10' rx='2' fill='rgba(26,25,23,0.05)'/%3E%3Crect x='330' y='26' width='176' height='66' rx='7'/%3E%3Cline x1='330' y1='41' x2='506' y2='41'/%3E%3Cline x1='330' y1='77' x2='506' y2='77'/%3E%3Crect x='339' y='30' width='11' height='7' rx='2' fill='rgba(26,25,23,0.05)'/%3E%3Crect x='339' y='81' width='11' height='7' rx='2' fill='rgba(26,25,23,0.05)'/%3E%3Crect x='363' y='30' width='11' height='7' rx='2' fill='rgba(26,25,23,0.05)'/%3E%3Crect x='363' y='81' width='11' height='7' rx='2' fill='rgba(26,25,23,0.05)'/%3E%3Crect x='387' y='30' width='11' height='7' rx='2' fill='rgba(26,25,23,0.05)'/%3E%3Crect x='387' y='81' width='11' height='7' rx='2' fill='rgba(26,25,23,0.05)'/%3E%3Crect x='411' y='30' width='11' height='7' rx='2' fill='rgba(26,25,23,0.05)'/%3E%3Crect x='411' y='81' width='11' height='7' rx='2' fill='rgba(26,25,23,0.05)'/%3E%3Crect x='435' y='30' width='11' height='7' rx='2' fill='rgba(26,25,23,0.05)'/%3E%3Crect x='435' y='81' width='11' height='7' rx='2' fill='rgba(26,25,23,0.05)'/%3E%3Crect x='459' y='30' width='11' height='7' rx='2' fill='rgba(26,25,23,0.05)'/%3E%3Crect x='459' y='81' width='11' height='7' rx='2' fill='rgba(26,25,23,0.05)'/%3E%3Crect x='483' y='30' width='11' height='7' rx='2' fill='rgba(26,25,23,0.05)'/%3E%3Crect x='483' y='81' width='11' height='7' rx='2' fill='rgba(26,25,23,0.05)'/%3E%3Ccircle cx='212' cy='59' r='34'/%3E%3Cpath d='M200 45 L229 59 L200 73 Z'/%3E%3Cpath d='M246 59 H330'/%3E%3Cline x1='120' y1='196' x2='530' y2='196'/%3E%3Cpath d='M206 187 l9 9 l-9 9 l-9 -9 z' fill='rgba(26,25,23,0.05)'/%3E%3Cpath d='M288 187 l9 9 l-9 9 l-9 -9 z' fill='rgba(26,25,23,0.05)'/%3E%3Cpath d='M370 187 l9 9 l-9 9 l-9 -9 z' fill='rgba(26,25,23,0.05)'/%3E%3Cpath d='M452 187 l9 9 l-9 9 l-9 -9 z' fill='rgba(26,25,23,0.05)'/%3E%3Cpath d='M120 196 V150'/%3E%3Crect x='115' y='145' width='10' height='10' rx='2' fill='rgba(26,25,23,0.05)'/%3E%3Cline x1='150' y1='276' x2='150' y2='296' stroke-linecap='round'/%3E%3Cline x1='163' y1='264' x2='163' y2='308' stroke-linecap='round'/%3E%3Cline x1='176' y1='272' x2='176' y2='300' stroke-linecap='round'/%3E%3Cline x1='189' y1='256' x2='189' y2='316' stroke-linecap='round'/%3E%3Cline x1='202' y1='268' x2='202' y2='304' stroke-linecap='round'/%3E%3Cline x1='215' y1='248' x2='215' y2='324' stroke-linecap='round'/%3E%3Cline x1='228' y1='262' x2='228' y2='310' stroke-linecap='round'/%3E%3Cline x1='241' y1='274' x2='241' y2='298' stroke-linecap='round'/%3E%3Cline x1='254' y1='258' x2='254' y2='314' stroke-linecap='round'/%3E%3Cline x1='267' y1='270' x2='267' y2='302' stroke-linecap='round'/%3E%3Cline x1='280' y1='252' x2='280' y2='320' stroke-linecap='round'/%3E%3Cline x1='293' y1='266' x2='293' y2='306' stroke-linecap='round'/%3E%3Cline x1='306' y1='275' x2='306' y2='297' stroke-linecap='round'/%3E%3Cpath d='M150 286 H136 V330'/%3E%3Cpath d='M400 326 V300 H426'/%3E%3Cpath d='M514 300 H540 V326'/%3E%3Cpath d='M400 358 V384 H426'/%3E%3Cpath d='M514 384 H540 V358'/%3E%3C/svg%3E");}
-#screen-auth::after{bottom:0;left:0;width:min(46vw,520px);height:min(46vh,440px);background-position:bottom left;background-size:contain;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 520 440' fill='none' stroke='rgba(26,25,23,0.13)' stroke-width='1.5' stroke-linejoin='round'%3E%3Cpath d='M0 392 H128 V330 H206'/%3E%3Crect x='200' y='324' width='12' height='12' rx='2' fill='rgba(26,25,23,0.05)'/%3E%3Cpath d='M0 300 H70 V252'/%3E%3Crect x='65' y='247' width='10' height='10' rx='2' fill='rgba(26,25,23,0.05)'/%3E%3Cpath d='M0 96 H96 V150 H168'/%3E%3Crect x='162' y='144' width='12' height='12' rx='2' fill='rgba(26,25,23,0.05)'/%3E%3Crect x='196' y='60' width='200' height='68' rx='7'/%3E%3Cline x1='196' y1='75' x2='396' y2='75'/%3E%3Cline x1='196' y1='113' x2='396' y2='113'/%3E%3Crect x='205' y='64' width='11' height='7' rx='2' fill='rgba(26,25,23,0.05)'/%3E%3Crect x='205' y='117' width='11' height='7' rx='2' fill='rgba(26,25,23,0.05)'/%3E%3Crect x='229' y='64' width='11' height='7' rx='2' fill='rgba(26,25,23,0.05)'/%3E%3Crect x='229' y='117' width='11' height='7' rx='2' fill='rgba(26,25,23,0.05)'/%3E%3Crect x='253' y='64' width='11' height='7' rx='2' fill='rgba(26,25,23,0.05)'/%3E%3Crect x='253' y='117' width='11' height='7' rx='2' fill='rgba(26,25,23,0.05)'/%3E%3Crect x='277' y='64' width='11' height='7' rx='2' fill='rgba(26,25,23,0.05)'/%3E%3Crect x='277' y='117' width='11' height='7' rx='2' fill='rgba(26,25,23,0.05)'/%3E%3Crect x='301' y='64' width='11' height='7' rx='2' fill='rgba(26,25,23,0.05)'/%3E%3Crect x='301' y='117' width='11' height='7' rx='2' fill='rgba(26,25,23,0.05)'/%3E%3Crect x='325' y='64' width='11' height='7' rx='2' fill='rgba(26,25,23,0.05)'/%3E%3Crect x='325' y='117' width='11' height='7' rx='2' fill='rgba(26,25,23,0.05)'/%3E%3Crect x='349' y='64' width='11' height='7' rx='2' fill='rgba(26,25,23,0.05)'/%3E%3Crect x='349' y='117' width='11' height='7' rx='2' fill='rgba(26,25,23,0.05)'/%3E%3Crect x='373' y='64' width='11' height='7' rx='2' fill='rgba(26,25,23,0.05)'/%3E%3Crect x='373' y='117' width='11' height='7' rx='2' fill='rgba(26,25,23,0.05)'/%3E%3Cpath d='M240 176 H452' stroke-dasharray='9 8'/%3E%3Ccircle cx='462' cy='176' r='9'/%3E%3Cpath d='M296 168 V184 M348 168 V184 M400 168 V184'/%3E%3Cline x1='40' y1='252' x2='470' y2='252'/%3E%3Cpath d='M124 243 l9 9 l-9 9 l-9 -9 z' fill='rgba(26,25,23,0.05)'/%3E%3Cpath d='M206 243 l9 9 l-9 9 l-9 -9 z' fill='rgba(26,25,23,0.05)'/%3E%3Cpath d='M288 243 l9 9 l-9 9 l-9 -9 z' fill='rgba(26,25,23,0.05)'/%3E%3Cpath d='M370 243 l9 9 l-9 9 l-9 -9 z' fill='rgba(26,25,23,0.05)'/%3E%3Cline x1='232' y1='332' x2='232' y2='356' stroke-linecap='round'/%3E%3Cline x1='245' y1='318' x2='245' y2='370' stroke-linecap='round'/%3E%3Cline x1='258' y1='328' x2='258' y2='360' stroke-linecap='round'/%3E%3Cline x1='271' y1='310' x2='271' y2='378' stroke-linecap='round'/%3E%3Cline x1='284' y1='324' x2='284' y2='364' stroke-linecap='round'/%3E%3Cline x1='297' y1='302' x2='297' y2='386' stroke-linecap='round'/%3E%3Cline x1='310' y1='318' x2='310' y2='370' stroke-linecap='round'/%3E%3Cline x1='323' y1='330' x2='323' y2='358' stroke-linecap='round'/%3E%3Cline x1='336' y1='314' x2='336' y2='374' stroke-linecap='round'/%3E%3Cline x1='349' y1='326' x2='349' y2='362' stroke-linecap='round'/%3E%3Cline x1='362' y1='308' x2='362' y2='380' stroke-linecap='round'/%3E%3Cline x1='375' y1='322' x2='375' y2='366' stroke-linecap='round'/%3E%3Cline x1='388' y1='331' x2='388' y2='357' stroke-linecap='round'/%3E%3Cline x1='401' y1='316' x2='401' y2='372' stroke-linecap='round'/%3E%3Cpath d='M232 344 H214 V392'/%3E%3Ccircle cx='430' cy='332' r='30'/%3E%3Cpath d='M420 320 L445 332 L420 344 Z'/%3E%3Cpath d='M400 332 H340'/%3E%3Cpath d='M40 118 V92 H66'/%3E%3Cpath d='M142 92 H168 V118'/%3E%3Cpath d='M40 144 V170 H66'/%3E%3Cpath d='M142 170 H168 V144'/%3E%3C/svg%3E");}
-/* the navbar and the login card must stay above the artwork */
-#screen-auth > nav,
-#screen-auth .auth-wrap{position:relative;z-index:1;}
-@media (max-width:768px){
-  /* on a phone the card fills the screen, so the art only peeks out */
-  #screen-auth::before{width:76vw;height:30vh;opacity:.55;}
-  #screen-auth::after{width:72vw;height:28vh;opacity:.55;}
-}
-@media (prefers-reduced-motion:reduce){
-  #screen-auth::before,#screen-auth::after{opacity:.5;}
-}
-​
+
 /* ── AUTH ── */
 .auth-wrap{flex:1;display:flex;align-items:center;justify-content:center;padding:32px 16px;}
 .auth-box{background:var(--surface);border:1px solid var(--glass-border-strong);border-radius:var(--radius-lg);padding:36px;width:100%;max-width:440px;position:relative;overflow:hidden;box-shadow:var(--shadow-xl);}
@@ -440,7 +408,7 @@ h1 em{
 .btn-loading{position:relative;pointer-events:none;opacity:.75;}
 .btn-loading::after{content:'';position:absolute;width:14px;height:14px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:spin .6s linear infinite;right:12px;top:50%;transform:translateY(-50%);}
 @keyframes spin{to{transform:translateY(-50%) rotate(360deg);}}
-​
+
 /* ── TOAST ── */
 .toast-wrap{position:fixed;top:72px;right:20px;z-index:999;display:flex;flex-direction:column;gap:8px;pointer-events:none;}
 .toast{background:var(--surface);border:1px solid var(--glass-border-strong);border-radius:12px;padding:12px 16px;display:flex;align-items:center;gap:10px;font-size:.84rem;min-width:240px;animation:toastIn .3s ease both;box-shadow:var(--shadow-lg);pointer-events:all;color:var(--text);}
@@ -448,31 +416,30 @@ h1 em{
 .toast-icon{font-size:1rem;flex-shrink:0;}
 @keyframes toastIn{from{opacity:0;transform:translateX(60px);}to{opacity:1;transform:none;}}
 @keyframes toastOut{to{opacity:0;transform:translateX(60px);}}
-​
+
 /* ── DASHBOARD LAYOUT ── */
 /* fills whatever height the locked screen leaves under the navbar; min-height:0
    is what lets the children scroll internally instead of growing */
 .dash-layout{flex:1 1 auto;display:flex;overflow:hidden;position:relative;min-height:0;}
 .sidebar-overlay{display:none;position:fixed;inset:0;z-index:150;background:rgba(0,0,0,.25);backdrop-filter:blur(3px);}
 .sidebar-overlay.show{display:block;}
-​
+
 /* ── SIDEBAR ── */
 .sidebar{
   width:var(--sidebar-w);flex-shrink:0;
   background:var(--surface);
   border-right:1px solid var(--glass-border);
   padding:20px 12px;display:flex;flex-direction:column;gap:0;
-  /* the sidebar itself no longer scrolls. Its inner .sb-scroll does, so the
-     Logout row below it is a real footer instead of a sticky bar that the nav
-     items slid underneath. overflow:hidden also kills the stray scrollbar that
-     showed up as a thin dark line at the bottom-left: the old sticky logout
-     made the content 6px taller than the sidebar, which was enough for the
-     browser to draw a scrollbar on BOTH axes. */
-  overflow:hidden;z-index:160;
-  height:100%;min-height:0;
+/* the sidebar itself no longer scrolls. Its inner .sb-scroll does, so the
+   Logout row below it is a real footer instead of a sticky bar that the
+   nav items slid underneath while scrolling. */
+overflow:hidden;z-index:160;
+height:100%;min-height:0;
   transition:transform .3s cubic-bezier(.25,.46,.45,.94);
-  box-shadow:var(--shadow-sm);
+    box-shadow:var(--shadow-sm);
 }
+/* the only scrolling part of the sidebar: profile card + every nav row.
+   min-height:0 is required or a flex child refuses to shrink and scroll. */
 /* the only scrolling part of the sidebar: profile card + every nav row.
    min-height:0 is required or a flex child refuses to shrink and scroll.
    overflow-x:hidden so a vertical scrollbar can never drag a horizontal one
@@ -505,13 +472,13 @@ h1 em{
 /* hairline separating the pinned footer from the scrolling list above it */
 .sb-logout::before{content:'';position:absolute;left:-12px;right:-12px;top:-10px;height:1px;background:var(--glass-border);}
 .sb-logout:hover{background:rgba(220,38,38,.08);border-color:rgba(220,38,38,.25);}
-​
+
 /* ── DASH MAIN ── */
 .dash-main{flex:1;overflow-y:auto;padding:28px 28px;scroll-behavior:smooth;background:var(--bg);min-height:0;}
 .page-head{margin-bottom:22px;}
 .page-head h2{font-family:'Outfit',sans-serif;font-size:1.45rem;font-weight:700;letter-spacing:-.3px;color:var(--text);}
 .page-head p{color:var(--text-2);font-size:.85rem;margin-top:3px;}
-​
+
 /* ── METRIC CARDS ── */
 .cards-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;margin-bottom:24px;}
 .mc{
@@ -542,7 +509,7 @@ h1 em{
 .mc.p .value{color:var(--accent2);}
 .mc.b{border-color:rgba(29,78,216,.2);background:rgba(29,78,216,.04);}
 .mc.b .value{color:var(--blue);}
-​
+
 /* ── PROJECT CARDS ── */
 .section-title{font-family:'Outfit',sans-serif;font-size:.92rem;font-weight:600;margin-bottom:12px;letter-spacing:-.2px;color:var(--text);}
 .project-list{display:flex;flex-direction:column;gap:9px;}
@@ -576,7 +543,7 @@ h1 em{
 .alert-i{background:rgba(124,58,237,.07);border:1px solid rgba(124,58,237,.18);color:var(--accent2);}
 .alert-w{background:rgba(217,119,6,.08);border:1px solid rgba(217,119,6,.2);color:var(--yellow);}
 .alert-e{background:rgba(220,38,38,.07);border:1px solid rgba(220,38,38,.2);color:var(--red);}
-​
+
 /* ── WORKFLOW ── */
 .wf-stepper{display:flex;align-items:center;margin-bottom:24px;overflow-x:auto;padding-bottom:4px;gap:0;}
 .wf-stepper::-webkit-scrollbar{height:0;}
@@ -588,7 +555,7 @@ h1 em{
 .step-line.done{background:var(--green);}
 .wf-body{background:var(--surface);border:1px solid var(--glass-border);border-radius:var(--radius-lg);padding:24px;box-shadow:var(--shadow-sm);}
 .wf-body h3{font-family:'Outfit',sans-serif;font-size:1rem;font-weight:600;margin-bottom:16px;color:var(--text);}
-​
+
 /* ── FREELANCER GRID ── */
 .f-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:10px;}
 .f-card{background:var(--surface);border:1.5px solid var(--glass-border);border-radius:var(--radius);padding:14px;cursor:pointer;text-align:center;transition:all .2s;box-shadow:var(--shadow-xs);}
@@ -601,7 +568,7 @@ h1 em{
 .ct-list{display:flex;gap:8px;flex-wrap:wrap;}
 .ct-pill{padding:8px 16px;border-radius:99px;border:1px solid var(--glass-border-strong);background:var(--surface);cursor:pointer;font-family:'DM Sans',sans-serif;font-size:.8rem;color:var(--text-3);transition:all .2s;box-shadow:var(--shadow-xs);}
 .ct-pill.active{border-color:rgba(224,92,42,.35);color:var(--accent);background:var(--accent-soft);}
-​
+
 /* ── CHAT ── */
 .chat-wrap{display:flex;height:440px;background:var(--surface);border:1px solid var(--glass-border);border-radius:var(--radius-lg);overflow:hidden;box-shadow:var(--shadow-sm);}
 .chat-list{width:260px;border-right:1px solid var(--glass-border);overflow-y:auto;flex-shrink:0;background:var(--bg2);}
@@ -643,7 +610,7 @@ h1 em{
 .star-rating span{color:rgba(0,0,0,.1);transition:color .15s,transform .15s;}
 .star-rating span:hover{transform:scale(1.1);}
 .star-rating span.lit{color:var(--yellow);}
-​
+
 /* ── MODAL ── */
 .modal-bg{display:none;position:fixed;inset:0;z-index:300;background:rgba(0,0,0,.25);backdrop-filter:blur(6px);align-items:center;justify-content:center;padding:20px;}
 .modal-bg.show{display:flex;}
@@ -651,12 +618,12 @@ h1 em{
 @keyframes modalIn{from{opacity:0;transform:scale(.94) translateY(8px);}to{opacity:1;transform:none;}}
 .modal h3{font-family:'Outfit',sans-serif;font-size:1.05rem;font-weight:600;margin-bottom:16px;color:var(--text);}
 .modal-footer{display:flex;gap:10px;margin-top:18px;justify-content:flex-end;}
-​
+
 @keyframes fadeDown{from{opacity:0;transform:translateY(-12px);}to{opacity:1;transform:none;}}
 @keyframes fadeUp{from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:none;}}
 @keyframes fadeIn{from{opacity:0;}to{opacity:1;}}
 .fade-in{animation:fadeIn .3s ease both;}
-​
+
 /* ── BOTTOM NAV ── */
 .bottom-nav{display:none;position:fixed;bottom:0;left:0;right:0;z-index:190;background:rgba(255,255,255,.95);backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);border-top:1px solid var(--glass-border);box-shadow:0 -4px 20px rgba(0,0,0,.06);padding:8px 4px max(8px, env(safe-area-inset-bottom));gap:0;}
 .bn-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 4px;border-radius:var(--radius-sm);cursor:pointer;transition:all .2s;color:var(--text-3);font-size:.58rem;position:relative;}
@@ -664,7 +631,7 @@ h1 em{
 .bn-item.active{color:var(--accent);}
 .bn-item.active .bn-icon{transform:translateY(-1px);}
 .bn-badge{position:absolute;top:3px;right:calc(50% - 14px);background:var(--accent);color:#fff;font-size:.55rem;font-weight:700;padding:1px 4px;border-radius:99px;min-width:14px;text-align:center;}
-​
+
 ::-webkit-scrollbar{width:4px;height:4px;}
 ::-webkit-scrollbar-track{background:transparent;}
 ::-webkit-scrollbar-thumb{background:rgba(0,0,0,.12);border-radius:99px;}
@@ -675,7 +642,7 @@ h1 em{
 .chat-inp{flex:1;padding:8px 12px;background:var(--bg2);border:1px solid var(--glass-border-strong);border-radius:var(--radius-sm);color:var(--text);font-family:'DM Sans',sans-serif;font-size:.82rem;outline:none;transition:border .2s;}
 .chat-inp:focus{border-color:rgba(224,92,42,.4);background:#fff;box-shadow:0 0 0 2px rgba(224,92,42,.08);}
 .chat-inp::placeholder{color:var(--text-3);}
-​
+
 /* ── SOCIAL / FOLLOW ── */
 .social-btn{display:flex;align-items:center;gap:8px;padding:8px 16px;border-radius:999px;border:1px solid var(--glass-border-strong);background:var(--surface);font-size:.85rem;color:var(--text-2);text-decoration:none;transition:all .25s ease;box-shadow:var(--shadow-xs);}
 .social-btn svg{width:16px;height:16px;}
@@ -687,24 +654,24 @@ h1 em{
 .site-footer{border-top:1px solid var(--glass-border);background:transparent;padding:26px 24px 20px;}
 .foot-inner{max-width:1180px;margin:0 auto;}
 .foot-top{display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap;}
-​
+
 /* Footer logo reuses the navbar's .logo / .logo-img / .logo-text so that the
    mark, the wordmark, the accent colour and the dark-theme white-logo swap
    ([data-theme="dark"] .logo-img) are all identical to the header. */
 .foot-logo{text-decoration:none;flex:0 0 auto;}
 /* the navbar hides .logo-text below 768px - keep it visible in the footer */
 .foot-logo .logo-text{display:inline-block !important;}
-​
+
 .foot-links{display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;flex:1 1 auto;}
 .foot-link{font-size:.82rem;color:var(--text-2);text-decoration:none;transition:color .2s ease;}
 .foot-link:hover{color:var(--accent);}
 .foot-sep{color:var(--text-4);font-size:.8rem;user-select:none;}
-​
+
 .foot-socials{display:flex;align-items:center;gap:9px;flex:0 0 auto;}
 .foot-soc{width:25px;height:25px;border-radius:7px;display:flex;align-items:center;justify-content:center;color:#fff;text-decoration:none;flex-shrink:0;box-shadow:0 1px 2px rgba(0,0,0,.12);transition:transform .2s ease,box-shadow .2s ease;}
 .foot-soc svg{width:14px;height:14px;display:block;}
 .foot-soc:hover{transform:translateY(-2px);box-shadow:0 5px 13px rgba(0,0,0,.2);}
-​
+
 /* official brand colours + per-mark optical sizing */
 .foot-soc-ig{background:radial-gradient(circle at 30% 107%,#fdf497 0%,#fdf497 5%,#fd5949 45%,#d6249f 60%,#285aeb 90%);}
 .foot-soc-ig svg{width:15px;height:15px;}
@@ -714,14 +681,14 @@ h1 em{
 .foot-soc-fb svg{width:15px;height:15px;}
 .foot-soc-yt{background:#ff0000;}
 .foot-soc-yt svg{width:16px;height:16px;margin-left:1px;}
-​
+
 /* on the dark background a pure-black X badge would disappear */
 [data-theme="dark"] .foot-soc-x{border:1px solid rgba(255,255,255,.25);}
-​
+
 .foot-divider{height:1px;background:var(--glass-border);margin:20px 0 14px;}
 .foot-copy{text-align:center;font-size:.76rem;color:var(--text-3);}
-​
-​
+
+
 @media(max-width:860px){
   .foot-top{flex-direction:column;gap:16px;text-align:center;}
   .foot-links{order:2;}
@@ -737,11 +704,11 @@ h1 em{
 @media(prefers-reduced-motion:reduce){
   .foot-soc,.foot-soc:hover{transition:none;transform:none;}
 }
-​
+
 /* ── BOTTOM NAV ICON SIZING ── */
 .bn-icon-svg {display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;}
 .bn-icon-svg svg {width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;}
-​
+
 /* ── MOBILE RESPONSIVE ── */
 @media(max-width:768px){
   :root{--nav-h:54px;--sidebar-w:260px;}
@@ -790,14 +757,14 @@ h1 em{
   flex-direction:column;
   min-height:0;        /* ✅ KEY FIX — prevents overflow */
 }
-​
+
 .chat-msgs{
   flex:1;
   overflow-y:auto;
   min-height:0;        /* ✅ KEY FIX — allows shrinking */
 }
-​
-​
+
+
   .chat-list{
     position: fixed;
     left: -260px;
@@ -811,7 +778,7 @@ h1 em{
   .chat-list.open{
   left: 0;
   }
-​
+
 .chat-toggle{
   position: fixed;
   top: calc(var(--nav-h) + 50px);
@@ -829,7 +796,7 @@ h1 em{
   z-index: 1000;
   display: none;
 }
-​
+
 .chat-overlay.show{
   display: block;
 }
@@ -860,7 +827,7 @@ h1 em{
   .how-card{width:100%;max-width:300px;}
 }
 /* ── MEET THE TEAM MODAL ── */
-​
+
 /* Button hover upgrade */
 #meet-team-btn {
   transition: transform .22s cubic-bezier(.25,.46,.45,.94), box-shadow .22s ease, border-color .22s ease !important;
@@ -870,7 +837,7 @@ h1 em{
   box-shadow: 0 8px 28px rgba(224,92,42,.18), var(--shadow-md) !important;
   border-color: rgba(224,92,42,.35) !important;
 }
-​
+
 #team-modal-overlay {
   display: none;
   position: fixed;
@@ -887,7 +854,7 @@ h1 em{
 #team-modal-overlay.team-open {
   display: flex;
 }
-​
+
 /* Modal box */
 #team-modal-box {
   /* explicit vertical stack: header on top, cards underneath, always */
@@ -910,7 +877,7 @@ h1 em{
   from { opacity: 0; transform: scale(.95) translateY(12px); }
   to   { opacity: 1; transform: none; }
 }
-​
+
 /* Close button */
 #team-modal-close {
   position: absolute;
@@ -931,7 +898,7 @@ h1 em{
   box-shadow: var(--shadow-sm);
   transform: scale(1.08);
 }
-​
+
 /* Header */
 #team-modal-header {
   /* full-width centred band; the resets below make the header immune to any
@@ -968,7 +935,7 @@ h1 em{
   max-width: 680px;
   margin: 0 auto;
 }
-​
+
 /* Cards grid */
 #team-modal-cards {
   display: grid;
@@ -985,7 +952,7 @@ h1 em{
   columns: auto;
   column-count: auto;
 }
-​
+
 #team-modal-loading {
   grid-column: 1 / -1;
   text-align: center;
@@ -993,7 +960,7 @@ h1 em{
   color: var(--text-3);
   font-size: .85rem;
 }
-​
+
 /* Individual card */
 .team-card {
   background: var(--bg2);
@@ -1071,12 +1038,12 @@ h1 em{
   background: var(--accent-soft);
   transform: scale(1.1);
 }
-​
+
 /* ── TABLET: 2 columns ── */
 @media (max-width: 860px) {
   #team-modal-cards { gap: 14px; }
 }
-​
+
 /* ── MOBILE: Bottom Sheet ── */
 @media (max-width: 768px) {
   #team-modal-overlay {
@@ -1111,19 +1078,19 @@ h1 em{
   z-index: 1;
   transition: filter 0.28s ease;
 }
-​
+
 .page-content.blur-active {
   filter: blur(20px) brightness(0.16);
   pointer-events: none;
   user-select: none;
 }
-​
+
 /* ═══════════════════════════════════════════════════════════════
    AALYNEX — PREMIUM CHAT UI LAYER
    Paste this entire block at the very END of your <style> tag,
    right before . Nothing else needs to change.
 ═══════════════════════════════════════════════════════════════ */
-​
+
 /* ── 1. CHAT WRAP — container polish ── */
 .chat-wrap {
   border-radius: var(--radius-lg);
@@ -1132,16 +1099,16 @@ h1 em{
   overflow: hidden;
   background: var(--bg);
 }
-​
+
 /* ── 2. SIDEBAR — conversation list ── */
 .chat-list {
   background: var(--surface);
   border-right: 1px solid var(--glass-border);
 }
-​
+
 .chat-list::-webkit-scrollbar { width: 3px; }
 .chat-list::-webkit-scrollbar-thumb { background: rgba(0,0,0,.08); border-radius: 99px; }
-​
+
 /* conversation item */
 .cc-item {
   padding: 12px 14px;
@@ -1157,7 +1124,7 @@ h1 em{
   border-left: 3px solid var(--accent);
   padding-left: 11px;
 }
-​
+
 /* sidebar avatar */
 .c-av {
   background: linear-gradient(135deg, var(--accent2), #6D28D9);
@@ -1166,7 +1133,7 @@ h1 em{
   letter-spacing: -.3px;
   flex-shrink: 0;
 }
-​
+
 /* name & preview */
 .cc-name {
   font-size: .82rem;
@@ -1185,7 +1152,7 @@ h1 em{
   max-width: 154px;
   line-height: 1.4;
 }
-​
+
 /* ── 3. CHAT HEADER ── */
 .ch-header {
   padding: 13px 18px;
@@ -1198,14 +1165,14 @@ h1 em{
   gap: 9px;
   flex-shrink: 0;
 }
-​
+
 /* avatar in header */
 .ch-header .c-av {
   width: 32px !important;
   height: 32px !important;
   font-size: .72rem !important;
 }
-​
+
 /* online dot */
 .online-dot {
   width: 7px;
@@ -1215,7 +1182,7 @@ h1 em{
   transition: background .3s ease;
   flex-shrink: 0;
 }
-​
+
 /* ── 4. MESSAGES AREA ── */
 .chat-msgs {
   padding: 20px 18px;
@@ -1228,7 +1195,7 @@ h1 em{
 }
 .chat-msgs::-webkit-scrollbar { width: 3px; }
 .chat-msgs::-webkit-scrollbar-thumb { background: rgba(0,0,0,.1); border-radius: 99px; }
-​
+
 /* ── 5. MESSAGE BUBBLES ── */
 .msg {
   padding: 9px 13px;
@@ -1238,12 +1205,12 @@ h1 em{
   animation: chatMsgIn .18s cubic-bezier(.25,.46,.45,.94) both;
   transition: opacity .15s ease;
 }
-​
+
 @keyframes chatMsgIn {
   from { opacity: 0; transform: translateY(5px) scale(.98); }
   to   { opacity: 1; transform: none; }
 }
-​
+
 /* received bubble */
 .msg.received {
   background: var(--surface);
@@ -1253,7 +1220,7 @@ h1 em{
   color: var(--text);
   max-width: 72%;
 }
-​
+
 /* sent bubble */
 .msg.sent {
   background: linear-gradient(135deg, #E05C2A, #F07A45);
@@ -1262,7 +1229,7 @@ h1 em{
   box-shadow: 0 2px 12px rgba(224,92,42,.28), 0 1px 3px rgba(224,92,42,.15);
   max-width: 72%;
 }
-​
+
 /* ── 6. TIMESTAMPS ── */
 .msg-time {
   font-size: .61rem;
@@ -1271,11 +1238,11 @@ h1 em{
   letter-spacing: .02em;
 }
 .msg.sent + div .msg-time, .msg-time { opacity: .85; }
-​
+
 /* ── 7. VIDEO MESSAGE CARD ── */
 .msg-video { max-width: 74%; }
 .msg-video.sent-video { align-self: flex-end; }
-​
+
 .msg-video-inner {
   border-radius: 14px;
   overflow: hidden;
@@ -1288,7 +1255,7 @@ h1 em{
   background: rgba(224,92,42,.06);
   border-color: rgba(224,92,42,.2);
 }
-​
+
 .msg-video-label {
   padding: 10px 13px;
   gap: 9px;
@@ -1305,7 +1272,7 @@ h1 em{
   background: linear-gradient(135deg, var(--accent), #F07A45);
   box-shadow: 0 2px 6px rgba(224,92,42,.22);
 }
-​
+
 .msg-video-player {
   display: block;
   width: 100%;
@@ -1314,18 +1281,18 @@ h1 em{
   object-fit: cover;
   background: #0a0a0a;
 }
-​
+
 .msg-video-footer {
   padding: 7px 13px;
   background: var(--surface2);
   font-size: .63rem;
   color: var(--text-3);
 }
-​
+
 /* ── 8. NEGOTIATION BUBBLE ── */
 /* The negotiation bubble already uses .msg; just tighten it */
 .msg[style*="NEGOTIATION"] strong { font-weight: 700; }
-​
+
 /* ── 9. CHAT INPUT BAR ── */
 .chat-inp-bar {
   padding: 11px 15px;
@@ -1336,7 +1303,7 @@ h1 em{
   box-shadow: 0 -1px 0 rgba(0,0,0,.04);
   flex-shrink: 0;
 }
-​
+
 /* input pill */
 .chat-inp {
   flex: 1;
@@ -1358,7 +1325,7 @@ h1 em{
   border-color: rgba(224,92,42,.45);
   box-shadow: 0 0 0 3px rgba(224,92,42,.09);
 }
-​
+
 /* send button — circular premium */
 .chat-inp-bar .btn-primary.btn-sm {
   border-radius: 999px;
@@ -1375,7 +1342,7 @@ h1 em{
   box-shadow: 0 4px 14px rgba(224,92,42,.32);
 }
 .chat-inp-bar .btn-primary.btn-sm:active { transform: scale(.96); }
-​
+
 /* attachment icon button */
 .chat-inp-bar label[for^="chat-upload"] {
   width: 34px;
@@ -1396,7 +1363,7 @@ h1 em{
   color: var(--accent);
   transform: scale(1.08);
 }
-​
+
 /* ── 10. EMPTY STATE ── */
 .chat-msgs div[style*="text-align:center"] {
   background: var(--surface);
@@ -1408,7 +1375,7 @@ h1 em{
   margin: 16px auto;
   max-width: 280px;
 }
-​
+
 /* ── 11. CHAT TOGGLE BUTTON (mobile) ── */
 .chat-toggle {
   display: none !important;
@@ -1435,7 +1402,7 @@ h1 em{
   }
   .chat-toggle:active { transform: scale(.95); }
 }
-​
+
 /* ── 12. MOBILE CHAT OVERLAY ── */
 @media (max-width: 768px) {
   .chat-list {
@@ -1448,18 +1415,18 @@ h1 em{
   .chat-list.open {
     border-right: 1px solid var(--glass-border);
   }
-​
+
   /* narrow bubbles on mobile */
   .msg.received,
   .msg.sent { max-width: 80%; }
-​
+
   .chat-msgs { padding: 14px 12px; }
   .chat-inp-bar { padding: 9px 12px; gap: 7px; }
-​
+
   .chat-inp { padding: 8px 13px; font-size: .82rem; }
   .chat-inp-bar .btn-primary.btn-sm { padding: 8px 14px; font-size: .78rem; }
 }
-​
+
 /* ── 13. NO MESSAGES IN SIDEBAR ── */
 .chat-list > div[style*="padding:14px"] {
   padding: 20px 16px !important;
@@ -1468,7 +1435,7 @@ h1 em{
   text-align: center;
   line-height: 1.6;
 }
-​
+
 /* ── 14. SKELETON LOADER for chat (optional usage) ── */
 @keyframes chatSkeleton {
   0%,100% { opacity: .45; }
@@ -1488,20 +1455,20 @@ h1 em{
   max-width: 45%;
   background: rgba(224,92,42,.08);
 }
-​
+
 /* ── END OF CHAT UI LAYER ── */
-​
-​
+
+
 /* ═════════════════════════════════════════════════════════════
    AALYNEX — CHAT UI (CLEAN FINAL) — replaces all earlier chat overrides
    Desktop unchanged. Mobile = reliable 2-screen (list -> chat) pattern.
    Chat area is ALWAYS present (slides off-screen), so it can never vanish.
 ═════════════════════════════════════════════════════════════ */
-​
+
 /* Desktop: hide mobile-only controls */
 .chat-back { display: none; }
 .chat-toggle { display: none !important; }
-​
+
 @media (max-width: 768px) {
   /* Card = positioning context with a definite height (dvh handles the
      mobile address-bar so the composer never floats in the middle) */
@@ -1513,7 +1480,7 @@ h1 em{
     overflow: hidden;
     border-radius: var(--radius-lg);
   }
-​
+
   /* Screen 1 — conversation list */
   .chat-list {
     position: absolute;
@@ -1527,7 +1494,7 @@ h1 em{
     box-shadow: none;
     background: var(--surface);
   }
-​
+
   /* Screen 2 — chat. Always rendered; just slides in/out (never display:none) */
   .chat-area {
     position: absolute;
@@ -1541,7 +1508,7 @@ h1 em{
     background: var(--bg);
   }
   .chat-wrap.show-chat .chat-area { transform: translateX(0); }
-​
+
   /* Internal layout: header pinned top, messages scroll, composer pinned bottom */
   .chat-area .ch-header { flex: 0 0 auto; }
   .chat-area .chat-msgs {
@@ -1555,7 +1522,7 @@ h1 em{
     flex: 0 0 auto;
     padding-bottom: calc(11px + env(safe-area-inset-bottom));
   }
-​
+
   /* Back button (mobile only) */
   .chat-back {
     display: inline-flex;
@@ -1640,7 +1607,7 @@ transition: transform .2s ease, color .2s ease, background .2s ease;
   from { opacity: 0; transform: rotate(-120deg) scale(.35); }
   to   { opacity: 1; transform: rotate(0deg) scale(1); }
 }
-​
+
 /* sidebar name + role visible in dark */
 [data-theme="dark"] .sb-name { color: var(--text); }
 [data-theme="dark"] .sb-role { color: var(--text-3); }
@@ -1711,7 +1678,7 @@ transition: transform .2s ease, color .2s ease, background .2s ease;
    ============================================================ */
 .faq-section{padding:48px 24px 0;scroll-margin-top:90px;animation:fadeUp .7s .48s ease both;}
 .faq-inner{max-width:1120px;margin:0 auto;}
-​
+
 .faq-layout{
   display:grid;
   grid-template-columns:236px minmax(0,1fr);
@@ -1719,7 +1686,7 @@ transition: transform .2s ease, color .2s ease, background .2s ease;
   align-items:start;
   margin-top:8px;
 }
-​
+
 /* ---- left category rail ---- */
 .faq-cats{
   display:flex;flex-direction:column;gap:8px;
@@ -1746,7 +1713,7 @@ transition: transform .2s ease, color .2s ease, background .2s ease;
   border-color:var(--glass-border-strong);
   box-shadow:var(--shadow-sm);
 }
-​
+
 /* ---- right accordion ---- */
 .faq-list{
   background:var(--surface);
@@ -1777,7 +1744,7 @@ transition: transform .2s ease, color .2s ease, background .2s ease;
 }
 .faq-item.open > .faq-q{color:var(--accent);font-weight:600;}
 .faq-item.open > .faq-q .faq-chev{transform:rotate(180deg);color:var(--accent);}
-​
+
 .faq-a{
   max-height:0;overflow:hidden;
   transition:max-height .34s cubic-bezier(.4,0,.2,1);
@@ -1787,7 +1754,7 @@ transition: transform .2s ease, color .2s ease, background .2s ease;
   color:var(--text-2);
   font-size:.83rem;line-height:1.68;
 }
-​
+
 .faq-foot{
   margin-top:26px;text-align:center;
   font-size:.83rem;color:var(--text-3);
@@ -1796,13 +1763,13 @@ transition: transform .2s ease, color .2s ease, background .2s ease;
   color:var(--accent);font-weight:600;text-decoration:none;margin-left:6px;
 }
 .faq-foot-link:hover{text-decoration:underline;}
-​
+
 /* ---- dark theme touch-ups ---- */
 [data-theme="dark"] .faq-cat{background:var(--glass);}
 [data-theme="dark"] .faq-cat.active{background:var(--surface2);}
 [data-theme="dark"] .faq-q:hover{background:rgba(255,255,255,.035);}
 [data-theme="dark"] .faq-list{background:var(--surface);}
-​
+
 /* ---- responsive: rail becomes a horizontal chip row ---- */
 @media(max-width:900px){
   .faq-layout{grid-template-columns:1fr;gap:18px;}
@@ -1844,8 +1811,3 @@ transition: transform .2s ease, color .2s ease, background .2s ease;
 #team-modal-welcome .logo-img { height: 30px; }
 /* the navbar hides .logo-text under 768px - keep it visible here */
 #team-modal-welcome .logo-text { display: inline-block !important; font-weight: 600; }
-​
-/* auth artwork, dark theme: same drawing, light strokes */
-[data-theme="dark"] #screen-auth::before{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 600 440' fill='none' stroke='rgba(245,243,239,0.15)' stroke-width='1.5' stroke-linejoin='round'%3E%3Cpath d='M600 54 H470 V112 H392'/%3E%3Crect x='386' y='106' width='12' height='12' rx='2' fill='rgba(245,243,239,0.05)'/%3E%3Cpath d='M600 152 H540 V104'/%3E%3Crect x='535' y='99' width='10' height='10' rx='2' fill='rgba(245,243,239,0.05)'/%3E%3Cpath d='M600 386 H452 V330 H374'/%3E%3Crect x='368' y='324' width='12' height='12' rx='2' fill='rgba(245,243,239,0.05)'/%3E%3Cpath d='M600 250 H556'/%3E%3Crect x='551' y='245' width='10' height='10' rx='2' fill='rgba(245,243,239,0.05)'/%3E%3Crect x='330' y='26' width='176' height='66' rx='7'/%3E%3Cline x1='330' y1='41' x2='506' y2='41'/%3E%3Cline x1='330' y1='77' x2='506' y2='77'/%3E%3Crect x='339' y='30' width='11' height='7' rx='2' fill='rgba(245,243,239,0.05)'/%3E%3Crect x='339' y='81' width='11' height='7' rx='2' fill='rgba(245,243,239,0.05)'/%3E%3Crect x='363' y='30' width='11' height='7' rx='2' fill='rgba(245,243,239,0.05)'/%3E%3Crect x='363' y='81' width='11' height='7' rx='2' fill='rgba(245,243,239,0.05)'/%3E%3Crect x='387' y='30' width='11' height='7' rx='2' fill='rgba(245,243,239,0.05)'/%3E%3Crect x='387' y='81' width='11' height='7' rx='2' fill='rgba(245,243,239,0.05)'/%3E%3Crect x='411' y='30' width='11' height='7' rx='2' fill='rgba(245,243,239,0.05)'/%3E%3Crect x='411' y='81' width='11' height='7' rx='2' fill='rgba(245,243,239,0.05)'/%3E%3Crect x='435' y='30' width='11' height='7' rx='2' fill='rgba(245,243,239,0.05)'/%3E%3Crect x='435' y='81' width='11' height='7' rx='2' fill='rgba(245,243,239,0.05)'/%3E%3Crect x='459' y='30' width='11' height='7' rx='2' fill='rgba(245,243,239,0.05)'/%3E%3Crect x='459' y='81' width='11' height='7' rx='2' fill='rgba(245,243,239,0.05)'/%3E%3Crect x='483' y='30' width='11' height='7' rx='2' fill='rgba(245,243,239,0.05)'/%3E%3Crect x='483' y='81' width='11' height='7' rx='2' fill='rgba(245,243,239,0.05)'/%3E%3Ccircle cx='212' cy='59' r='34'/%3E%3Cpath d='M200 45 L229 59 L200 73 Z'/%3E%3Cpath d='M246 59 H330'/%3E%3Cline x1='120' y1='196' x2='530' y2='196'/%3E%3Cpath d='M206 187 l9 9 l-9 9 l-9 -9 z' fill='rgba(245,243,239,0.05)'/%3E%3Cpath d='M288 187 l9 9 l-9 9 l-9 -9 z' fill='rgba(245,243,239,0.05)'/%3E%3Cpath d='M370 187 l9 9 l-9 9 l-9 -9 z' fill='rgba(245,243,239,0.05)'/%3E%3Cpath d='M452 187 l9 9 l-9 9 l-9 -9 z' fill='rgba(245,243,239,0.05)'/%3E%3Cpath d='M120 196 V150'/%3E%3Crect x='115' y='145' width='10' height='10' rx='2' fill='rgba(245,243,239,0.05)'/%3E%3Cline x1='150' y1='276' x2='150' y2='296' stroke-linecap='round'/%3E%3Cline x1='163' y1='264' x2='163' y2='308' stroke-linecap='round'/%3E%3Cline x1='176' y1='272' x2='176' y2='300' stroke-linecap='round'/%3E%3Cline x1='189' y1='256' x2='189' y2='316' stroke-linecap='round'/%3E%3Cline x1='202' y1='268' x2='202' y2='304' stroke-linecap='round'/%3E%3Cline x1='215' y1='248' x2='215' y2='324' stroke-linecap='round'/%3E%3Cline x1='228' y1='262' x2='228' y2='310' stroke-linecap='round'/%3E%3Cline x1='241' y1='274' x2='241' y2='298' stroke-linecap='round'/%3E%3Cline x1='254' y1='258' x2='254' y2='314' stroke-linecap='round'/%3E%3Cline x1='267' y1='270' x2='267' y2='302' stroke-linecap='round'/%3E%3Cline x1='280' y1='252' x2='280' y2='320' stroke-linecap='round'/%3E%3Cline x1='293' y1='266' x2='293' y2='306' stroke-linecap='round'/%3E%3Cline x1='306' y1='275' x2='306' y2='297' stroke-linecap='round'/%3E%3Cpath d='M150 286 H136 V330'/%3E%3Cpath d='M400 326 V300 H426'/%3E%3Cpath d='M514 300 H540 V326'/%3E%3Cpath d='M400 358 V384 H426'/%3E%3Cpath d='M514 384 H540 V358'/%3E%3C/svg%3E");}
-[data-theme="dark"] #screen-auth::after{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 520 440' fill='none' stroke='rgba(245,243,239,0.15)' stroke-width='1.5' stroke-linejoin='round'%3E%3Cpath d='M0 392 H128 V330 H206'/%3E%3Crect x='200' y='324' width='12' height='12' rx='2' fill='rgba(245,243,239,0.05)'/%3E%3Cpath d='M0 300 H70 V252'/%3E%3Crect x='65' y='247' width='10' height='10' rx='2' fill='rgba(245,243,239,0.05)'/%3E%3Cpath d='M0 96 H96 V150 H168'/%3E%3Crect x='162' y='144' width='12' height='12' rx='2' fill='rgba(245,243,239,0.05)'/%3E%3Crect x='196' y='60' width='200' height='68' rx='7'/%3E%3Cline x1='196' y1='75' x2='396' y2='75'/%3E%3Cline x1='196' y1='113' x2='396' y2='113'/%3E%3Crect x='205' y='64' width='11' height='7' rx='2' fill='rgba(245,243,239,0.05)'/%3E%3Crect x='205' y='117' width='11' height='7' rx='2' fill='rgba(245,243,239,0.05)'/%3E%3Crect x='229' y='64' width='11' height='7' rx='2' fill='rgba(245,243,239,0.05)'/%3E%3Crect x='229' y='117' width='11' height='7' rx='2' fill='rgba(245,243,239,0.05)'/%3E%3Crect x='253' y='64' width='11' height='7' rx='2' fill='rgba(245,243,239,0.05)'/%3E%3Crect x='253' y='117' width='11' height='7' rx='2' fill='rgba(245,243,239,0.05)'/%3E%3Crect x='277' y='64' width='11' height='7' rx='2' fill='rgba(245,243,239,0.05)'/%3E%3Crect x='277' y='117' width='11' height='7' rx='2' fill='rgba(245,243,239,0.05)'/%3E%3Crect x='301' y='64' width='11' height='7' rx='2' fill='rgba(245,243,239,0.05)'/%3E%3Crect x='301' y='117' width='11' height='7' rx='2' fill='rgba(245,243,239,0.05)'/%3E%3Crect x='325' y='64' width='11' height='7' rx='2' fill='rgba(245,243,239,0.05)'/%3E%3Crect x='325' y='117' width='11' height='7' rx='2' fill='rgba(245,243,239,0.05)'/%3E%3Crect x='349' y='64' width='11' height='7' rx='2' fill='rgba(245,243,239,0.05)'/%3E%3Crect x='349' y='117' width='11' height='7' rx='2' fill='rgba(245,243,239,0.05)'/%3E%3Crect x='373' y='64' width='11' height='7' rx='2' fill='rgba(245,243,239,0.05)'/%3E%3Crect x='373' y='117' width='11' height='7' rx='2' fill='rgba(245,243,239,0.05)'/%3E%3Cpath d='M240 176 H452' stroke-dasharray='9 8'/%3E%3Ccircle cx='462' cy='176' r='9'/%3E%3Cpath d='M296 168 V184 M348 168 V184 M400 168 V184'/%3E%3Cline x1='40' y1='252' x2='470' y2='252'/%3E%3Cpath d='M124 243 l9 9 l-9 9 l-9 -9 z' fill='rgba(245,243,239,0.05)'/%3E%3Cpath d='M206 243 l9 9 l-9 9 l-9 -9 z' fill='rgba(245,243,239,0.05)'/%3E%3Cpath d='M288 243 l9 9 l-9 9 l-9 -9 z' fill='rgba(245,243,239,0.05)'/%3E%3Cpath d='M370 243 l9 9 l-9 9 l-9 -9 z' fill='rgba(245,243,239,0.05)'/%3E%3Cline x1='232' y1='332' x2='232' y2='356' stroke-linecap='round'/%3E%3Cline x1='245' y1='318' x2='245' y2='370' stroke-linecap='round'/%3E%3Cline x1='258' y1='328' x2='258' y2='360' stroke-linecap='round'/%3E%3Cline x1='271' y1='310' x2='271' y2='378' stroke-linecap='round'/%3E%3Cline x1='284' y1='324' x2='284' y2='364' stroke-linecap='round'/%3E%3Cline x1='297' y1='302' x2='297' y2='386' stroke-linecap='round'/%3E%3Cline x1='310' y1='318' x2='310' y2='370' stroke-linecap='round'/%3E%3Cline x1='323' y1='330' x2='323' y2='358' stroke-linecap='round'/%3E%3Cline x1='336' y1='314' x2='336' y2='374' stroke-linecap='round'/%3E%3Cline x1='349' y1='326' x2='349' y2='362' stroke-linecap='round'/%3E%3Cline x1='362' y1='308' x2='362' y2='380' stroke-linecap='round'/%3E%3Cline x1='375' y1='322' x2='375' y2='366' stroke-linecap='round'/%3E%3Cline x1='388' y1='331' x2='388' y2='357' stroke-linecap='round'/%3E%3Cline x1='401' y1='316' x2='401' y2='372' stroke-linecap='round'/%3E%3Cpath d='M232 344 H214 V392'/%3E%3Ccircle cx='430' cy='332' r='30'/%3E%3Cpath d='M420 320 L445 332 L420 344 Z'/%3E%3Cpath d='M400 332 H340'/%3E%3Cpath d='M40 118 V92 H66'/%3E%3Cpath d='M142 92 H168 V118'/%3E%3Cpath d='M40 144 V170 H66'/%3E%3Cpath d='M142 170 H168 V144'/%3E%3C/svg%3E");}
-​
