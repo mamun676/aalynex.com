@@ -146,8 +146,8 @@ function cProjectDetail(pid) {
 
 <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:8px;">
   <button class="btn btn-ghost" onclick="cPage('projects', document.querySelector('[data-page=projects]'))">← Back</button>
-  <button class="btn btn-primary" onclick="cProjectEdit('${p.id}')">✏️ Edit Project</button>
-  <button class="btn" style="background:#e5484d;color:#fff;margin-left:auto;" onclick="deleteProjectConfirm('${p.id}')">🗑 Remove Project</button>
+  <button class="btn btn-primary" onclick="cProjectEdit('${p.id}')"> Edit Project</button>
+  <button class="btn" style="background:#e5484d;color:#fff;margin-left:auto;" onclick="deleteProjectConfirm('${p.id}')"> Remove Project</button>
 </div>`;
 }
 
