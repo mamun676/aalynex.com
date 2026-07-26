@@ -1171,9 +1171,9 @@ height:100%;min-height:0;
 .team-card-link.team-soc-ig{color:#fff;border-color:transparent;}
 /* rounded-square tiles, identical treatment to the footer badges */
 .team-card-link.team-soc-li{background:#0a66c2;border-radius:8px;}
-.team-card-link.team-soc-li svg{width:17px;height:17px;}
-.team-card-link.team-soc-ig{background:radial-gradient(circle at 30% 107%,#fdf497 0%,#fdf497 5%,#fd5949 45%,#d6249f 60%,#285aeb 90%);border-radius:9px;}
-.team-card-link.team-soc-ig svg{width:18px;height:18px;}
+.team-card-link.team-soc-li svg{width:16px;height:16px;}
+.team-card-link.team-soc-ig{background:radial-gradient(circle at 30% 107%,#fdf497 0%,#fdf497 5%,#fd5949 45%,#d6249f 60%,#285aeb 90%);border-radius:8px;}
+.team-card-link.team-soc-ig svg{width:15px;height:15px;}
 .team-card-link.team-soc-li:hover,
 .team-card-link.team-soc-ig:hover{color:#fff;border-color:transparent;transform:translateY(-2px) scale(1.06);box-shadow:0 6px 15px rgba(0,0,0,.22);}
 .team-card-link.team-soc-li:hover{background:#0a66c2;}
