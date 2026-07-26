@@ -57,11 +57,14 @@ if (supaClient && CU) {
   }
 }
 
-function renderF(p) {
+function renderF(p, quiet) {
   const m = document.getElementById('f-main');
-  if      (p === 'home')     m.innerHTML = fHome();
-  else if (p === 'browse')   m.innerHTML = fBrowse();
-  else if (p === 'ongoing')  m.innerHTML = fOngoing();
+  if (!m) return;
+
+  let html = null;
+  if      (p === 'home')     html = fHome();
+  else if (p === 'browse')   html = fBrowse();
+  else if (p === 'ongoing')  html = fOngoing();
   else if (p === 'chat') {
     const myProjects = DB.projects().filter(p => (p.creatorId === CU.id || p.freelancerId === CU.id) && p.status !== 'open');
     const relatedUserIds = [...new Set(myProjects.map(p => p.creatorId === CU.id ? p.freelancerId : p.creatorId).filter(id => id))];
@@ -79,14 +82,23 @@ function renderF(p) {
       }
     });
 
-    m.innerHTML = `<div class="page-head"><h2>Messages</h2></div>${buildChat(CU.id, defaultOther)}`;
-  }
-  else if (p === 'negotiate') m.innerHTML = fNegotiate();
-  else if (p === 'upload')    m.innerHTML = fUpload();
-  else if (p === 'earnings')  m.innerHTML = fEarnings();
-  else if (p === 'profile')   m.innerHTML = fProfile();
+      html = `<div class="page-head"><h2>Messages</h2></div>${buildChat(CU.id, defaultOther)}`;
+}
+  else if (p === 'negotiate') html = fNegotiate();
+  else if (p === 'upload')    html = fUpload();
+  else if (p === 'earnings')  html = fEarnings();
+  else if (p === 'profile')   html = fProfile();
+  if (html === null) return;
 
-  if (p !== 'chat') {
+  // quiet = background repaint after a sync finished. Identical markup means
+  // there is nothing to show, so skip the write and avoid the flash.
+  if (quiet && m.innerHTML === html) return;
+
+  m.innerHTML = html;
+
+  // Only a click-driven render animates. A background repaint must NOT restart
+  // fadeIn - that restart from opacity:0 was the one-second blink after clicks.
+  if (p !== 'chat' && !quiet) {
     m.classList.remove('fade-in'); void m.offsetWidth; m.classList.add('fade-in');
   }
 }
@@ -1041,4 +1053,3 @@ async function deleteExperience(idx) {
     renderF('profile');
   }
 }
-
