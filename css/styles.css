@@ -461,6 +461,21 @@ h1 em{
   #screen-auth::before,#screen-auth::after{opacity:.5;}
 }
 
+/* ── AUTH CARD HEADER ──
+   takeuforward opens its login card with the logo + wordmark and a welcome
+   line, then the form. Same here. It lives in .auth-box ABOVE .auth-tabs, so it
+   is shared by the Login and the Sign Up tab instead of being duplicated.
+   It reuses .logo / .logo-img / .logo-text, which means the dark-theme white
+   logo swap applies for free - but the navbar hides .logo-text on small
+   screens, so it has to be forced back on here (same trick as the team modal
+   and the footer). */
+.auth-head{text-align:center;margin-bottom:22px;}
+.auth-brand{display:flex;align-items:center;justify-content:center;gap:7px;font-size:1.5rem;margin-bottom:14px;}
+.auth-brand .logo-img{height:32px;}
+.auth-brand .logo-text{display:inline-block !important;font-weight:600;}
+.auth-welcome{margin:0;font-family:'Outfit',sans-serif;font-size:1.02rem;font-weight:700;letter-spacing:-.2px;color:var(--text);}
+.auth-welcome-sub{margin:5px 0 0;font-size:.8rem;color:var(--text-3);}
+
 /* ── AUTH ── */
 .auth-wrap{flex:1;display:flex;align-items:center;justify-content:center;padding:32px 16px;}
 .auth-box{background:var(--surface);border:1px solid var(--glass-border-strong);border-radius:var(--radius-lg);padding:36px;width:100%;max-width:440px;position:relative;overflow:hidden;box-shadow:var(--shadow-xl);}
@@ -878,6 +893,11 @@ height:100%;min-height:0;
   .cards-grid{grid-template-columns:1fr 1fr;}
   .f-grid{grid-template-columns:1fr 1fr;}
   .auth-box{padding:22px 16px;}
+.auth-head{margin-bottom:18px;}
+.auth-brand{font-size:1.28rem;gap:6px;margin-bottom:11px;}
+.auth-brand .logo-img{height:28px;}
+.auth-welcome{font-size:.94rem;}
+.auth-welcome-sub{font-size:.76rem;}
   .hero-cta .hero-btn{padding:11px 18px;font-size:.88rem;}
   .toast-wrap{right:10px;left:10px;}
   .toast{min-width:unset;}
