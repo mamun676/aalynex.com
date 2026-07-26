@@ -815,18 +815,18 @@ h1 em{
   border-color: rgba(224,92,42,.35) !important;
 }
 
-/* Overlay — full viewport, proper stacking */
 #team-modal-overlay {
   display: none;
   position: fixed;
   inset: 0;
-  z-index: 500;
-  background: rgba(0, 0, 0, 0.55);
-  backdrop-filter: blur(10px) saturate(140%);
-  -webkit-backdrop-filter: blur(10px) saturate(140%);
+  z-index: 9999;
+  background: rgba(0, 0, 0, 0.15);
+  backdrop-filter: blur(18px) saturate(140%);
+  -webkit-backdrop-filter: blur(18px) saturate(140%);
   align-items: center;
   justify-content: center;
   padding: 20px;
+  overflow-y: auto;
 }
 #team-modal-overlay.team-open {
   display: flex;
@@ -834,6 +834,10 @@ h1 em{
 
 /* Modal box */
 #team-modal-box {
+  /* explicit vertical stack: header on top, cards underneath, always */
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
   background: var(--surface);
   border: 1px solid var(--glass-border-strong);
   border-radius: var(--radius-lg);
@@ -874,10 +878,20 @@ h1 em{
 
 /* Header */
 #team-modal-header {
+  /* full-width centred band; the resets below make the header immune to any
+     inherited multi-column / float / flex layout coming from other CSS layers */
+  display: block;
+  width: 100%;
+  max-width: none;
+  flex: 0 0 auto;
+  float: none;
+  columns: auto;
+  column-count: auto;
   text-align: center;
-  margin-bottom: 28px;
+  margin: 0 0 28px;
 }
 #team-modal-title {
+  margin: 0 0 6px;
   font-family: 'Outfit', sans-serif;
   font-size: 1.6rem;
   font-weight: 800;
@@ -886,6 +900,7 @@ h1 em{
   margin-bottom: 6px;
 }
 #team-modal-sub {
+  margin: 0 0 14px;
   font-size: .9rem;
   color: var(--text-3);
   margin-bottom: 14px;
@@ -901,8 +916,26 @@ h1 em{
 /* Cards grid */
 #team-modal-cards {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  /* auto-fit + minmax = cards reflow on their own at every width, so the grid
+     can never end up with a half-empty or overflowing row */
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
   gap: 18px;
+  align-items: stretch;
+  justify-content: center;
+  width: 100%;
+  max-width: none;
+  flex: 0 0 auto;
+  float: none;
+  columns: auto;
+  column-count: auto;
+}
+
+#team-modal-loading {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--text-3);
+  font-size: .85rem;
 }
 
 /* Individual card */
@@ -914,6 +947,11 @@ h1 em{
   text-align: center;
   transition: transform .25s ease, box-shadow .25s ease, border-color .25s ease;
   box-shadow: var(--shadow-xs);
+  /* column layout so every card is the same height and the social row always
+     sits flush at the bottom, however long the bio is */
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
 }
 .team-card:hover {
   transform: translateY(-6px);
@@ -952,6 +990,7 @@ h1 em{
   color: var(--text-3);
   line-height: 1.6;
   margin-bottom: 16px;
+  flex: 1 1 auto;   /* absorbs the height difference between short and long bios */
 }
 .team-card-links {
   display: flex;
@@ -979,10 +1018,7 @@ h1 em{
 
 /* ── TABLET: 2 columns ── */
 @media (max-width: 860px) {
-  #team-modal-cards {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 14px;
-  }
+  #team-modal-cards { gap: 14px; }
 }
 
 /* ── MOBILE: Bottom Sheet ── */
@@ -1026,12 +1062,7 @@ h1 em{
   user-select: none;
 }
 
-#team-modal-overlay {
-  backdrop-filter: blur(18px) !important;
-  -webkit-backdrop-filter: blur(18px) !important;
-  background: rgba(0, 0, 0, 0.15);
-  z-index: 9999;
-}/* ═══════════════════════════════════════════════════════════════
+/* ═══════════════════════════════════════════════════════════════
    AALYNEX — PREMIUM CHAT UI LAYER
    Paste this entire block at the very END of your <style> tag,
    right before . Nothing else needs to change.
@@ -1739,3 +1770,21 @@ transition: transform .2s ease, color .2s ease, background .2s ease;
   .faq-a{transition:none;}
   .faq-chev{transition:none;}
 }
+/* TUF-style "Welcome to Aalynex" band - reuses .logo so the mark, the wordmark,
+   the orange accent and the dark-theme white-logo swap all match the navbar */
+#team-modal-welcome {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 4px 10px;
+  margin-bottom: 20px;
+}
+#team-welcome-kicker {
+  font-size: .95rem;
+  color: var(--text-2);
+}
+#team-modal-welcome .logo { font-size: 1.5rem; gap: 8px; }
+#team-modal-welcome .logo-img { height: 30px; }
+/* the navbar hides .logo-text under 768px - keep it visible here */
+#team-modal-welcome .logo-text { display: inline-block !important; font-weight: 600; }
