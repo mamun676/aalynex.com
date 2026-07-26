@@ -20,7 +20,11 @@ if (supaClient && CU) {
   syncFromSupabase(CU).then(() => {
     // a newer nav click landed while this sync was in flight - drop the repaint
     if (_navStale(_navT) || currentCreatorPage !== p) return;
-    if (p === 'chat') {
+// These AI pages hold their own state (typed input, generated results)
+// and read nothing from the synced project data, so a background
+// repaint would only blink and wipe the user's work.
+if (p === 'aisuggest' || p === 'analyzer' || p === 'thumbnail') return;
+if (p === 'chat') {
         const el = document.getElementById('chat-msgs-el');
         if (el && currentChatUserId) {
           const key = [CU.id, currentChatUserId].sort().join('_');
@@ -28,10 +32,10 @@ if (supaClient && CU) {
           el.scrollTop = el.scrollHeight;
         }
         updateChatSidebarPreviews();
-      } else {
-        renderC(p);
-      }
-    });
+          } else {
+    renderC(p, true);
+  }
+});
   }
 }
 
@@ -59,26 +63,39 @@ if (supaClient && CU) {
           el.scrollTop = el.scrollHeight;
         }
         updateChatSidebarPreviews();
-      } else {
-        renderC(p);
-      }
-    });
+          } else {
+    renderC(p, true);
+  }
+});
   }
 }
 
-function renderC(p) {
+function renderC(p, quiet) {
   const m = document.getElementById('c-main');
-  if      (p === 'home')     m.innerHTML = cHome();
-  else if (p === 'new')      m.innerHTML = cNew();
-  else if (p === 'projects') m.innerHTML = cProjects();
-  else if (p === 'chat')     m.innerHTML = cChat();
-  else if (p === 'payment')  m.innerHTML = cPayment();
-  else if (p === 'rate')     m.innerHTML = cRate();
-  else if (p === 'profile')  m.innerHTML = cProfile();
-  else if (p === 'browse')   m.innerHTML = cBrowseFreelancers();
-  else if (p === 'managed')  m.innerHTML = cManagedEditing();
+  if (!m) return;
 
-  if (p !== 'chat') {
+  let html = null;
+  if      (p === 'home')     html = cHome();
+  else if (p === 'new')      html = cNew();
+  else if (p === 'projects') html = cProjects();
+  else if (p === 'chat')     html = cChat();
+  else if (p === 'payment')  html = cPayment();
+  else if (p === 'rate')     html = cRate();
+  else if (p === 'profile')  html = cProfile();
+  else if (p === 'browse')   html = cBrowseFreelancers();
+  else if (p === 'managed')  html = cManagedEditing();
+  if (html === null) return;
+
+  // quiet = background repaint after a sync finished. If the freshly built
+  // markup is identical to what is already on screen, writing innerHTML would
+  // only cause a visible flash, so leave the DOM completely alone.
+  if (quiet && m.innerHTML === html) { checkFProfileCompletion(); return; }
+
+  m.innerHTML = html;
+
+  // Only a click-driven render animates. A background repaint must NOT restart
+  // fadeIn - that restart from opacity:0 was the one-second blink after clicks.
+  if (p !== 'chat' && !quiet) {
     m.classList.remove('fade-in'); void m.offsetWidth; m.classList.add('fade-in');
   }
   checkFProfileCompletion();
@@ -1655,4 +1672,3 @@ async function startPremiumCheckout() {
     if (cb) { cb.disabled = false; cb.textContent = 'Start Free Trial →'; }
   }
 }
-
