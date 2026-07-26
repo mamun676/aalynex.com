@@ -624,12 +624,63 @@ h1 em{
 .social-btn{display:flex;align-items:center;gap:8px;padding:8px 16px;border-radius:999px;border:1px solid var(--glass-border-strong);background:var(--surface);font-size:.85rem;color:var(--text-2);text-decoration:none;transition:all .25s ease;box-shadow:var(--shadow-xs);}
 .social-btn svg{width:16px;height:16px;}
 .social-btn:hover{transform:translateY(-3px) scale(1.04);border-color:rgba(224,92,42,.4);color:var(--accent);background:rgba(224,92,42,.06);box-shadow:0 8px 22px rgba(224,92,42,.12), var(--shadow-sm);}
-.follow-section{margin-top:40px;border-top:1px solid var(--glass-border);text-align:center;padding:40px 20px;background:transparent;}
-.follow-title{font-family:'Outfit',sans-serif;font-size:1.4rem;font-weight:700;margin-bottom:18px;color:var(--text);}
-.social-links{display:flex;justify-content:center;gap:18px;flex-wrap:wrap;margin-bottom:18px;}
-.social-links a{padding:8px 16px;border-radius:999px;border:1px solid var(--glass-border-strong);background:var(--surface);font-size:.85rem;color:var(--text-2);cursor:pointer;transition:all .2s;text-decoration:none;box-shadow:var(--shadow-xs);}
-.social-links a:hover{border-color:rgba(224,92,42,.3);color:var(--accent);background:rgba(224,92,42,.05);box-shadow:var(--shadow-sm);}
-.follow-bottom{font-size:.8rem;color:var(--text-3);}
+/* ============================================================
+   SITE FOOTER  (takeuforward-style: logo | links | socials)
+   Works in both light and dark theme via CSS variables.
+   ============================================================ */
+.site-footer{border-top:1px solid var(--glass-border);background:transparent;padding:26px 24px 20px;}
+.foot-inner{max-width:1180px;margin:0 auto;}
+.foot-top{display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap;}
+
+/* Footer logo reuses the navbar's .logo / .logo-img / .logo-text so that the
+   mark, the wordmark, the accent colour and the dark-theme white-logo swap
+   ([data-theme="dark"] .logo-img) are all identical to the header. */
+.foot-logo{text-decoration:none;flex:0 0 auto;}
+/* the navbar hides .logo-text below 768px - keep it visible in the footer */
+.foot-logo .logo-text{display:inline-block !important;}
+
+.foot-links{display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;flex:1 1 auto;}
+.foot-link{font-size:.82rem;color:var(--text-2);text-decoration:none;transition:color .2s ease;}
+.foot-link:hover{color:var(--accent);}
+.foot-sep{color:var(--text-4);font-size:.8rem;user-select:none;}
+
+.foot-socials{display:flex;align-items:center;gap:9px;flex:0 0 auto;}
+.foot-soc{width:25px;height:25px;border-radius:7px;display:flex;align-items:center;justify-content:center;color:#fff;text-decoration:none;flex-shrink:0;box-shadow:0 1px 2px rgba(0,0,0,.12);transition:transform .2s ease,box-shadow .2s ease;}
+.foot-soc svg{width:14px;height:14px;display:block;}
+.foot-soc:hover{transform:translateY(-2px);box-shadow:0 5px 13px rgba(0,0,0,.2);}
+
+/* official brand colours + per-mark optical sizing */
+.foot-soc-ig{background:radial-gradient(circle at 30% 107%,#fdf497 0%,#fdf497 5%,#fd5949 45%,#d6249f 60%,#285aeb 90%);}
+.foot-soc-ig svg{width:15px;height:15px;}
+.foot-soc-x{background:#000;border-radius:50%;}
+.foot-soc-x svg{width:11px;height:11px;}
+.foot-soc-fb{background:#1877f2;border-radius:50%;}
+.foot-soc-fb svg{width:15px;height:15px;}
+.foot-soc-yt{background:#ff0000;}
+.foot-soc-yt svg{width:16px;height:16px;margin-left:1px;}
+
+/* on the dark background a pure-black X badge would disappear */
+[data-theme="dark"] .foot-soc-x{border:1px solid rgba(255,255,255,.25);}
+
+.foot-divider{height:1px;background:var(--glass-border);margin:20px 0 14px;}
+.foot-copy{text-align:center;font-size:.76rem;color:var(--text-3);}
+
+
+@media(max-width:860px){
+  .foot-top{flex-direction:column;gap:16px;text-align:center;}
+  .foot-links{order:2;}
+  .foot-socials{order:3;}
+}
+@media(max-width:520px){
+  .site-footer{padding:22px 16px 18px;}
+  .foot-sep{display:none;}
+  .foot-links{gap:10px 18px;}
+  .foot-link{font-size:.8rem;}
+  .foot-copy{font-size:.72rem;}
+}
+@media(prefers-reduced-motion:reduce){
+  .foot-soc,.foot-soc:hover{transition:none;transform:none;}
+}
 
 /* ── BOTTOM NAV ICON SIZING ── */
 .bn-icon-svg {display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;}
