@@ -617,25 +617,40 @@
   </footer>
 </div>
 
-<div id="team-modal-overlay" onclick="closeTeamModal(event)">
-    <div id="team-modal-title" id="team-modal-heading">Our Amazing Team</div>
+<!-- ===================== MEET THE TEAM MODAL ===================== -->
+  <div id="team-modal-overlay" onclick="closeTeamModal(event)">
+    <div id="team-modal-box" role="dialog" aria-modal="true" aria-labelledby="team-modal-title">
+
       <button onclick="closeTeamModal()" id="team-modal-close" aria-label="Close">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
       </button>
+
       <div id="team-modal-header">
-        <div id="team-modal-title" id="team-modal-heading">Our Amazing Team</div>
-        <div id="team-modal-sub">Built by developers who understand creators and editors.</div>
-        <p id="team-modal-desc">Aalynex was born from a real problem — creators struggling to find reliable, skilled editors, and editors struggling to find consistent work. Our small but passionate team set out to build a platform that bridges that gap with transparency, speed, and trust at its core. Every feature you see was thoughtfully crafted with both sides of the workflow in mind.</p>
+        <div id="team-modal-welcome">
+          <span id="team-welcome-kicker">Welcome to</span>
+          <span id="team-welcome-brand" class="logo">
+            <img src="aalynex-logo.png" class="logo-img" draggable="false" alt="">
+            <span class="logo-text">Aal<span class="logo-accent">y</span>nex</span>
+          </span>
+        </div>
+
+        <h2 id="team-modal-title">Our Amazing Team</h2>
+
+        <p id="team-modal-sub">Built by developers who understand creators and editors.</p>
+
+        <p id="team-modal-desc">Aalynex was born from a real problem &mdash; creators struggling to find reliable, skilled editors, and editors struggling to find consistent work. Our small but passionate team set out to build a platform that bridges that gap with transparency, speed, and trust at its core. Every feature you see was thoughtfully crafted with both sides of the workflow in mind.</p>
       </div>
-<div id="team-modal-cards">
-  <div style="grid-column:1/-1;text-align:center;padding:40px 20px;color:var(--text-3);font-size:.85rem;">
-    Click to load team...
-  </div>
-</div>
+
+      <div id="team-modal-cards">
+        <div id="team-modal-loading">Click to load team...</div>
+      </div>
+
     </div>
   </div>
 
-</div>
 <div id="screen-public-profile" class="screen">
   <nav>
     <div class="logo">
