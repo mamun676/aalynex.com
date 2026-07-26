@@ -364,8 +364,10 @@ async function loginSuccess(u) {
         clearTimeout(window._rtProjTimer);
         window._rtProjTimer = setTimeout(() => {
           syncFromSupabase(CU).then(() => {
-            if (CU.role === 'creator' && currentCreatorPage !== 'chat') renderC(currentCreatorPage || 'home');
-            else if (CU.role === 'freelancer' && currentFreelancerPage !== 'chat') renderF(currentFreelancerPage || 'home');
+            // quiet repaint: a realtime row change on ANY project fires this, so it
+// must not flash the page when the visible data did not actually change
+if (CU.role === 'creator' && currentCreatorPage !== 'chat') renderC(currentCreatorPage || 'home', true);
+else if (CU.role === 'freelancer' && currentFreelancerPage !== 'chat') renderF(currentFreelancerPage || 'home', true);
           });
         }, 400);
       })
