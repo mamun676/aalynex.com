@@ -440,7 +440,11 @@ height:100%;min-height:0;
 }
 /* the only scrolling part of the sidebar: profile card + every nav row.
    min-height:0 is required or a flex child refuses to shrink and scroll. */
-.sb-scroll{flex:1 1 auto;min-height:0;overflow-y:auto;display:flex;flex-direction:column;gap:2px;padding-bottom:4px;}
+/* the only scrolling part of the sidebar: profile card + every nav row.
+   min-height:0 is required or a flex child refuses to shrink and scroll.
+   overflow-x:hidden so a vertical scrollbar can never drag a horizontal one
+   along with it. */
+.sb-scroll{flex:1 1 auto;min-height:0;overflow-y:auto;overflow-x:hidden;display:flex;flex-direction:column;gap:2px;padding-bottom:4px;}
 .sb-profile{background:var(--bg2);border:1px solid var(--glass-border);border-radius:var(--radius);padding:14px;margin-bottom:16px;display:flex;align-items:center;gap:11px;}
 .sb-avatar{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:1rem;flex-shrink:0;font-family:'Outfit',sans-serif;}
 .sb-av-creator{background:linear-gradient(135deg,var(--creator),#059669);color:#fff;}
