@@ -73,13 +73,23 @@ var Tawk_API = Tawk_API || {}, Tawk_LoadStart = new Date();
     const st = e.state || { view: 'landing' };
     window._navigatingBack = true;
     try {
-      if (st.view === 'creator' && CU) {
-        showScreen('screen-creator');
-        cPage(st.page || 'home', document.querySelector(`#screen-creator .nav-item[data-page="${st.page || 'home'}"]`));
-      } else if (st.view === 'freelancer' && CU) {
-        showScreen('screen-freelancer');
-        fPage(st.page || 'home', document.querySelector(`#screen-freelancer .nav-item[data-page="${st.page || 'home'}"]`));
-      } else if (st.view === 'auth') {
+      // Only navigate when the target page is not already on screen. Anything that
+// touches history (the Tawk.to widget, a stray hash change, a duplicate
+// popstate) used to re-run cPage/fPage for the page we were ALREADY on,
+// which repainted it a second time and looked like a one-second blink.
+if (st.view === 'creator' && CU) {
+  showScreen('screen-creator');
+  const want = st.page || 'home';
+  if (currentCreatorPage !== want) {
+    cPage(want, document.querySelector(`#screen-creator .nav-item[data-page="${want}"]`));
+  }
+} else if (st.view === 'freelancer' && CU) {
+  showScreen('screen-freelancer');
+  const want = st.page || 'home';
+  if (currentFreelancerPage !== want) {
+    fPage(want, document.querySelector(`#screen-freelancer .nav-item[data-page="${want}"]`));
+  }
+} else if (st.view === 'auth') {
         showScreen('screen-auth');
       } else {
         showScreen('screen-landing');
