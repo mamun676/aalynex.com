@@ -52,7 +52,16 @@ function showModal(title, bodyHtml, onConfirm) {
   cb.onclick = () => { closeModal(); onConfirm(); };
 }
 function closeModal() { document.getElementById('modal-bg').classList.remove('show'); }
-
+/* ── ROUTER RACE GUARD ──
+   Every nav click fires an async syncFromSupabase() whose .then() re-renders the
+   page that was captured at click time. When you click fast, a slower earlier
+   request can resolve AFTER a newer click and repaint the OLD page over the new
+   one - which looked like the page flipping back and forth on its own.
+   Each click now takes a ticket; a callback only repaints if its ticket is still
+   the newest one. */
+window._navSeq = 0;
+function _navTicket() { return ++window._navSeq; }
+function _navStale(t) { return t !== window._navSeq; }
 /* ── SCREEN + SIDEBAR ── */
 /* history router helper — in-app nav state push karta hai (duplicate skip) */
 function _pushNav(state) {
