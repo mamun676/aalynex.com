@@ -1,4 +1,4 @@
-// ════════════════════════════════════
+
 //  PUBLIC PROFILE — shareable freelancer page (?profile=<id>)
 //  Logged-out (anon) users ke liye public read.
 // ════════════════════════════════════
