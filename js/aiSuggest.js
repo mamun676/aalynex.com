@@ -19,7 +19,7 @@ window._aiSuggestHistory = null;
   };
 })();
 
-const AIS_PLATFORMS = ['YouTube', 'YouTube Shorts', 'Instagram Reels', 'Instagram', 'TikTok', 'LinkedIn'];
+const AIS_PLATFORMS = ['YouTube', 'YouTube Shorts', 'Instagram Reels', 'Instagram', 'LinkedIn'];
 const AIS_LANGS = ['Hinglish', 'Hindi', 'English', 'Tamil', 'Telugu', 'Bengali', 'Marathi'];
 const AIS_AGES = ['13-17', '18-24', '25-34', '35-44', '45+'];
 const AIS_EXP = ['Beginner', 'Growing', 'Established'];
