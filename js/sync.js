@@ -32,7 +32,8 @@ async function syncFromSupabase(u, opts = {}) {
         };
         if (!exists) localUsers.push(mapped); else Object.assign(exists, mapped);
       });
-      DB.saveUsers(localUsers);
+      localUsers.sort((a, b) => (a.createdAt - b.createdAt) || String(a.id).localeCompare(String(b.id)));
+DB.saveUsers(localUsers);
 
       // ── Managed Editors (admin-controlled) — mark which freelancers are managed ──
       try {
@@ -80,7 +81,8 @@ async function syncFromSupabase(u, opts = {}) {
         editedUploaded: p.edited_uploaded || false, paid: p.paid || false,
         rating: p.rating || 0, review: p.review || '', createdAt: new Date(p.created_at).getTime()
       }));
-      DB.saveProjects(mapped);
+      mapped.sort((a, b) => (a.createdAt - b.createdAt) || String(a.id).localeCompare(String(b.id)));
+DB.saveProjects(mapped);
     }
 
     const { data: attachments } = await supaClient.from('project_attachments').select('*');
@@ -90,7 +92,9 @@ async function syncFromSupabase(u, opts = {}) {
         file_url: a.file_url,   // ← THIS WAS MISSING (preserved fix)
         type: a.file_type, size: a.file_size, duration: a.duration
       }));
-      DB.saveAttachments(mappedAtts);
+      mappedAtts.sort((a, b) => String(a.projectId).localeCompare(String(b.projectId))
+  || String(a.id).localeCompare(String(b.id)));
+DB.saveAttachments(mappedAtts);
     }
 
     // ⚡ FAST PATH: dashboard/non-chat pages ko messages ki zaroorat nahi —
