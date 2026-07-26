@@ -1147,6 +1147,20 @@ height:100%;min-height:0;
   transform: scale(1.1);
 }
 
+/* real brand badges - same official filled glyphs and brand colours as the
+   site footer, so a white glyph sits on the brand background instead of the
+   neutral outline circle. The brand background must survive :hover, so these
+   selectors are one class more specific than .team-card-link:hover above. */
+.team-card-link.team-soc-li,
+.team-card-link.team-soc-ig{color:#fff;border-color:transparent;}
+.team-card-link.team-soc-li{background:#0a66c2;}
+.team-card-link.team-soc-ig{background:radial-gradient(circle at 30% 107%,#fdf497 0%,#fdf497 5%,#fd5949 45%,#d6249f 60%,#285aeb 90%);}
+.team-card-link.team-soc-ig svg{width:15px;height:15px;}
+.team-card-link.team-soc-li:hover,
+.team-card-link.team-soc-ig:hover{color:#fff;border-color:transparent;transform:scale(1.1);box-shadow:0 5px 13px rgba(0,0,0,.2);}
+.team-card-link.team-soc-li:hover{background:#0a66c2;}
+.team-card-link.team-soc-ig:hover{background:radial-gradient(circle at 30% 107%,#fdf497 0%,#fdf497 5%,#fd5949 45%,#d6249f 60%,#285aeb 90%);}
+
 /* ── TABLET: 2 columns ── */
 @media (max-width: 860px) {
   #team-modal-cards { gap: 14px; }
