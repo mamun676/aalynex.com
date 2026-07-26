@@ -516,11 +516,14 @@ h1 em{
   width:var(--sidebar-w);flex-shrink:0;
   background:var(--surface);
   border-right:1px solid var(--glass-border);
-  padding:20px 12px;display:flex;flex-direction:column;gap:0;
-/* the sidebar itself no longer scrolls. Its inner .sb-scroll does, so the
-   Logout row below it is a real footer instead of a sticky bar that the
-   nav items slid underneath while scrolling. */
-overflow:hidden;z-index:160;
+padding:20px 12px;display:flex;flex-direction:column;gap:2px;
+/* the whole column scrolls as one piece - options AND the Logout row. Nothing
+   is pinned, so Logout just follows the last option, which is what makes it
+   adapt to any screen height or number of options.
+   overflow-x is explicitly hidden: this box only ever overflows vertically,
+   and letting overflow-x fall back to auto was what drew that thin dark line
+   along the bottom-left edge. */
+overflow-y:auto;overflow-x:hidden;z-index:160;
 height:100%;min-height:0;
   transition:transform .3s cubic-bezier(.25,.46,.45,.94);
     box-shadow:var(--shadow-sm);
@@ -531,7 +534,10 @@ height:100%;min-height:0;
    min-height:0 is required or a flex child refuses to shrink and scroll.
    overflow-x:hidden so a vertical scrollbar can never drag a horizontal one
    along with it. */
-.sb-scroll{flex:1 1 auto;min-height:0;overflow-y:auto;overflow-x:hidden;display:flex;flex-direction:column;gap:2px;padding-bottom:4px;}
+/* kept only so index.html needs no change - it is a plain pass-through box
+   now, deliberately WITHOUT its own scrolling or flex growth, so the nav
+   items participate in the sidebar's single scroll. */
+.sb-scroll{display:flex;flex-direction:column;gap:2px;}
 .sb-profile{background:var(--bg2);border:1px solid var(--glass-border);border-radius:var(--radius);padding:14px;margin-bottom:16px;display:flex;align-items:center;gap:11px;}
 .sb-avatar{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:1rem;flex-shrink:0;font-family:'Outfit',sans-serif;}
 .sb-av-creator{background:linear-gradient(135deg,var(--creator),#059669);color:#fff;}
@@ -555,9 +561,9 @@ height:100%;min-height:0;
 .nav-badge-pro{background:var(--accent-soft);color:var(--accent);letter-spacing:.3px;}
 /* sits OUTSIDE .sb-scroll: always visible, never overlaps a nav row, and
    nothing scrolls through it. flex-shrink:0 keeps it at full height. */
-.sb-logout{display:flex;align-items:center;gap:9px;padding:9px 11px;border-radius:var(--radius-sm);cursor:pointer;color:var(--red);font-size:.85rem;font-weight:500;transition:all .2s;flex-shrink:0;margin-top:10px;position:relative;border:1px solid rgba(220,38,38,.15);background:linear-gradient(rgba(220,38,38,.04),rgba(220,38,38,.04)),var(--surface);}
+.sb-logout{display:flex;align-items:center;gap:9px;padding:9px 11px;border-radius:var(--radius-sm);cursor:pointer;color:var(--red);font-size:.85rem;font-weight:500;transition:all .2s;flex-shrink:0;margin-top:auto;position:relative;border:1px solid rgba(220,38,38,.15);background:linear-gradient(rgba(220,38,38,.04),rgba(220,38,38,.04)),var(--surface);}
 /* hairline separating the pinned footer from the scrolling list above it */
-.sb-logout::before{content:'';position:absolute;left:-12px;right:-12px;top:-10px;height:1px;background:var(--glass-border);}
+.sb-logout::before{content:'';position:absolute;left:-12px;right:-12px;top:-8px;height:1px;background:var(--glass-border);}
 .sb-logout:hover{background:rgba(220,38,38,.08);border-color:rgba(220,38,38,.25);}
 
 /* ── DASH MAIN ── */
