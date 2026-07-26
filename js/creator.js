@@ -25,12 +25,17 @@ if (supaClient && CU) {
 // repaint would only blink and wipe the user's work.
 if (p === 'aisuggest' || p === 'analyzer' || p === 'thumbnail') return;
 if (p === 'chat') {
-        const el = document.getElementById('chat-msgs-el');
-        if (el && currentChatUserId) {
-          const key = [CU.id, currentChatUserId].sort().join('_');
-          el.innerHTML = renderMsgs(DB.messages()[key] || [], CU.id);
-          el.scrollTop = el.scrollHeight;
-        }
+  const el = document.getElementById('chat-msgs-el');
+if (el && currentChatUserId) {
+  const key = [CU.id, currentChatUserId].sort().join('_');
+  const msgHtml = renderMsgs(DB.messages()[key] || [], CU.id);
+  // only touch the thread when a message actually arrived, otherwise
+  // this rewrite flashed the whole conversation on every sync
+  if (_paintChanged('c:msgs:' + key, msgHtml)) {
+    el.innerHTML = msgHtml;
+    el.scrollTop = el.scrollHeight;
+  }
+}
         updateChatSidebarPreviews();
           } else {
     renderC(p, true);
@@ -56,12 +61,17 @@ if (supaClient && CU) {
     // a newer nav click landed while this sync was in flight - drop the repaint
     if (_navStale(_navT) || currentCreatorPage !== p) return;
     if (p === 'chat') {
-        const el = document.getElementById('chat-msgs-el');
-        if (el && currentChatUserId) {
-          const key = [CU.id, currentChatUserId].sort().join('_');
-          el.innerHTML = renderMsgs(DB.messages()[key] || [], CU.id);
-          el.scrollTop = el.scrollHeight;
-        }
+      const el = document.getElementById('chat-msgs-el');
+if (el && currentChatUserId) {
+  const key = [CU.id, currentChatUserId].sort().join('_');
+  const msgHtml = renderMsgs(DB.messages()[key] || [], CU.id);
+  // only touch the thread when a message actually arrived, otherwise
+  // this rewrite flashed the whole conversation on every sync
+  if (_paintChanged('c:msgs:' + key, msgHtml)) {
+    el.innerHTML = msgHtml;
+    el.scrollTop = el.scrollHeight;
+  }
+}
         updateChatSidebarPreviews();
           } else {
     renderC(p, true);
@@ -89,7 +99,10 @@ function renderC(p, quiet) {
   // quiet = background repaint after a sync finished. If the freshly built
   // markup is identical to what is already on screen, writing innerHTML would
   // only cause a visible flash, so leave the DOM completely alone.
-  if (quiet && m.innerHTML === html) { checkFProfileCompletion(); return; }
+  const changed = _paintChanged('c:' + p, html);
+if (quiet && !changed) { checkFProfileCompletion(); return; }
+
+m.innerHTML = html;
 
   m.innerHTML = html;
 
