@@ -21,15 +21,15 @@ if (el && currentChatUserId) {
   const msgHtml = renderMsgs(DB.messages()[key] || [], CU.id);
   // only touch the thread when a message actually arrived, otherwise
   // this rewrite flashed the whole conversation on every sync
-  if (_paintChanged('c:msgs:' + key, msgHtml)) {
+  if (_paintChanged('f:msgs:' + key, msgHtml)) {
     el.innerHTML = msgHtml;
     el.scrollTop = el.scrollHeight;
   }
 }
         updateChatSidebarPreviews();
-      } else {
-        renderF(p);
-      }
+} else {
+  renderF(p, true);
+}
     });
   }
 }
@@ -54,15 +54,15 @@ if (el && currentChatUserId) {
   const msgHtml = renderMsgs(DB.messages()[key] || [], CU.id);
   // only touch the thread when a message actually arrived, otherwise
   // this rewrite flashed the whole conversation on every sync
-  if (_paintChanged('c:msgs:' + key, msgHtml)) {
+  if (_paintChanged('f:msgs:' + key, msgHtml)) {
     el.innerHTML = msgHtml;
     el.scrollTop = el.scrollHeight;
   }
 }
         updateChatSidebarPreviews();
-      } else {
-        renderF(p);
-      }
+} else {
+  renderF(p, true);
+}
     });
   }
 }
@@ -100,11 +100,12 @@ function renderF(p, quiet) {
   else if (p === 'profile')   html = fProfile();
   if (html === null) return;
 
-  // quiet = background repaint after a sync finished. Identical markup means
-  // there is nothing to show, so skip the write and avoid the flash.
-  if (quiet && m.innerHTML === html) return;
+// quiet = background repaint after a sync finished. Identical markup means the
+// data did not change, so skip the write and avoid the flash.
+const changed = _paintChanged('f:' + p, html);
+if (quiet && !changed) return;
 
-  m.innerHTML = html;
+m.innerHTML = html;
 
   // Only a click-driven render animates. A background repaint must NOT restart
   // fadeIn - that restart from opacity:0 was the one-second blink after clicks.
@@ -988,11 +989,14 @@ function checkFProfileCompletion() {
   const fMain = document.getElementById('f-main');
   if (!fMain) return;
 
-  if (existingBanner) {
-    existingBanner.outerHTML = bannerHtml;
-  } else {
-    fMain.insertAdjacentHTML('afterbegin', bannerHtml);
-  }
+// outerHTML assignment destroys and recreates the node, which flashes even when
+// the percentage did not change - so only rewrite when the markup really differs
+if (existingBanner) {
+  if (_paintChanged('f:banner', bannerHtml)) existingBanner.outerHTML = bannerHtml;
+} else {
+  _paintChanged('f:banner', bannerHtml);
+  fMain.insertAdjacentHTML('afterbegin', bannerHtml);
+}
 }
 
 async function savePortfolioLinks() {
@@ -1063,4 +1067,3 @@ async function deleteExperience(idx) {
     renderF('profile');
   }
 }
-
