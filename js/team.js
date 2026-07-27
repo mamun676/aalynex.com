@@ -1,5 +1,4 @@
 
-//  TEAM — "Meet the Team" modal
 // ════════════════════════════════════
 async function fetchAndRenderDevelopers() {
   if (!supaClient) return;
