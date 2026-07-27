@@ -83,10 +83,71 @@ function _pushNav(state) {
   if (cur && cur.view === state.view && cur.page === state.page) return;
   try { history.pushState(state, ''); } catch (e) {}
 }
+/* ── BRAND SPLASH ──────────────────────────────────────────────────
+   NOT shown when the site first opens. It only covers the two slow
+   moments: (1) opening Login / Sign Up, (2) entering a dashboard after
+   logging in, so the empty white dashboard is never visible.
+   If the network never comes back, the curtain turns into a
+   "No internet connection" card instead of hanging forever. */
+var SPLASH_OFFLINE_MS = 7000;   // how long to wait before giving up
+window._splashShownAt = 0;
+window._splashTimer = null;
+window._splashOffTimer = null;
+function _splashEl() { return document.getElementById('app-splash'); }
+function showSplash() {
+  var el = _splashEl();
+  if (!el) return;
+  if (window._splashTimer) { clearTimeout(window._splashTimer); window._splashTimer = null; }
+  if (window._splashOffTimer) clearTimeout(window._splashOffTimer);
+  window._splashShownAt = Date.now();
+  el.classList.remove('is-offline');
+  el.classList.remove('splash-hide');
+  // already offline? say so straight away, else wait and then give up
+  if (navigator.onLine === false) { el.classList.add('is-offline'); }
+  window._splashOffTimer = setTimeout(function () {
+    var e = _splashEl();
+    if (e && !e.classList.contains('splash-hide')) e.classList.add('is-offline');
+  }, SPLASH_OFFLINE_MS);
+}
+/* minMs = keep the lockup on screen at least this long so it never flickers */
+function hideSplash(minMs) {
+  var el = _splashEl();
+  if (!el) return;
+  if (el.classList.contains('is-offline')) return;   // let the user read it / retry
+  var min = (typeof minMs === 'number') ? minMs : 700;
+  var left = Math.max(0, min - (Date.now() - (window._splashShownAt || 0)));
+  if (window._splashTimer) clearTimeout(window._splashTimer);
+  window._splashTimer = setTimeout(function () {
+    if (window._splashOffTimer) { clearTimeout(window._splashOffTimer); window._splashOffTimer = null; }
+    el.classList.add('splash-hide');
+    el.classList.remove('is-offline');
+  }, left);
+}
+function splashRetry() {
+  if (navigator.onLine === false) { showToast('Still offline. Check your connection.', 'err', ''); return; }
+  location.reload();
+}
+/* connection dropped mid-load -> switch to the offline card immediately */
+window.addEventListener('offline', function () {
+  var el = _splashEl();
+  if (el && !el.classList.contains('splash-hide')) el.classList.add('is-offline');
+});
+
 function showScreen(id) {
+  var prev = document.querySelector('.screen.active');
+  var fromAuth = prev && prev.id === 'screen-auth';
+  var toDash = (id === 'screen-creator' || id === 'screen-freelancer');
+  // The curtain must go UP FIRST, before the new screen is revealed,
+  // otherwise the login page paints for a moment and the logo arrives
+  // late (looked like a glitch). Two slow moments: opening Login /
+  // Sign Up, and landing on a dashboard after logging in.
+  var curtain = (id === 'screen-auth' && !fromAuth) ? 700
+               : (fromAuth && toDash) ? 1400 : 0;
+  if (curtain) showSplash();
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
   window.scrollTo(0, 0);
+  if (curtain) hideSplash(curtain);
   if (id === 'screen-landing')          _pushNav({ view: 'landing' });
   else if (id === 'screen-auth')        _pushNav({ view: 'auth' });
   else if (id === 'screen-creator')     _pushNav({ view: 'creator',    page: (typeof currentCreatorPage   !== 'undefined' ? currentCreatorPage   : 'home') });
@@ -120,6 +181,9 @@ document.addEventListener('keydown', function (e) {
   if (el && el.classList && el.classList.contains('logo-home')) goHome(e);
 });
 function goAuth(tab, role) {
+  // raise the curtain on the click itself so the Aalynex lockup is the
+  // FIRST thing seen, then build the login/signup screen behind it
+  showSplash();
   showScreen('screen-auth');
   switchTab(tab);
   if (role) { tab === 'signup' ? setSRole(role) : setLRole(role); }
