@@ -1102,7 +1102,7 @@ function cPayment() {
           const payable = !p.paid && (p.status === 'completed' || p.editedUploaded);
           return `
           <div class="pc" style="cursor:pointer;" onclick="cViewPayment('${p.id}')">
-            <div class="pico"><svg class="pico-icon" viewBox="0 0 24 24"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg></div>
+            <div class="pico">${contentIconSvg(p.contentType)}</div>
             <div class="pinfo"><div class="ptitle">${p.title}</div><div class="pmeta">&#8377;${fmt(p.budget)} &#183; ${f ? f.name : 'No editor yet'} &#183; ${fmtDate(p.createdAt)}</div></div>
             <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
               <div class="pstatus ${p.paid ? 's-co' : 's-pe'}">${p.paid ? 'Paid' : 'Pending'}</div>
