@@ -60,6 +60,19 @@ function closeModal() { document.getElementById('modal-bg').classList.remove('sh
    Each click now takes a ticket; a callback only repaints if its ticket is still
    the newest one. */
 window._navSeq = 0;
+/* ── PAINT SIGNATURE ──
+   Remembers the markup string each page produced last time it was painted.
+   Do NOT compare against element.innerHTML instead: the browser re-serializes
+   the DOM (attribute quoting/order, entity encoding, self-closing tags), so
+   reading it back never equals the string we generated, and a "has it changed?"
+   check written that way always reports "changed" and repaints for nothing.
+   Same generator + unchanged data = byte-identical string, so this compares. */
+window._paintSig = {};
+function _paintChanged(key, html) {
+  if (window._paintSig[key] === html) return false;
+  window._paintSig[key] = html;
+  return true;
+}
 function _navTicket() { return ++window._navSeq; }
 function _navStale(t) { return t !== window._navSeq; }
 /* ── SCREEN + SIDEBAR ── */
@@ -79,6 +92,33 @@ function showScreen(id) {
   else if (id === 'screen-creator')     _pushNav({ view: 'creator',    page: (typeof currentCreatorPage   !== 'undefined' ? currentCreatorPage   : 'home') });
   else if (id === 'screen-freelancer')  _pushNav({ view: 'freelancer',  page: (typeof currentFreelancerPage !== 'undefined' ? currentFreelancerPage : 'home') });
 }
+/* Clicking the Aalynex logo or name anywhere on the site lands on the first
+   (landing) page, scrolled to the top. Every close/reset step is wrapped in
+   try/catch because this also fires from screens where those elements do not
+   exist (for example the shared public-profile page). */
+function goHome(e) {
+  if (e) { if (e.preventDefault) e.preventDefault(); if (e.stopPropagation) e.stopPropagation(); }
+  try { if (typeof closeTeamModal === 'function') closeTeamModal(); } catch (err) {}
+  try { if (typeof closeModal === 'function') closeModal(); } catch (err) {}
+  try { closeSidebar('creator'); } catch (err) {}
+  try { closeSidebar('freelancer'); } catch (err) {}
+  document.body.style.overflow = '';
+  window.isPublicProfileView = false;
+  // a shared link carries ?profile=<id>; drop it so a later refresh does not
+  // bounce back to that profile instead of the landing page
+  try {
+    if (window.location.search) history.replaceState(null, '', window.location.pathname);
+  } catch (err) {}
+  showScreen('screen-landing');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  return false;
+}
+// keyboard parity: the lockups are role="link" tabindex="0", so Enter/Space act like a click
+document.addEventListener('keydown', function (e) {
+  if (e.key !== 'Enter' && e.key !== ' ') return;
+  var el = document.activeElement;
+  if (el && el.classList && el.classList.contains('logo-home')) goHome(e);
+});
 function goAuth(tab, role) {
   showScreen('screen-auth');
   switchTab(tab);
@@ -130,14 +170,11 @@ function statusLabel(s) { return { open: 'Open', ongoing: 'In Progress', complet
 /* ── CONTENT TYPE ICONS ── */
 function contentIconSvg(t) {
   const icons = {
-    'YouTube Long-form': `<svg class="pico-icon" viewBox="0 0 24 24"><rect x="2" y="3" width="15" height="13" rx="2"/><polygon points="22 7 17 10 22 13 22 7"/></svg>`,
-    'Instagram Reel':    `<svg class="pico-icon" viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="20" rx="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/></svg>`,
-    'YouTube Shorts':    `<svg class="pico-icon" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg>`,
-    'TikTok':            `<svg class="pico-icon" viewBox="0 0 24 24"><path d="M9 12a4 4 0 1 0 4 4V4a5 5 0 0 0 5 5"/></svg>`,
-    'LinkedIn Video':    `<svg class="pico-icon" viewBox="0 0 24 24"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>`,
-    'Brand Video':       `<svg class="pico-icon" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>`,
-    'Documentary':       `<svg class="pico-icon" viewBox="0 0 24 24"><rect x="2" y="3" width="15" height="13" rx="2"/><polygon points="22 7 17 10 22 13 22 7"/></svg>`,
-    'Podcast Edit':      `<svg class="pico-icon" viewBox="0 0 24 24"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>`,
+    /* real brand marks below - official single-path glyphs, filled, in brand colours */
+'YouTube Long-form': `<svg class="pico-icon pico-brand pico-yt" viewBox="0 0 24 24" aria-hidden="true"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>`,
+'Instagram Reel':    `<svg class="pico-icon pico-brand pico-ig" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 1.366.062 2.633.336 3.608 1.311.975.975 1.249 2.242 1.311 3.608.058 1.266.07 1.646.07 4.85s-.012 3.584-.07 4.85c-.062 1.366-.336 2.633-1.311 3.608-.975.975-2.242 1.249-3.608 1.311-1.266.058-1.646.07-4.85.07s-3.584-.012-4.85-.07c-1.366-.062-2.633-.336-3.608-1.311-.975-.975-1.249-2.242-1.311-3.608C2.175 15.584 2.163 15.204 2.163 12s.012-3.584.07-4.85c.062-1.366.336-2.633 1.311-3.608.975-.975 2.242-1.249 3.608-1.311C8.416 2.175 8.796 2.163 12 2.163zm0 1.802c-3.148 0-3.512.011-4.75.068-1.024.047-1.72.207-2.226.713-.506.506-.666 1.202-.713 2.226-.057 1.238-.068 1.602-.068 4.75s.011 3.512.068 4.75c.047 1.024.207 1.72.713 2.226.506.506 1.202.666 2.226.713 1.238.057 1.602.068 4.75.068s3.512-.011 4.75-.068c1.024-.047 1.72-.207 2.226-.713.506-.506.666-1.202.713-2.226.057-1.238.068-1.602.068-4.75s-.011-3.512-.068-4.75c-.047-1.024-.207-1.72-.713-2.226-.506-.506-1.202-.666-2.226-.713-1.238-.057-1.602-.068-4.75-.068zM12 6.865a5.135 5.135 0 1 0 0 10.27 5.135 5.135 0 0 0 0-10.27zm0 8.468a3.333 3.333 0 1 1 0-6.666 3.333 3.333 0 0 1 0 6.666zm6.538-8.671a1.2 1.2 0 1 1-2.4 0 1.2 1.2 0 0 1 2.4 0z"/></svg>`,
+'YouTube Shorts':    `<svg class="pico-icon pico-brand pico-yt" viewBox="0 0 24 24" aria-hidden="true"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>`,
+'LinkedIn Video':    `<svg class="pico-icon pico-brand pico-li" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.225 0z"/></svg>`,
   };
   return icons[t] || `<svg class="pico-icon" viewBox="0 0 24 24"><rect x="2" y="3" width="15" height="13" rx="2"/><polygon points="22 7 17 10 22 13 22 7"/></svg>`;
 }

@@ -15,16 +15,21 @@ if (supaClient && CU) {
     // a newer nav click landed while this sync was in flight - drop the repaint
     if (_navStale(_navT) || currentFreelancerPage !== p) return;
     if (p === 'chat') {
-        const el = document.getElementById('chat-msgs-el');
-        if (el && currentChatUserId) {
-          const key = [CU.id, currentChatUserId].sort().join('_');
-          el.innerHTML = renderMsgs(DB.messages()[key] || [], CU.id);
-          el.scrollTop = el.scrollHeight;
-        }
+      const el = document.getElementById('chat-msgs-el');
+if (el && currentChatUserId) {
+  const key = [CU.id, currentChatUserId].sort().join('_');
+  const msgHtml = renderMsgs(DB.messages()[key] || [], CU.id);
+  // only touch the thread when a message actually arrived, otherwise
+  // this rewrite flashed the whole conversation on every sync
+  if (_paintChanged('f:msgs:' + key, msgHtml)) {
+    el.innerHTML = msgHtml;
+    el.scrollTop = el.scrollHeight;
+  }
+}
         updateChatSidebarPreviews();
-      } else {
-        renderF(p);
-      }
+} else {
+  renderF(p, true);
+}
     });
   }
 }
@@ -43,25 +48,33 @@ if (supaClient && CU) {
     // a newer nav click landed while this sync was in flight - drop the repaint
     if (_navStale(_navT) || currentFreelancerPage !== p) return;
     if (p === 'chat') {
-        const el = document.getElementById('chat-msgs-el');
-        if (el && currentChatUserId) {
-          const key = [CU.id, currentChatUserId].sort().join('_');
-          el.innerHTML = renderMsgs(DB.messages()[key] || [], CU.id);
-          el.scrollTop = el.scrollHeight;
-        }
+      const el = document.getElementById('chat-msgs-el');
+if (el && currentChatUserId) {
+  const key = [CU.id, currentChatUserId].sort().join('_');
+  const msgHtml = renderMsgs(DB.messages()[key] || [], CU.id);
+  // only touch the thread when a message actually arrived, otherwise
+  // this rewrite flashed the whole conversation on every sync
+  if (_paintChanged('f:msgs:' + key, msgHtml)) {
+    el.innerHTML = msgHtml;
+    el.scrollTop = el.scrollHeight;
+  }
+}
         updateChatSidebarPreviews();
-      } else {
-        renderF(p);
-      }
+} else {
+  renderF(p, true);
+}
     });
   }
 }
 
-function renderF(p) {
+function renderF(p, quiet) {
   const m = document.getElementById('f-main');
-  if      (p === 'home')     m.innerHTML = fHome();
-  else if (p === 'browse')   m.innerHTML = fBrowse();
-  else if (p === 'ongoing')  m.innerHTML = fOngoing();
+  if (!m) return;
+
+  let html = null;
+  if      (p === 'home')     html = fHome();
+  else if (p === 'browse')   html = fBrowse();
+  else if (p === 'ongoing')  html = fOngoing();
   else if (p === 'chat') {
     const myProjects = DB.projects().filter(p => (p.creatorId === CU.id || p.freelancerId === CU.id) && p.status !== 'open');
     const relatedUserIds = [...new Set(myProjects.map(p => p.creatorId === CU.id ? p.freelancerId : p.creatorId).filter(id => id))];
@@ -79,14 +92,24 @@ function renderF(p) {
       }
     });
 
-    m.innerHTML = `<div class="page-head"><h2>Messages</h2></div>${buildChat(CU.id, defaultOther)}`;
-  }
-  else if (p === 'negotiate') m.innerHTML = fNegotiate();
-  else if (p === 'upload')    m.innerHTML = fUpload();
-  else if (p === 'earnings')  m.innerHTML = fEarnings();
-  else if (p === 'profile')   m.innerHTML = fProfile();
+      html = `<div class="page-head"><h2>Messages</h2></div>${buildChat(CU.id, defaultOther)}`;
+}
+  else if (p === 'negotiate') html = fNegotiate();
+  else if (p === 'upload')    html = fUpload();
+  else if (p === 'earnings')  html = fEarnings();
+  else if (p === 'profile')   html = fProfile();
+  if (html === null) return;
 
-  if (p !== 'chat') {
+// quiet = background repaint after a sync finished. Identical markup means the
+// data did not change, so skip the write and avoid the flash.
+const changed = _paintChanged('f:' + p, html);
+if (quiet && !changed) return;
+
+m.innerHTML = html;
+
+  // Only a click-driven render animates. A background repaint must NOT restart
+  // fadeIn - that restart from opacity:0 was the one-second blink after clicks.
+  if (p !== 'chat' && !quiet) {
     m.classList.remove('fade-in'); void m.offsetWidth; m.classList.add('fade-in');
   }
 }
@@ -966,11 +989,14 @@ function checkFProfileCompletion() {
   const fMain = document.getElementById('f-main');
   if (!fMain) return;
 
-  if (existingBanner) {
-    existingBanner.outerHTML = bannerHtml;
-  } else {
-    fMain.insertAdjacentHTML('afterbegin', bannerHtml);
-  }
+// outerHTML assignment destroys and recreates the node, which flashes even when
+// the percentage did not change - so only rewrite when the markup really differs
+if (existingBanner) {
+  if (_paintChanged('f:banner', bannerHtml)) existingBanner.outerHTML = bannerHtml;
+} else {
+  _paintChanged('f:banner', bannerHtml);
+  fMain.insertAdjacentHTML('afterbegin', bannerHtml);
+}
 }
 
 async function savePortfolioLinks() {

@@ -133,6 +133,14 @@ body::after{
 
 /* project icon images */
 .pico-icon {width:22px;height:22px;stroke:var(--text-3);fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;}
+/* real brand marks (YouTube / Instagram / LinkedIn) are official
+   FILLED single-path glyphs, so they must opt out of the stroke styling
+   above. Colour is set with `color` and picked up through currentColor, so
+   one rule per brand is enough. */
+.pico-icon.pico-brand{fill:currentColor;stroke:none;width:21px;height:21px;}
+.pico-yt{color:#ff0000;}
+.pico-ig{color:#d6249f;}
+.pico-li{color:#0a66c2;}
 
 /* Social icons */
 .social-btn-icon {width:16px;height:16px;flex-shrink:0;}
@@ -185,6 +193,10 @@ nav.scrolled{
 .logo-icon::after{content:'';position:absolute;inset:-1px;border-radius:10px;background:linear-gradient(135deg,rgba(224,92,42,.3),rgba(240,122,69,.1));z-index:-1;filter:blur(3px);}
 .logo span{color:var(--text);}
 .logo-text{color:var(--text);font-weight:500;display:inline-block;-webkit-text-fill-color:currentColor;letter-spacing:-.3px;}
+/* clickable brand lockups (every Aalynex logo/name routes to the landing page) */
+.logo-home{cursor:pointer;transition:opacity .18s ease;}
+.logo-home:hover{opacity:.72;}
+.logo-home:focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:8px;}
 .logo .logo-accent{color:var(--accent);-webkit-text-fill-color:var(--accent);}
 .nav-right{display:flex;align-items:center;gap:8px;flex-shrink:0;}
 .nav-greeting{font-size:.8rem;color:var(--text-3);white-space:nowrap;}
@@ -389,6 +401,93 @@ h1 em{
 .stat strong{display:block;font-family:'Outfit',sans-serif;font-size:1.4rem;font-weight:700;background:linear-gradient(135deg,var(--accent),#F07A45);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
 .stat span{color:var(--text-3);font-size:.75rem;}
 
+/* ── AUTH BACKGROUND ──
+   takeuforward puts a faint circuit-board line drawing behind its login card.
+   Same idea here, but drawn from OUR platform's motifs instead of circuits:
+   film strips, play buttons, an edit timeline with keyframe diamonds, an audio
+   waveform and crop/aspect-ratio framing marks - i.e. a video edit bay.
+   Two sparse clusters (top-right + bottom-left) exactly like TUF.
+
+   Pure CSS: the art lives in ::before / ::after as inline SVG data URIs, so
+   index.html needs no new markup at all.
+   No negative offsets and no overflow:hidden on purpose - the tall Sign Up
+   form still has to be able to scroll, and a negatively-offset absolute layer
+   would have added a stray scrollbar. */
+#screen-auth{position:relative;}
+#screen-auth::before,
+#screen-auth::after{
+  content:'';position:absolute;pointer-events:none;z-index:0;
+  background-repeat:no-repeat;
+}
+#screen-auth::before{top:0;right:0;width:min(50vw,600px);height:min(48vh,440px);background-position:top right;background-size:contain;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 600 440' fill='none' stroke='rgba(26,25,23,0.13)' stroke-width='1.5' stroke-linejoin='round'%3E%3Cpath d='M600 54 H470 V112 H392'/%3E%3Crect x='386' y='106' width='12' height='12' rx='2' fill='rgba(26,25,23,0.05)'/%3E%3Cpath d='M600 152 H540 V104'/%3E%3Crect x='535' y='99' width='10' height='10' rx='2' fill='rgba(26,25,23,0.05)'/%3E%3Cpath d='M600 386 H452 V330 H374'/%3E%3Crect x='368' y='324' width='12' height='12' rx='2' fill='rgba(26,25,23,0.05)'/%3E%3Cpath d='M600 250 H556'/%3E%3Crect x='551' y='245' width='10' height='10' rx='2' fill='rgba(26,25,23,0.05)'/%3E%3Crect x='330' y='26' width='176' height='66' rx='7'/%3E%3Cline x1='330' y1='41' x2='506' y2='41'/%3E%3Cline x1='330' y1='77' x2='506' y2='77'/%3E%3Crect x='339' y='30' width='11' height='7' rx='2' fill='rgba(26,25,23,0.05)'/%3E%3Crect x='339' y='81' width='11' height='7' rx='2' fill='rgba(26,25,23,0.05)'/%3E%3Crect x='363' y='30' width='11' height='7' rx='2' fill='rgba(26,25,23,0.05)'/%3E%3Crect x='363' y='81' width='11' height='7' rx='2' fill='rgba(26,25,23,0.05)'/%3E%3Crect x='387' y='30' width='11' height='7' rx='2' fill='rgba(26,25,23,0.05)'/%3E%3Crect x='387' y='81' width='11' height='7' rx='2' fill='rgba(26,25,23,0.05)'/%3E%3Crect x='411' y='30' width='11' height='7' rx='2' fill='rgba(26,25,23,0.05)'/%3E%3Crect x='411' y='81' width='11' height='7' rx='2' fill='rgba(26,25,23,0.05)'/%3E%3Crect x='435' y='30' width='11' height='7' rx='2' fill='rgba(26,25,23,0.05)'/%3E%3Crect x='435' y='81' width='11' height='7' rx='2' fill='rgba(26,25,23,0.05)'/%3E%3Crect x='459' y='30' width='11' height='7' rx='2' fill='rgba(26,25,23,0.05)'/%3E%3Crect x='459' y='81' width='11' height='7' rx='2' fill='rgba(26,25,23,0.05)'/%3E%3Crect x='483' y='30' width='11' height='7' rx='2' fill='rgba(26,25,23,0.05)'/%3E%3Crect x='483' y='81' width='11' height='7' rx='2' fill='rgba(26,25,23,0.05)'/%3E%3Ccircle cx='212' cy='59' r='34'/%3E%3Cpath d='M200 45 L229 59 L200 73 Z'/%3E%3Cpath d='M246 59 H330'/%3E%3Cline x1='120' y1='196' x2='530' y2='196'/%3E%3Cpath d='M206 187 l9 9 l-9 9 l-9 -9 z' fill='rgba(26,25,23,0.05)'/%3E%3Cpath d='M288 187 l9 9 l-9 9 l-9 -9 z' fill='rgba(26,25,23,0.05)'/%3E%3Cpath d='M370 187 l9 9 l-9 9 l-9 -9 z' fill='rgba(26,25,23,0.05)'/%3E%3Cpath d='M452 187 l9 9 l-9 9 l-9 -9 z' fill='rgba(26,25,23,0.05)'/%3E%3Cpath d='M120 196 V150'/%3E%3Crect x='115' y='145' width='10' height='10' rx='2' fill='rgba(26,25,23,0.05)'/%3E%3Cline x1='150' y1='276' x2='150' y2='296' stroke-linecap='round'/%3E%3Cline x1='163' y1='264' x2='163' y2='308' stroke-linecap='round'/%3E%3Cline x1='176' y1='272' x2='176' y2='300' stroke-linecap='round'/%3E%3Cline x1='189' y1='256' x2='189' y2='316' stroke-linecap='round'/%3E%3Cline x1='202' y1='268' x2='202' y2='304' stroke-linecap='round'/%3E%3Cline x1='215' y1='248' x2='215' y2='324' stroke-linecap='round'/%3E%3Cline x1='228' y1='262' x2='228' y2='310' stroke-linecap='round'/%3E%3Cline x1='241' y1='274' x2='241' y2='298' stroke-linecap='round'/%3E%3Cline x1='254' y1='258' x2='254' y2='314' stroke-linecap='round'/%3E%3Cline x1='267' y1='270' x2='267' y2='302' stroke-linecap='round'/%3E%3Cline x1='280' y1='252' x2='280' y2='320' stroke-linecap='round'/%3E%3Cline x1='293' y1='266' x2='293' y2='306' stroke-linecap='round'/%3E%3Cline x1='306' y1='275' x2='306' y2='297' stroke-linecap='round'/%3E%3Cpath d='M150 286 H136 V330'/%3E%3Cpath d='M400 326 V300 H426'/%3E%3Cpath d='M514 300 H540 V326'/%3E%3Cpath d='M400 358 V384 H426'/%3E%3Cpath d='M514 384 H540 V358'/%3E%3C/svg%3E");}
+#screen-auth::after{bottom:0;left:0;width:min(46vw,520px);height:min(46vh,440px);background-position:bottom left;background-size:contain;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 520 440' fill='none' stroke='rgba(26,25,23,0.13)' stroke-width='1.5' stroke-linejoin='round'%3E%3Cpath d='M0 392 H128 V330 H206'/%3E%3Crect x='200' y='324' width='12' height='12' rx='2' fill='rgba(26,25,23,0.05)'/%3E%3Cpath d='M0 300 H70 V252'/%3E%3Crect x='65' y='247' width='10' height='10' rx='2' fill='rgba(26,25,23,0.05)'/%3E%3Cpath d='M0 96 H96 V150 H168'/%3E%3Crect x='162' y='144' width='12' height='12' rx='2' fill='rgba(26,25,23,0.05)'/%3E%3Crect x='196' y='60' width='200' height='68' rx='7'/%3E%3Cline x1='196' y1='75' x2='396' y2='75'/%3E%3Cline x1='196' y1='113' x2='396' y2='113'/%3E%3Crect x='205' y='64' width='11' height='7' rx='2' fill='rgba(26,25,23,0.05)'/%3E%3Crect x='205' y='117' width='11' height='7' rx='2' fill='rgba(26,25,23,0.05)'/%3E%3Crect x='229' y='64' width='11' height='7' rx='2' fill='rgba(26,25,23,0.05)'/%3E%3Crect x='229' y='117' width='11' height='7' rx='2' fill='rgba(26,25,23,0.05)'/%3E%3Crect x='253' y='64' width='11' height='7' rx='2' fill='rgba(26,25,23,0.05)'/%3E%3Crect x='253' y='117' width='11' height='7' rx='2' fill='rgba(26,25,23,0.05)'/%3E%3Crect x='277' y='64' width='11' height='7' rx='2' fill='rgba(26,25,23,0.05)'/%3E%3Crect x='277' y='117' width='11' height='7' rx='2' fill='rgba(26,25,23,0.05)'/%3E%3Crect x='301' y='64' width='11' height='7' rx='2' fill='rgba(26,25,23,0.05)'/%3E%3Crect x='301' y='117' width='11' height='7' rx='2' fill='rgba(26,25,23,0.05)'/%3E%3Crect x='325' y='64' width='11' height='7' rx='2' fill='rgba(26,25,23,0.05)'/%3E%3Crect x='325' y='117' width='11' height='7' rx='2' fill='rgba(26,25,23,0.05)'/%3E%3Crect x='349' y='64' width='11' height='7' rx='2' fill='rgba(26,25,23,0.05)'/%3E%3Crect x='349' y='117' width='11' height='7' rx='2' fill='rgba(26,25,23,0.05)'/%3E%3Crect x='373' y='64' width='11' height='7' rx='2' fill='rgba(26,25,23,0.05)'/%3E%3Crect x='373' y='117' width='11' height='7' rx='2' fill='rgba(26,25,23,0.05)'/%3E%3Cpath d='M240 176 H452' stroke-dasharray='9 8'/%3E%3Ccircle cx='462' cy='176' r='9'/%3E%3Cpath d='M296 168 V184 M348 168 V184 M400 168 V184'/%3E%3Cline x1='40' y1='252' x2='470' y2='252'/%3E%3Cpath d='M124 243 l9 9 l-9 9 l-9 -9 z' fill='rgba(26,25,23,0.05)'/%3E%3Cpath d='M206 243 l9 9 l-9 9 l-9 -9 z' fill='rgba(26,25,23,0.05)'/%3E%3Cpath d='M288 243 l9 9 l-9 9 l-9 -9 z' fill='rgba(26,25,23,0.05)'/%3E%3Cpath d='M370 243 l9 9 l-9 9 l-9 -9 z' fill='rgba(26,25,23,0.05)'/%3E%3Cline x1='232' y1='332' x2='232' y2='356' stroke-linecap='round'/%3E%3Cline x1='245' y1='318' x2='245' y2='370' stroke-linecap='round'/%3E%3Cline x1='258' y1='328' x2='258' y2='360' stroke-linecap='round'/%3E%3Cline x1='271' y1='310' x2='271' y2='378' stroke-linecap='round'/%3E%3Cline x1='284' y1='324' x2='284' y2='364' stroke-linecap='round'/%3E%3Cline x1='297' y1='302' x2='297' y2='386' stroke-linecap='round'/%3E%3Cline x1='310' y1='318' x2='310' y2='370' stroke-linecap='round'/%3E%3Cline x1='323' y1='330' x2='323' y2='358' stroke-linecap='round'/%3E%3Cline x1='336' y1='314' x2='336' y2='374' stroke-linecap='round'/%3E%3Cline x1='349' y1='326' x2='349' y2='362' stroke-linecap='round'/%3E%3Cline x1='362' y1='308' x2='362' y2='380' stroke-linecap='round'/%3E%3Cline x1='375' y1='322' x2='375' y2='366' stroke-linecap='round'/%3E%3Cline x1='388' y1='331' x2='388' y2='357' stroke-linecap='round'/%3E%3Cline x1='401' y1='316' x2='401' y2='372' stroke-linecap='round'/%3E%3Cpath d='M232 344 H214 V392'/%3E%3Ccircle cx='430' cy='332' r='30'/%3E%3Cpath d='M420 320 L445 332 L420 344 Z'/%3E%3Cpath d='M400 332 H340'/%3E%3Cpath d='M40 118 V92 H66'/%3E%3Cpath d='M142 92 H168 V118'/%3E%3Cpath d='M40 144 V170 H66'/%3E%3Cpath d='M142 170 H168 V144'/%3E%3C/svg%3E");}
+/* the navbar and the login card must stay above the artwork */
+#screen-auth > nav,
+#screen-auth .auth-wrap{position:relative;z-index:1;}
+
+/* ── AUTH BACKGROUND, CENTRE BAND ──
+   The two corner clusters left the middle of the screen empty. TUF fills its
+   middle too, so this is a third layer: a wide band centred on the card.
+   Every motif sits in the outer thirds (preview monitor + clip stack on the
+   left, timeline tracks + publish node on the right) because the card owns the
+   middle 440px. The two long horizontal rails DO run through the centre on
+   purpose - they vanish behind the card and reappear on the other side, which
+   is what makes the whole thing read as one connected diagram.
+   It hangs off .auth-wrap (not a third pseudo-element on #screen-auth, which
+   only has two) and is vertically centred with translateY, so it never adds
+   document height. */
+#screen-auth .auth-wrap::before{
+  content:'';position:absolute;left:0;right:0;top:50%;transform:translateY(-50%);
+  height:min(58vh,480px);pointer-events:none;z-index:0;
+  background-repeat:no-repeat;background-position:center center;background-size:contain;
+  background-image:url("data:image/svg+xml,<<< 4,445-char data URI — attached file se lo >>>");
+}
+/* ── AUTH BACKGROUND, FULL-PAGE TEXTURE ──
+   The corner clusters and the centre band both leave the area immediately
+   around the card bare, but takeuforward's circuit art actually covers the
+   WHOLE page - it runs behind its login card too, just very faintly. This is
+   that layer: one seamless 340px tile of the same edit-bay vocabulary (rails,
+   junction nodes, film perforations, a keyframe, a play button, waveform bars)
+   repeated across the viewport.
+   position:fixed on purpose - it covers the navbar area as well and can never
+   add document height, so the tall Sign Up form still scrolls normally.
+   Strokes are roughly half the corner clusters' opacity because this one is
+   directly behind the form and must not compete with it. */
+#screen-auth .auth-wrap::after{
+  content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+  background-repeat:repeat;background-position:center center;background-size:340px 340px;
+  background-image:url("data:image/svg+xml,<<< 1,518-char tile URI >>>");
+}
+/* the card sits above every art layer */
+#screen-auth .auth-box{z-index:1;}
+@media (max-width:768px){
+  /* the card fills a phone screen - a centre band would only show as noise */
+  #screen-auth .auth-wrap::before{display:none;}
+}
+@media (max-width:768px){
+  /* on a phone the card fills the screen, so the art only peeks out */
+  #screen-auth::before{width:76vw;height:30vh;opacity:.55;}
+  #screen-auth::after{width:72vw;height:28vh;opacity:.55;}
+}
+@media (prefers-reduced-motion:reduce){
+  #screen-auth::before,#screen-auth::after{opacity:.5;}
+}
+
+/* ── AUTH CARD HEADER ──
+   takeuforward opens its login card with the logo + wordmark and a welcome
+   line, then the form. Same here. It lives in .auth-box ABOVE .auth-tabs, so it
+   is shared by the Login and the Sign Up tab instead of being duplicated.
+   It reuses .logo / .logo-img / .logo-text, which means the dark-theme white
+   logo swap applies for free - but the navbar hides .logo-text on small
+   screens, so it has to be forced back on here (same trick as the team modal
+   and the footer). */
+.auth-head{text-align:center;margin-bottom:22px;}
+.auth-brand{display:flex;align-items:center;justify-content:center;gap:7px;font-size:1.5rem;margin-bottom:14px;}
+.auth-brand .logo-img{height:32px;}
+.auth-brand .logo-text{display:inline-block !important;font-weight:600;}
+.auth-welcome{margin:0;font-family:'Outfit',sans-serif;font-size:1.02rem;font-weight:700;letter-spacing:-.2px;color:var(--text);}
+.auth-welcome-sub{margin:5px 0 0;font-size:.8rem;color:var(--text-3);}
+
 /* ── AUTH ── */
 .auth-wrap{flex:1;display:flex;align-items:center;justify-content:center;padding:32px 16px;}
 .auth-box{background:var(--surface);border:1px solid var(--glass-border-strong);border-radius:var(--radius-lg);padding:36px;width:100%;max-width:440px;position:relative;overflow:hidden;box-shadow:var(--shadow-xl);}
@@ -429,14 +528,28 @@ h1 em{
   width:var(--sidebar-w);flex-shrink:0;
   background:var(--surface);
   border-right:1px solid var(--glass-border);
-  padding:20px 12px;display:flex;flex-direction:column;gap:2px;
-  overflow-y:auto;z-index:160;
-  /* full height of the shell + min-height:0 so overflow-y actually kicks in
-     and the sticky logout stays parked at the bottom of the viewport */
-  height:100%;min-height:0;
+padding:20px 12px;display:flex;flex-direction:column;gap:2px;
+/* the whole column scrolls as one piece - options AND the Logout row. Nothing
+   is pinned, so Logout just follows the last option, which is what makes it
+   adapt to any screen height or number of options.
+   overflow-x is explicitly hidden: this box only ever overflows vertically,
+   and letting overflow-x fall back to auto was what drew that thin dark line
+   along the bottom-left edge. */
+overflow-y:auto;overflow-x:hidden;z-index:160;
+height:100%;min-height:0;
   transition:transform .3s cubic-bezier(.25,.46,.45,.94);
-  box-shadow:var(--shadow-sm);
+    box-shadow:var(--shadow-sm);
 }
+/* the only scrolling part of the sidebar: profile card + every nav row.
+   min-height:0 is required or a flex child refuses to shrink and scroll. */
+/* the only scrolling part of the sidebar: profile card + every nav row.
+   min-height:0 is required or a flex child refuses to shrink and scroll.
+   overflow-x:hidden so a vertical scrollbar can never drag a horizontal one
+   along with it. */
+/* kept only so index.html needs no change - it is a plain pass-through box
+   now, deliberately WITHOUT its own scrolling or flex growth, so the nav
+   items participate in the sidebar's single scroll. */
+.sb-scroll{display:flex;flex-direction:column;gap:2px;}
 .sb-profile{background:var(--bg2);border:1px solid var(--glass-border);border-radius:var(--radius);padding:14px;margin-bottom:16px;display:flex;align-items:center;gap:11px;}
 .sb-avatar{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:1rem;flex-shrink:0;font-family:'Outfit',sans-serif;}
 .sb-av-creator{background:linear-gradient(135deg,var(--creator),#059669);color:#fff;}
@@ -458,7 +571,11 @@ h1 em{
 .nav-badge{margin-left:auto;background:var(--accent);color:#fff;font-size:.65rem;font-weight:700;padding:2px 6px;border-radius:99px;min-width:18px;text-align:center;}
 /* soft "PRO" pill used by the AI feature rows in the sidebar */
 .nav-badge-pro{background:var(--accent-soft);color:var(--accent);letter-spacing:.3px;}
-.sb-logout{display:flex;align-items:center;gap:9px;padding:9px 11px;border-radius:var(--radius-sm);cursor:pointer;color:var(--red);font-size:.85rem;font-weight:500;transition:all .2s;margin-top:auto;border:1px solid rgba(220,38,38,.15);background:linear-gradient(rgba(220,38,38,.04),rgba(220,38,38,.04)),var(--surface);position:sticky;bottom:8px;box-shadow:0 -8px 16px -6px rgba(0,0,0,.10);}
+/* sits OUTSIDE .sb-scroll: always visible, never overlaps a nav row, and
+   nothing scrolls through it. flex-shrink:0 keeps it at full height. */
+.sb-logout{display:flex;align-items:center;gap:9px;padding:9px 11px;border-radius:var(--radius-sm);cursor:pointer;color:var(--red);font-size:.85rem;font-weight:500;transition:all .2s;flex-shrink:0;margin-top:auto;position:relative;border:1px solid rgba(220,38,38,.15);background:linear-gradient(rgba(220,38,38,.04),rgba(220,38,38,.04)),var(--surface);}
+/* hairline separating the pinned footer from the scrolling list above it */
+.sb-logout::before{content:'';position:absolute;left:-12px;right:-12px;top:-8px;height:1px;background:var(--glass-border);}
 .sb-logout:hover{background:rgba(220,38,38,.08);border-color:rgba(220,38,38,.25);}
 
 /* ── DASH MAIN ── */
@@ -656,19 +773,23 @@ h1 em{
 .foot-sep{color:var(--text-4);font-size:.8rem;user-select:none;}
 
 .foot-socials{display:flex;align-items:center;gap:9px;flex:0 0 auto;}
-.foot-soc{width:25px;height:25px;border-radius:7px;display:flex;align-items:center;justify-content:center;color:#fff;text-decoration:none;flex-shrink:0;box-shadow:0 1px 2px rgba(0,0,0,.12);transition:transform .2s ease,box-shadow .2s ease;}
-.foot-soc svg{width:14px;height:14px;display:block;}
-.foot-soc:hover{transform:translateY(-2px);box-shadow:0 5px 13px rgba(0,0,0,.2);}
+.foot-soc{width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#fff;text-decoration:none;flex-shrink:0;box-shadow:0 1px 3px rgba(0,0,0,.14);transition:transform .2s ease,box-shadow .2s ease;}
+.foot-soc svg{width:17px;height:17px;display:block;}
+.foot-soc:hover{transform:translateY(-2px);box-shadow:0 6px 15px rgba(0,0,0,.22);}
 
 /* official brand colours + per-mark optical sizing */
-.foot-soc-ig{background:radial-gradient(circle at 30% 107%,#fdf497 0%,#fdf497 5%,#fd5949 45%,#d6249f 60%,#285aeb 90%);}
-.foot-soc-ig svg{width:15px;height:15px;}
+.foot-soc-ig{background:radial-gradient(circle at 30% 107%,#fdf497 0%,#fdf497 5%,#fd5949 45%,#d6249f 60%,#285aeb 90%);border-radius:9px;}
+.foot-soc-ig svg{width:18px;height:18px;}
+/* X and Facebook are circular marks */
 .foot-soc-x{background:#000;border-radius:50%;}
-.foot-soc-x svg{width:11px;height:11px;}
+.foot-soc-x svg{width:13px;height:13px;}
 .foot-soc-fb{background:#1877f2;border-radius:50%;}
-.foot-soc-fb svg{width:15px;height:15px;}
-.foot-soc-yt{background:#ff0000;}
-.foot-soc-yt svg{width:16px;height:16px;margin-left:1px;}
+.foot-soc-fb svg{width:18px;height:18px;}
+/* YouTube's mark is a wide rounded tile, not a square */
+.foot-soc-yt{background:#ff0000;width:37px;height:27px;border-radius:8px;}
+.foot-soc-yt svg{width:19px;height:19px;margin-left:1px;}
+.foot-soc-li{background:#0a66c2;border-radius:7px;}
+.foot-soc-li svg{width:17px;height:17px;}
 
 /* on the dark background a pure-black X badge would disappear */
 [data-theme="dark"] .foot-soc-x{border:1px solid rgba(255,255,255,.25);}
@@ -684,6 +805,20 @@ h1 em{
 }
 @media(max-width:520px){
   .site-footer{padding:22px 16px 18px;}
+  /* slightly smaller tiles so five badges never crowd a narrow phone */
+.foot-socials{gap:8px;}
+.foot-soc{width:27px;height:27px;border-radius:7px;}
+/* the line above resets every tile, so the round marks must be restated */
+.foot-soc-x,
+.foot-soc-fb{border-radius:50%;}
+.foot-soc-ig{border-radius:8px;}
+.foot-soc svg{width:15px;height:15px;}
+.foot-soc-ig svg{width:16px;height:16px;}
+.foot-soc-fb svg{width:16px;height:16px;}
+.foot-soc-x svg{width:12px;height:12px;}
+.foot-soc-yt{width:33px;height:24px;}
+.foot-soc-yt svg{width:17px;height:17px;}
+.foot-soc-li svg{width:15px;height:15px;}
   .foot-sep{display:none;}
   .foot-links{gap:10px 18px;}
   .foot-link{font-size:.8rem;}
@@ -794,6 +929,11 @@ h1 em{
   .cards-grid{grid-template-columns:1fr 1fr;}
   .f-grid{grid-template-columns:1fr 1fr;}
   .auth-box{padding:22px 16px;}
+.auth-head{margin-bottom:18px;}
+.auth-brand{font-size:1.28rem;gap:6px;margin-bottom:11px;}
+.auth-brand .logo-img{height:28px;}
+.auth-welcome{font-size:.94rem;}
+.auth-welcome-sub{font-size:.76rem;}
   .hero-cta .hero-btn{padding:11px 18px;font-size:.88rem;}
   .toast-wrap{right:10px;left:10px;}
   .toast{min-width:unset;}
@@ -1009,7 +1149,7 @@ h1 em{
   gap: 10px;
 }
 .team-card-link {
-  width: 32px; height: 32px;
+  width: 29px; height: 29px;
   border-radius: 50%;
   border: 1px solid var(--glass-border-strong);
   background: var(--surface);
@@ -1026,6 +1166,22 @@ h1 em{
   background: var(--accent-soft);
   transform: scale(1.1);
 }
+
+/* real brand badges - same official filled glyphs and brand colours as the
+   site footer, so a white glyph sits on the brand background instead of the
+   neutral outline circle. The brand background must survive :hover, so these
+   selectors are one class more specific than .team-card-link:hover above. */
+.team-card-link.team-soc-li,
+.team-card-link.team-soc-ig{color:#fff;border-color:transparent;}
+/* rounded-square tiles, identical treatment to the footer badges */
+.team-card-link.team-soc-li{background:#0a66c2;border-radius:8px;}
+.team-card-link.team-soc-li svg{width:16px;height:16px;}
+.team-card-link.team-soc-ig{background:radial-gradient(circle at 30% 107%,#fdf497 0%,#fdf497 5%,#fd5949 45%,#d6249f 60%,#285aeb 90%);border-radius:8px;}
+.team-card-link.team-soc-ig svg{width:15px;height:15px;}
+.team-card-link.team-soc-li:hover,
+.team-card-link.team-soc-ig:hover{color:#fff;border-color:transparent;transform:translateY(-2px) scale(1.06);box-shadow:0 6px 15px rgba(0,0,0,.22);}
+.team-card-link.team-soc-li:hover{background:#0a66c2;}
+.team-card-link.team-soc-ig:hover{background:radial-gradient(circle at 30% 107%,#fdf497 0%,#fdf497 5%,#fd5949 45%,#d6249f 60%,#285aeb 90%);}
 
 /* ── TABLET: 2 columns ── */
 @media (max-width: 860px) {
@@ -1798,4 +1954,11 @@ transition: transform .2s ease, color .2s ease, background .2s ease;
 #team-modal-welcome .logo { font-size: 1.5rem; gap: 8px; }
 #team-modal-welcome .logo-img { height: 30px; }
 /* the navbar hides .logo-text under 768px - keep it visible here */
+/* the navbar hides .logo-text under 768px - keep it visible here */
 #team-modal-welcome .logo-text { display: inline-block !important; font-weight: 600; }
+
+/* auth artwork, dark theme: same drawing, light strokes */
+[data-theme="dark"] #screen-auth .auth-wrap::after{background-image:url("data:image/svg+xml,<<< dark-stroke tile URI >>>");}
+[data-theme="dark"] #screen-auth .auth-wrap::before{background-image:url("data:image/svg+xml,<<< dark-stroke band URI >>>");}
+[data-theme="dark"] #screen-auth::before{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 600 440' fill='none' stroke='rgba(245,243,239,0.15)' stroke-width='1.5' stroke-linejoin='round'%3E%3Cpath d='M600 54 H470 V112 H392'/%3E%3Crect x='386' y='106' width='12' height='12' rx='2' fill='rgba(245,243,239,0.05)'/%3E%3Cpath d='M600 152 H540 V104'/%3E%3Crect x='535' y='99' width='10' height='10' rx='2' fill='rgba(245,243,239,0.05)'/%3E%3Cpath d='M600 386 H452 V330 H374'/%3E%3Crect x='368' y='324' width='12' height='12' rx='2' fill='rgba(245,243,239,0.05)'/%3E%3Cpath d='M600 250 H556'/%3E%3Crect x='551' y='245' width='10' height='10' rx='2' fill='rgba(245,243,239,0.05)'/%3E%3Crect x='330' y='26' width='176' height='66' rx='7'/%3E%3Cline x1='330' y1='41' x2='506' y2='41'/%3E%3Cline x1='330' y1='77' x2='506' y2='77'/%3E%3Crect x='339' y='30' width='11' height='7' rx='2' fill='rgba(245,243,239,0.05)'/%3E%3Crect x='339' y='81' width='11' height='7' rx='2' fill='rgba(245,243,239,0.05)'/%3E%3Crect x='363' y='30' width='11' height='7' rx='2' fill='rgba(245,243,239,0.05)'/%3E%3Crect x='363' y='81' width='11' height='7' rx='2' fill='rgba(245,243,239,0.05)'/%3E%3Crect x='387' y='30' width='11' height='7' rx='2' fill='rgba(245,243,239,0.05)'/%3E%3Crect x='387' y='81' width='11' height='7' rx='2' fill='rgba(245,243,239,0.05)'/%3E%3Crect x='411' y='30' width='11' height='7' rx='2' fill='rgba(245,243,239,0.05)'/%3E%3Crect x='411' y='81' width='11' height='7' rx='2' fill='rgba(245,243,239,0.05)'/%3E%3Crect x='435' y='30' width='11' height='7' rx='2' fill='rgba(245,243,239,0.05)'/%3E%3Crect x='435' y='81' width='11' height='7' rx='2' fill='rgba(245,243,239,0.05)'/%3E%3Crect x='459' y='30' width='11' height='7' rx='2' fill='rgba(245,243,239,0.05)'/%3E%3Crect x='459' y='81' width='11' height='7' rx='2' fill='rgba(245,243,239,0.05)'/%3E%3Crect x='483' y='30' width='11' height='7' rx='2' fill='rgba(245,243,239,0.05)'/%3E%3Crect x='483' y='81' width='11' height='7' rx='2' fill='rgba(245,243,239,0.05)'/%3E%3Ccircle cx='212' cy='59' r='34'/%3E%3Cpath d='M200 45 L229 59 L200 73 Z'/%3E%3Cpath d='M246 59 H330'/%3E%3Cline x1='120' y1='196' x2='530' y2='196'/%3E%3Cpath d='M206 187 l9 9 l-9 9 l-9 -9 z' fill='rgba(245,243,239,0.05)'/%3E%3Cpath d='M288 187 l9 9 l-9 9 l-9 -9 z' fill='rgba(245,243,239,0.05)'/%3E%3Cpath d='M370 187 l9 9 l-9 9 l-9 -9 z' fill='rgba(245,243,239,0.05)'/%3E%3Cpath d='M452 187 l9 9 l-9 9 l-9 -9 z' fill='rgba(245,243,239,0.05)'/%3E%3Cpath d='M120 196 V150'/%3E%3Crect x='115' y='145' width='10' height='10' rx='2' fill='rgba(245,243,239,0.05)'/%3E%3Cline x1='150' y1='276' x2='150' y2='296' stroke-linecap='round'/%3E%3Cline x1='163' y1='264' x2='163' y2='308' stroke-linecap='round'/%3E%3Cline x1='176' y1='272' x2='176' y2='300' stroke-linecap='round'/%3E%3Cline x1='189' y1='256' x2='189' y2='316' stroke-linecap='round'/%3E%3Cline x1='202' y1='268' x2='202' y2='304' stroke-linecap='round'/%3E%3Cline x1='215' y1='248' x2='215' y2='324' stroke-linecap='round'/%3E%3Cline x1='228' y1='262' x2='228' y2='310' stroke-linecap='round'/%3E%3Cline x1='241' y1='274' x2='241' y2='298' stroke-linecap='round'/%3E%3Cline x1='254' y1='258' x2='254' y2='314' stroke-linecap='round'/%3E%3Cline x1='267' y1='270' x2='267' y2='302' stroke-linecap='round'/%3E%3Cline x1='280' y1='252' x2='280' y2='320' stroke-linecap='round'/%3E%3Cline x1='293' y1='266' x2='293' y2='306' stroke-linecap='round'/%3E%3Cline x1='306' y1='275' x2='306' y2='297' stroke-linecap='round'/%3E%3Cpath d='M150 286 H136 V330'/%3E%3Cpath d='M400 326 V300 H426'/%3E%3Cpath d='M514 300 H540 V326'/%3E%3Cpath d='M400 358 V384 H426'/%3E%3Cpath d='M514 384 H540 V358'/%3E%3C/svg%3E");}
+[data-theme="dark"] #screen-auth::after{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 520 440' fill='none' stroke='rgba(245,243,239,0.15)' stroke-width='1.5' stroke-linejoin='round'%3E%3Cpath d='M0 392 H128 V330 H206'/%3E%3Crect x='200' y='324' width='12' height='12' rx='2' fill='rgba(245,243,239,0.05)'/%3E%3Cpath d='M0 300 H70 V252'/%3E%3Crect x='65' y='247' width='10' height='10' rx='2' fill='rgba(245,243,239,0.05)'/%3E%3Cpath d='M0 96 H96 V150 H168'/%3E%3Crect x='162' y='144' width='12' height='12' rx='2' fill='rgba(245,243,239,0.05)'/%3E%3Crect x='196' y='60' width='200' height='68' rx='7'/%3E%3Cline x1='196' y1='75' x2='396' y2='75'/%3E%3Cline x1='196' y1='113' x2='396' y2='113'/%3E%3Crect x='205' y='64' width='11' height='7' rx='2' fill='rgba(245,243,239,0.05)'/%3E%3Crect x='205' y='117' width='11' height='7' rx='2' fill='rgba(245,243,239,0.05)'/%3E%3Crect x='229' y='64' width='11' height='7' rx='2' fill='rgba(245,243,239,0.05)'/%3E%3Crect x='229' y='117' width='11' height='7' rx='2' fill='rgba(245,243,239,0.05)'/%3E%3Crect x='253' y='64' width='11' height='7' rx='2' fill='rgba(245,243,239,0.05)'/%3E%3Crect x='253' y='117' width='11' height='7' rx='2' fill='rgba(245,243,239,0.05)'/%3E%3Crect x='277' y='64' width='11' height='7' rx='2' fill='rgba(245,243,239,0.05)'/%3E%3Crect x='277' y='117' width='11' height='7' rx='2' fill='rgba(245,243,239,0.05)'/%3E%3Crect x='301' y='64' width='11' height='7' rx='2' fill='rgba(245,243,239,0.05)'/%3E%3Crect x='301' y='117' width='11' height='7' rx='2' fill='rgba(245,243,239,0.05)'/%3E%3Crect x='325' y='64' width='11' height='7' rx='2' fill='rgba(245,243,239,0.05)'/%3E%3Crect x='325' y='117' width='11' height='7' rx='2' fill='rgba(245,243,239,0.05)'/%3E%3Crect x='349' y='64' width='11' height='7' rx='2' fill='rgba(245,243,239,0.05)'/%3E%3Crect x='349' y='117' width='11' height='7' rx='2' fill='rgba(245,243,239,0.05)'/%3E%3Crect x='373' y='64' width='11' height='7' rx='2' fill='rgba(245,243,239,0.05)'/%3E%3Crect x='373' y='117' width='11' height='7' rx='2' fill='rgba(245,243,239,0.05)'/%3E%3Cpath d='M240 176 H452' stroke-dasharray='9 8'/%3E%3Ccircle cx='462' cy='176' r='9'/%3E%3Cpath d='M296 168 V184 M348 168 V184 M400 168 V184'/%3E%3Cline x1='40' y1='252' x2='470' y2='252'/%3E%3Cpath d='M124 243 l9 9 l-9 9 l-9 -9 z' fill='rgba(245,243,239,0.05)'/%3E%3Cpath d='M206 243 l9 9 l-9 9 l-9 -9 z' fill='rgba(245,243,239,0.05)'/%3E%3Cpath d='M288 243 l9 9 l-9 9 l-9 -9 z' fill='rgba(245,243,239,0.05)'/%3E%3Cpath d='M370 243 l9 9 l-9 9 l-9 -9 z' fill='rgba(245,243,239,0.05)'/%3E%3Cline x1='232' y1='332' x2='232' y2='356' stroke-linecap='round'/%3E%3Cline x1='245' y1='318' x2='245' y2='370' stroke-linecap='round'/%3E%3Cline x1='258' y1='328' x2='258' y2='360' stroke-linecap='round'/%3E%3Cline x1='271' y1='310' x2='271' y2='378' stroke-linecap='round'/%3E%3Cline x1='284' y1='324' x2='284' y2='364' stroke-linecap='round'/%3E%3Cline x1='297' y1='302' x2='297' y2='386' stroke-linecap='round'/%3E%3Cline x1='310' y1='318' x2='310' y2='370' stroke-linecap='round'/%3E%3Cline x1='323' y1='330' x2='323' y2='358' stroke-linecap='round'/%3E%3Cline x1='336' y1='314' x2='336' y2='374' stroke-linecap='round'/%3E%3Cline x1='349' y1='326' x2='349' y2='362' stroke-linecap='round'/%3E%3Cline x1='362' y1='308' x2='362' y2='380' stroke-linecap='round'/%3E%3Cline x1='375' y1='322' x2='375' y2='366' stroke-linecap='round'/%3E%3Cline x1='388' y1='331' x2='388' y2='357' stroke-linecap='round'/%3E%3Cline x1='401' y1='316' x2='401' y2='372' stroke-linecap='round'/%3E%3Cpath d='M232 344 H214 V392'/%3E%3Ccircle cx='430' cy='332' r='30'/%3E%3Cpath d='M420 320 L445 332 L420 344 Z'/%3E%3Cpath d='M400 332 H340'/%3E%3Cpath d='M40 118 V92 H66'/%3E%3Cpath d='M142 92 H168 V118'/%3E%3Cpath d='M40 144 V170 H66'/%3E%3Cpath d='M142 170 H168 V144'/%3E%3C/svg%3E");}
