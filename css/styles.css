@@ -137,6 +137,10 @@ body::after{
    FILLED single-path glyphs, so they must opt out of the stroke styling
    above. Colour is set with `color` and picked up through currentColor, so
    one rule per brand is enough. */
+/* Payments + Earnings rows share one wallet mark, whatever the content type */
+.pico.pico-pay{background:rgba(22,163,74,.10);}
+[data-theme="dark"] .pico.pico-pay{background:rgba(22,163,74,.16);}
+.pico-icon.pico-wallet{fill:var(--green);stroke:none;width:20px;height:20px;}
 .pico-icon.pico-brand{fill:currentColor;stroke:none;width:21px;height:21px;}
 .pico-yt{color:#ff0000;}
 .pico-ig{color:#d6249f;}
@@ -194,6 +198,10 @@ nav.scrolled{
 .logo span{color:var(--text);}
 .logo-text{color:var(--text);font-weight:500;display:inline-block;-webkit-text-fill-color:currentColor;letter-spacing:-.3px;}
 /* clickable brand lockups (every Aalynex logo/name routes to the landing page) */
+.logo-home{cursor:pointer;transition:opacity .18s ease;}
+.logo-home:hover{opacity:.72;}
+.logo-home:focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:8px;}
+/* clickable brand lockups (top navbar logo/name routes to the landing page) */
 .logo-home{cursor:pointer;transition:opacity .18s ease;}
 .logo-home:hover{opacity:.72;}
 .logo-home:focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:8px;}
