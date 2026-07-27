@@ -1,9 +1,7 @@
-// ════════════════════════════════════
+
 //  PUBLIC PROFILE — shareable freelancer page (?profile=<id>)
 //  Logged-out (anon) users ke liye public read.
 // ════════════════════════════════════
-
-// Build the canonical share URL for a freelancer
 function publicProfileUrl(id) {
   return location.origin + location.pathname + '?profile=' + id;
 }

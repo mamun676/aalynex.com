@@ -1,4 +1,4 @@
-// AALYNEX — AI YOUTUBE CHANNEL ANALYZER (creator side)
+
 // Load AFTER creator.js and BEFORE main.js in index.html.
 
 const ANALYZER_URL = 'https://sfzbrygqpodjinhpagaz.supabase.co/functions/v1/yt-analyze';

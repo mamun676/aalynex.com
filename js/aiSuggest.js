@@ -1,5 +1,4 @@
-// AALYNEX — AI CONTENT SUGGESTION (creator side) — Premium UI + History
-// Load AFTER creator.js and BEFORE main.js in index.html.
+
 
 const AI_SUGGEST_URL = 'https://sfzbrygqpodjinhpagaz.supabase.co/functions/v1/ai-suggest';
 window._aiSuggestQuota = null;
