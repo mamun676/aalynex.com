@@ -530,7 +530,7 @@ function fEarnings() {
     ${projs.length
       ? projs.map(p => { const c = DB.users().find(u => u.id === p.creatorId); return `
           <div class="pc" style="cursor:pointer;" onclick="fViewEarning('${p.id}')">
-            <div class="pico"><svg class="pico-icon" viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div>
+            <div class="pico">${contentIconSvg(p.contentType)}</div>
             <div class="pinfo"><div class="ptitle">${p.title}</div><div class="pmeta">From ${c?.name || 'Creator'} &#183; ${fmtDate(p.createdAt)}</div></div>
             <div style="display:flex;align-items:center;gap:8px;">
               <div style="font-weight:600;font-size:.9rem;">&#8377;${fmt(p.budget)}</div>
