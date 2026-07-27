@@ -207,6 +207,7 @@ nav.scrolled{
 .logo-home:focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:8px;}
 .logo .logo-accent{color:var(--accent);-webkit-text-fill-color:var(--accent);}
 .nav-right{display:flex;align-items:center;gap:8px;flex-shrink:0;}
+.nav-back .nav-back-arrow{display:inline;}
 .nav-greeting{font-size:.8rem;color:var(--text-3);white-space:nowrap;}
 .nav-greeting strong{color:var(--creator);}
 .nav-greeting{background:rgba(0,0,0,0.04);padding:6px 12px;border-radius:999px;border:1px solid var(--glass-border);}
@@ -852,6 +853,11 @@ height:100%;min-height:0;
 .nav-right .btn-primary .btn-text{display:none;}
 .nav-right .btn-primary .btn-arrow{display:inline;font-size:1.1rem;color:#fff;line-height:1;}
 .nav-right .btn-ghost,.nav-right .btn-light{display:none !important;}
+/* the auth screen keeps its Back control on phones, next to the theme
+   toggle, as a compact arrow-only round button (label hidden) */
+.nav-right .btn-ghost.nav-back{display:inline-flex !important;align-items:center;justify-content:center;width:30px;height:30px;padding:0;border-radius:50%;flex-shrink:0;font-size:1rem;line-height:1;}
+.nav-back .nav-back-text{display:none;}
+.nav-back .nav-back-arrow{display:inline;font-size:1.05rem;line-height:1;}
 .theme-toggle{width:30px;height:30px;font-size:.8rem;flex-shrink:0;}
 .hamburger{display:none;}
 /* landing navbar on mobile: flatten the three wrappers with display:contents so
