@@ -128,7 +128,7 @@ function fHome() {
   </div>
   <div class="section-title">Your Ongoing Projects</div>
   <div class="project-list">
-    ${projs.filter(p => p.status === 'ongoing').map(p => { const c = DB.users().find(u => u.id === p.creatorId); return `<div class="pc" style="cursor:pointer;" onclick="fViewProject('${p.id}')"><div class="pico pico-pay"><svg class="pico-icon pico-wallet" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 18v1c0 1.1-.9 2-2 2H5c-1.11 0-2-.9-2-2V5c0-1.1.89-2 2-2h14c1.1 0 2 .9 2 2v1h-9c-1.11 0-2 .9-2 2v8c0 1.1.89 2 2 2h9zm-9-2h10V8H12v8zm4-2.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/></svg></div><div class="pinfo"><div class="ptitle">${p.title}</div><div class="pmeta">From ${c?.name || 'Creator'} &#183; &#8377;${fmt(p.budget)}</div></div><div class="pstatus ${statusClass(p.status)}">${statusLabel(p.status)}</div></div>`; }).join('')
+    ${projs.filter(p => p.status === 'ongoing').map(p => { const c = DB.users().find(u => u.id === p.creatorId); return `<div class="pc" style="cursor:pointer;" onclick="fViewProject('${p.id}')"><div class="pico">${contentIconSvg(p.contentType)}</div><div class="pinfo"><div class="ptitle">${p.title}</div><div class="pmeta">From ${c?.name || 'Creator'} &#183; &#8377;${fmt(p.budget)}</div></div><div class="pstatus ${statusClass(p.status)}">${statusLabel(p.status)}</div></div>`; }).join('')
       || '<div style="color:var(--text-3);font-size:.85rem;padding:16px 0;">No ongoing projects. <a style="color:var(--accent);cursor:pointer;" onclick="fPage(\'browse\',null)">Browse open projects &rarr;</a></div>'}
   </div>
   <div style="margin-top:18px;display:flex;gap:10px;flex-wrap:wrap;">
@@ -168,10 +168,10 @@ function fBrowse() {
   <div class="project-list">
     ${open.length
       ? open.map(p => { const c = DB.users().find(u => u.id === p.creatorId); return `
-          <div class="pc">
-            <div class="pico pico-pay"><svg class="pico-icon pico-wallet" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 18v1c0 1.1-.9 2-2 2H5c-1.11 0-2-.9-2-2V5c0-1.1.89-2 2-2h14c1.1 0 2 .9 2 2v1h-9c-1.11 0-2 .9-2 2v8c0 1.1.89 2 2 2h9zm-9-2h10V8H12v8zm4-2.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/></svg></div>
-            <div class="pinfo">
-              <div class="ptitle">${p.title}</div>
+        <div class="pc">
+  <div class="pico">${contentIconSvg(p.contentType)}</div>
+  <div class="pinfo">
+    <div class="ptitle">${p.title}</div>
               <div class="pmeta">By ${c?.name || 'Creator'} · <strong style="color:var(--accent)">₹${fmt(p.budget)}</strong> · Due ${fmtDate(p.deadline)}</div>
               <div style="margin-top:5px;display:flex;gap:5px;flex-wrap:wrap;">
                 <span class="tag">${p.contentType}</span><span class="tag b">${p.priority}</span>
@@ -281,11 +281,11 @@ function fOngoing() {
         const prog = p.editedUploaded ? 100 : 50;
         return `
         <div class="pc" style="cursor:pointer;" onclick="fViewOngoing('${p.id}')">
-          <div class="pico pico-pay"><svg class="pico-icon pico-wallet" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 18v1c0 1.1-.9 2-2 2H5c-1.11 0-2-.9-2-2V5c0-1.1.89-2 2-2h14c1.1 0 2 .9 2 2v1h-9c-1.11 0-2 .9-2 2v8c0 1.1.89 2 2 2h9zm-9-2h10V8H12v8zm4-2.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/></svg></div>
-          <div class="pinfo">
-            <div class="ptitle">${p.title}</div>
-            <div class="pmeta">${c?.name || 'Creator'} &#183; &#8377;${fmt(p.budget)} &#183; ${prog}% done</div>
-          </div>
+  <div class="pico">${contentIconSvg(p.contentType)}</div>
+  <div class="pinfo">
+    <div class="ptitle">${p.title}</div>
+    <div class="pmeta">${c?.name || 'Creator'} &#183; &#8377;${fmt(p.budget)} &#183; ${prog}% done</div>
+  </div>
           <div class="pstatus s-on" style="flex-shrink:0;">In Progress</div>
         </div>`;
       }).join('')
@@ -330,10 +330,11 @@ function fNegotiate() {
         const c = DB.users().find(u => u.id === p.creatorId);
         return `
         <div class="pc" style="cursor:pointer;" onclick="fViewNegotiate('${p.id}')">
-          <div class="pico pico-pay"><svg class="pico-icon pico-wallet" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 18v1c0 1.1-.9 2-2 2H5c-1.11 0-2-.9-2-2V5c0-1.1.89-2 2-2h14c1.1 0 2 .9 2 2v1h-9c-1.11 0-2 .9-2 2v8c0 1.1.89 2 2 2h9zm-9-2h10V8H12v8zm4-2.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/></svg></div>
-          <div class="pinfo">
-            <div class="ptitle">${p.title}</div>
-            <div class="pmeta">${c?.name || 'Creator'} &#183; Offer &#8377;${fmt(p.budget)} &#183; Due ${fmtDate(p.deadline)}</div>
+  <div class="pico">${contentIconSvg(p.contentType)}</div>
+  <div class="pinfo">
+    <div class="ptitle">${p.title}</div>
+    <div class="pmeta">${c?.name || 'Creator'} &#183; Offer &#8377;${fmt(p.budget)} &#183; Due ${fmtDate(p.deadline)}</div>
+  </div>
           </div>
           <div class="pstatus s-on" style="flex-shrink:0;">Negotiate</div>
         </div>`;
@@ -482,11 +483,11 @@ function fUpload() {
         const c = DB.users().find(u => u.id === p.creatorId);
         return `
         <div class="pc" style="cursor:pointer;" onclick="fViewUpload('${p.id}')">
-          <div class="pico pico-pay"><svg class="pico-icon pico-wallet" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 18v1c0 1.1-.9 2-2 2H5c-1.11 0-2-.9-2-2V5c0-1.1.89-2 2-2h14c1.1 0 2 .9 2 2v1h-9c-1.11 0-2 .9-2 2v8c0 1.1.89 2 2 2h9zm-9-2h10V8H12v8zm4-2.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/></svg></div>
-          <div class="pinfo">
-            <div class="ptitle">${p.title}</div>
-            <div class="pmeta">${c?.name || 'Creator'} &#183; &#8377;${fmt(p.budget)} &#183; ${p.editedUploaded ? 'Final delivered' : 'Awaiting final upload'}</div>
-          </div>
+  <div class="pico">${contentIconSvg(p.contentType)}</div>
+  <div class="pinfo">
+    <div class="ptitle">${p.title}</div>
+    <div class="pmeta">${c?.name || 'Creator'} &#183; &#8377;${fmt(p.budget)} &#183; ${p.editedUploaded ? 'Final delivered' : 'Awaiting final upload'}</div>
+  </div>
           <div class="pstatus ${p.editedUploaded ? 's-co' : 's-on'}" style="flex-shrink:0;">${p.editedUploaded ? 'Delivered' : 'Upload'}</div>
         </div>`;
       }).join('')
