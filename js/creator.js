@@ -441,7 +441,7 @@ function cHome() {
     ${recent.length
       ? recent.map(p => `
           <div class="pc" style="cursor:pointer;" onclick="manageProject('${p.id}')">
-            <div class="pico">${contentIconSvg(p.contentType)}</div>
+            <div class="pico pico-pay"><svg class="pico-icon pico-wallet" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 18v1c0 1.1-.9 2-2 2H5c-1.11 0-2-.9-2-2V5c0-1.1.89-2 2-2h14c1.1 0 2 .9 2 2v1h-9c-1.11 0-2 .9-2 2v8c0 1.1.89 2 2 2h9zm-9-2h10V8H12v8zm4-2.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/></svg></div>
             <div class="pinfo">
               <div class="ptitle">${p.title}</div>
               <div class="pmeta">${p.freelancerId ? 'Editor assigned' : 'Waiting for acceptance'} · ₹${fmt(p.budget)}</div>
@@ -1028,7 +1028,7 @@ function cProjects() {
     ${projs.length
       ? projs.slice().reverse().map(p => `
           <div class="pc" style="cursor:pointer;" onclick="manageProject('${p.id}')">
-            <div class="pico">${contentIconSvg(p.contentType)}</div>
+            <div class="pico pico-pay"><svg class="pico-icon pico-wallet" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 18v1c0 1.1-.9 2-2 2H5c-1.11 0-2-.9-2-2V5c0-1.1.89-2 2-2h14c1.1 0 2 .9 2 2v1h-9c-1.11 0-2 .9-2 2v8c0 1.1.89 2 2 2h9zm-9-2h10V8H12v8zm4-2.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/></svg></div>
             <div class="pinfo">
               <div class="ptitle">${p.title}</div>
               <div class="pmeta">₹${fmt(p.budget)} · Due ${fmtDate(p.deadline)} · ${p.contentType}</div>
@@ -1050,7 +1050,7 @@ function filterProjects(f) {
   document.getElementById('proj-list').innerHTML = filtered.length
     ? filtered.slice().reverse().map(p => `
         <div class="pc" style="cursor:pointer;" onclick="manageProject('${p.id}')">
-          <div class="pico">${contentIconSvg(p.contentType)}</div>
+          <div class="pico pico-pay"><svg class="pico-icon pico-wallet" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 18v1c0 1.1-.9 2-2 2H5c-1.11 0-2-.9-2-2V5c0-1.1.89-2 2-2h14c1.1 0 2 .9 2 2v1h-9c-1.11 0-2 .9-2 2v8c0 1.1.89 2 2 2h9zm-9-2h10V8H12v8zm4-2.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/></svg></div>
           <div class="pinfo">
             <div class="ptitle">${p.title}</div>
             <div class="pmeta">₹${fmt(p.budget)} · ${p.contentType}</div>
@@ -1102,7 +1102,7 @@ function cPayment() {
           const payable = !p.paid && (p.status === 'completed' || p.editedUploaded);
           return `
           <div class="pc" style="cursor:pointer;" onclick="cViewPayment('${p.id}')">
-            <div class="pico">${contentIconSvg(p.contentType)}</div>
+            <div class="pico pico-pay"><svg class="pico-icon pico-wallet" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 18v1c0 1.1-.9 2-2 2H5c-1.11 0-2-.9-2-2V5c0-1.1.89-2 2-2h14c1.1 0 2 .9 2 2v1h-9c-1.11 0-2 .9-2 2v8c0 1.1.89 2 2 2h9zm-9-2h10V8H12v8zm4-2.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/></svg></div>
             <div class="pinfo"><div class="ptitle">${p.title}</div><div class="pmeta">&#8377;${fmt(p.budget)} &#183; ${f ? f.name : 'No editor yet'} &#183; ${fmtDate(p.createdAt)}</div></div>
             <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
               <div class="pstatus ${p.paid ? 's-co' : 's-pe'}">${p.paid ? 'Paid' : 'Pending'}</div>
