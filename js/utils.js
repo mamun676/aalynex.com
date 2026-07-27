@@ -1,5 +1,5 @@
 
-//  UTILS — formatters, toasts, modals, screen, icons, email
+
 // ═══════════════════════════════════════════════
 
 /* ── ID + FORMATTERS ── */
