@@ -137,6 +137,10 @@ body::after{
    FILLED single-path glyphs, so they must opt out of the stroke styling
    above. Colour is set with `color` and picked up through currentColor, so
    one rule per brand is enough. */
+/* Payments + Earnings rows share one wallet mark, whatever the content type */
+.pico.pico-pay{background:rgba(22,163,74,.10);}
+[data-theme="dark"] .pico.pico-pay{background:rgba(22,163,74,.16);}
+.pico-icon.pico-wallet{fill:var(--green);stroke:none;width:20px;height:20px;}
 .pico-icon.pico-brand{fill:currentColor;stroke:none;width:21px;height:21px;}
 .pico-yt{color:#ff0000;}
 .pico-ig{color:#d6249f;}
@@ -197,8 +201,13 @@ nav.scrolled{
 .logo-home{cursor:pointer;transition:opacity .18s ease;}
 .logo-home:hover{opacity:.72;}
 .logo-home:focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:8px;}
+/* clickable brand lockups (top navbar logo/name routes to the landing page) */
+.logo-home{cursor:pointer;transition:opacity .18s ease;}
+.logo-home:hover{opacity:.72;}
+.logo-home:focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:8px;}
 .logo .logo-accent{color:var(--accent);-webkit-text-fill-color:var(--accent);}
 .nav-right{display:flex;align-items:center;gap:8px;flex-shrink:0;}
+.nav-back .nav-back-arrow{display:inline;}
 .nav-greeting{font-size:.8rem;color:var(--text-3);white-space:nowrap;}
 .nav-greeting strong{color:var(--creator);}
 .nav-greeting{background:rgba(0,0,0,0.04);padding:6px 12px;border-radius:999px;border:1px solid var(--glass-border);}
@@ -509,6 +518,29 @@ h1 em{
 @keyframes spin{to{transform:translateY(-50%) rotate(360deg);}}
 
 /* ── TOAST ── */
+/* ── BRAND SPLASH ─────────────────────────────────────────────
+   Only the logo + wordmark, gently breathing in and out. Same look in
+   both themes because it uses --bg / --text. No spinner, no bar. */
+/* NOTE: the fade lives on .splash-hide only, so raising the curtain is
+   instant (no 0.4s fade-in during which the page behind is visible)
+   while dropping it still fades out smoothly. */
+.app-splash{position:fixed;inset:0;z-index:10000;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:26px;background:var(--bg);opacity:1;visibility:visible;}
+.app-splash.splash-hide{opacity:0;visibility:hidden;pointer-events:none;transition:opacity .4s ease,visibility 0s linear .4s;}
+.splash-inner{display:flex;align-items:center;gap:14px;animation:splashPulse 1.6s ease-in-out infinite;}
+.splash-logo{height:72px;width:auto;display:block;}
+.splash-word{font-family:'Outfit','DM Sans',sans-serif;font-size:3.1rem;font-weight:600;color:var(--text);letter-spacing:.2px;line-height:1;}
+/* halka halka fade in-out (blink) instead of a loading bar */
+@keyframes splashPulse{0%,100%{opacity:.42;}50%{opacity:1;}}
+/* offline fallback, only shown when the network never recovers */
+.splash-offline{display:none;flex-direction:column;align-items:center;gap:8px;text-align:center;padding:0 24px;max-width:340px;}
+.app-splash.is-offline .splash-offline{display:flex;animation:fadeIn .35s ease both;}
+.app-splash.is-offline .splash-inner{animation:none;opacity:1;}
+.splash-offline svg{width:38px;height:38px;color:var(--text-3);margin-bottom:2px;}
+.splash-off-title{font-family:'Outfit',sans-serif;font-size:1.05rem;font-weight:600;color:var(--text);}
+.splash-off-sub{font-size:.86rem;color:var(--text-2);line-height:1.5;}
+.splash-offline .btn{margin-top:6px;}
+@media(max-width:520px){.splash-logo{height:58px;}.splash-word{font-size:2.5rem;}.splash-offline svg{width:34px;height:34px;}}
+@media(prefers-reduced-motion:reduce){.splash-inner{animation:none;}}
 .toast-wrap{position:fixed;top:72px;right:20px;z-index:999;display:flex;flex-direction:column;gap:8px;pointer-events:none;}
 .toast{background:var(--surface);border:1px solid var(--glass-border-strong);border-radius:12px;padding:12px 16px;display:flex;align-items:center;gap:10px;font-size:.84rem;min-width:240px;animation:toastIn .3s ease both;box-shadow:var(--shadow-lg);pointer-events:all;color:var(--text);}
 .toast.hide{animation:toastOut .3s ease both;}
@@ -844,6 +876,11 @@ height:100%;min-height:0;
 .nav-right .btn-primary .btn-text{display:none;}
 .nav-right .btn-primary .btn-arrow{display:inline;font-size:1.1rem;color:#fff;line-height:1;}
 .nav-right .btn-ghost,.nav-right .btn-light{display:none !important;}
+/* the auth screen keeps its Back control on phones, next to the theme
+   toggle, as a compact arrow-only round button (label hidden) */
+.nav-right .btn-ghost.nav-back{display:inline-flex !important;align-items:center;justify-content:center;width:30px;height:30px;padding:0;border-radius:50%;flex-shrink:0;font-size:1rem;line-height:1;}
+.nav-back .nav-back-text{display:none;}
+.nav-back .nav-back-arrow{display:inline;font-size:1.05rem;line-height:1;}
 .theme-toggle{width:30px;height:30px;font-size:.8rem;flex-shrink:0;}
 .hamburger{display:none;}
 /* landing navbar on mobile: flatten the three wrappers with display:contents so

@@ -25,10 +25,10 @@ const AIS_EXP = ['Beginner', 'Growing', 'Established'];
 const AIS_GOALS = ['Views', 'Subscribers', 'Engagement', 'Sales', 'Brand Building'];
 
 function _aisOpts(arr, sel) {
-  return arr.map(o => `<option value="${escapeHtml(o)}"${o === sel ? ' selected' : ''}>${escapeHtml(o)}</option>`).join('');
+  return arr.map(o => `<option value="${escapeHtml(o)}"${escapeHtml(o === sel ? ' selected' : '')}>${escapeHtml(o)}</option>`).join('');
 }
 function _aisQuotaInner() {
-  if (window._aiSuggestQuota) return `<b style="color:var(--accent);">${window._aiSuggestQuota.remaining}</b> of ${window._aiSuggestQuota.limit} left this month`;
+  if (window._aiSuggestQuota) return `<b style="color:var(--accent);">${escapeHtml(window._aiSuggestQuota.remaining)}</b> of ${escapeHtml(window._aiSuggestQuota.limit)} left this month`;
   return `<b style="color:var(--accent);">30</b> generations / month`;
 }
 
@@ -54,7 +54,7 @@ function renderAISuggest() {
     return head + `
       <div style="background:var(--surface);border:1px solid var(--glass-border);border-radius:var(--radius-lg);padding:28px;max-width:520px;box-shadow:var(--shadow-sm);">
         <div style="font-weight:700;font-size:1.05rem;color:var(--text);margin-bottom:8px;">This is a Premium feature</div>
-        <p style="font-size:.86rem;color:var(--text-2);line-height:1.6;margin:0 0 6px;">AI Content Suggestions come with <b>Aalynex Premium (₹${price}/month)</b> — the same plan that unlocks Managed Editing.</p>
+        <p style="font-size:.86rem;color:var(--text-2);line-height:1.6;margin:0 0 6px;">AI Content Suggestions come with <b>Aalynex Premium (₹${escapeHtml(price)}/month)</b> — the same plan that unlocks Managed Editing.</p>
         <p style="font-size:.82rem;color:var(--text-3);margin:0 0 18px;">Premium members get <b>30 idea generations</b> every month.</p>
         <button class="btn btn-primary" onclick="openPremiumModal()">Unlock Premium</button>
       </div>`;
@@ -155,19 +155,19 @@ async function generateAISuggestions() {
 function _aisScoreColor(n) { n = Number(n) || 0; return n >= 80 ? 'var(--green)' : n >= 60 ? 'var(--yellow)' : 'var(--text-3)'; }
 function _aisScoreBg(n) { n = Number(n) || 0; return n >= 80 ? 'var(--green-soft)' : n >= 60 ? 'rgba(217,119,6,.1)' : 'rgba(0,0,0,.05)'; }
 function _aisChips(arr, bg, col) {
-  return (arr || []).map(x => `<span style="display:inline-block;background:${bg};color:${col || 'var(--text-2)'};font-size:.66rem;padding:3px 9px;border-radius:999px;margin:0 5px 5px 0;">${escapeHtml(x)}</span>`).join('');
+  return (arr || []).map(x => `<span style="display:inline-block;background:${escapeHtml(bg)};color:${escapeHtml(col || 'var(--text-2)')};font-size:.66rem;padding:3px 9px;border-radius:999px;margin:0 5px 5px 0;">${escapeHtml(x)}</span>`).join('');
 }
 
 function renderAISuggestionCards(list) {
   if (!list || !list.length) return `<div style="color:var(--text-3);font-size:.85rem;padding:14px;">No ideas returned. Try changing your inputs.</div>`;
-  const header = `<div style="font-weight:700;font-size:1rem;color:var(--text);margin-bottom:14px;">${list.length} ideas generated</div>`;
+  const header = `<div style="font-weight:700;font-size:1rem;color:var(--text);margin-bottom:14px;">${escapeHtml(list.length)} ideas generated</div>`;
   const grid = `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:16px;">` + list.map(s => {
     const score = Number(s.viralScore) || 0;
     const meta = [s.difficulty, s.estViews].filter(Boolean).map(escapeHtml).join(' · ');
     return `
     <div style="background:var(--surface);border:1px solid var(--glass-border);border-radius:var(--radius-lg);padding:18px;display:flex;flex-direction:column;gap:10px;box-shadow:var(--shadow-sm);transition:box-shadow .25s,transform .25s;" onmouseover="this.style.boxShadow='var(--shadow-md)';this.style.transform='translateY(-2px)';" onmouseout="this.style.boxShadow='var(--shadow-sm)';this.style.transform='none';">
       <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
-        <span style="font-size:.68rem;font-weight:700;color:${_aisScoreColor(score)};background:${_aisScoreBg(score)};padding:4px 10px;border-radius:999px;">Viral score ${score}</span>
+        <span style="font-size:.68rem;font-weight:700;color:${_aisScoreColor(score)};background:${_aisScoreBg(score)};padding:4px 10px;border-radius:999px;">Viral score ${escapeHtml(score)}</span>
         ${meta ? `<span style="font-size:.66rem;color:var(--text-3);">${meta}</span>` : ''}
       </div>
       <div style="font-family:'Outfit',sans-serif;font-weight:700;font-size:1.02rem;color:var(--text);line-height:1.35;">${escapeHtml(s.topic || '')}</div>
@@ -175,7 +175,7 @@ function renderAISuggestionCards(list) {
       <div style="font-size:.78rem;color:var(--text-2);line-height:1.55;"><b style="color:var(--text);font-weight:600;">Why it works.</b> ${escapeHtml(s.why || '')}</div>
       <div style="font-size:.78rem;color:var(--text-2);line-height:1.55;"><b style="color:var(--text);font-weight:600;">Hook.</b> ${escapeHtml(s.hook || '')}</div>
       <div style="font-size:.78rem;color:var(--text-2);line-height:1.55;"><b style="color:var(--text);font-weight:600;">Thumbnail.</b> ${escapeHtml(s.thumbnailIdea || '')}</div>
-      ${s.audience ? `<div style="font-size:.71rem;color:var(--text-3);">${escapeHtml(s.audience)}${s.contentType ? ' · ' + escapeHtml(s.contentType) : ''}</div>` : ''}
+      ${s.audience ? `<div style="font-size:.71rem;color:var(--text-3);">${escapeHtml(s.audience)}${escapeHtml(s.contentType ? ' · ' + s.contentType : '')}</div>` : ''}
       <details style="margin-top:2px;">
         <summary style="cursor:pointer;font-size:.75rem;color:var(--accent);font-weight:600;">Titles, hashtags &amp; keywords</summary>
         <div style="margin-top:10px;">
@@ -222,15 +222,15 @@ function renderAISuggestHistory() {
       <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 15px;border:1px solid var(--glass-border);border-radius:12px;background:var(--surface);box-shadow:var(--shadow-xs);">
         <div style="min-width:0;">
           <div style="font-size:.84rem;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${label}</div>
-          <div style="font-size:.7rem;color:var(--text-3);margin-top:2px;">${when} · ${n} ideas</div>
+          <div style="font-size:.7rem;color:var(--text-3);margin-top:2px;">${escapeHtml(when)} · ${escapeHtml(n)} ideas</div>
         </div>
-        <button class="btn btn-ghost btn-xs" style="flex-shrink:0;" onclick="viewAISuggestHistory('${r.id}')">View</button>
+        <button class="btn btn-ghost btn-xs" style="flex-shrink:0;" data-app-click="${appEvent("viewAISuggestHistory", [String(r.id ?? '')])}">View</button>
       </div>`;
   }).join('');
   return `
     <div style="display:flex;align-items:baseline;gap:9px;margin-bottom:13px;">
       <h3 style="margin:0;font-family:'Outfit',sans-serif;font-weight:700;font-size:1rem;color:var(--text);">History</h3>
-      <span style="font-size:.72rem;color:var(--text-3);">Your last ${h.length} generations</span>
+      <span style="font-size:.72rem;color:var(--text-3);">Your last ${escapeHtml(h.length)} generations</span>
     </div>
     <div style="display:grid;gap:10px;max-width:660px;">${rows}</div>`;
 }

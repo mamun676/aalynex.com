@@ -62,7 +62,7 @@ function _san(d) {
     subText: String(d.subText || '').slice(0, 48),
     badge: String(d.badge || '').toUpperCase().slice(0, 10),
     emoji: String(d.emoji || '').slice(0, 4),
-    imageDataUrl: (typeof d.imageDataUrl === 'string') ? d.imageDataUrl : '',
+    imageDataUrl: validatedRasterDataUrl(d.imageDataUrl),
     palette: {
       bg1: _hex(pal.bg1, '#111827'), bg2: _hex(pal.bg2, '#B91C1C'),
       text: _hex(pal.text, '#FFFFFF'), accent: _hex(pal.accent, '#FACC15'),
@@ -76,7 +76,7 @@ function _prepThumbImages(designs) {
     const im = new Image();
     im.onload = function () { renderThumbCanvas(i); };
     im.onerror = function () {};
-    im.src = d.imageDataUrl;
+    im.src = validatedRasterDataUrl(d.imageDataUrl);
     d._img = im;
   });
 }
@@ -193,7 +193,7 @@ function _thumbPhotoUI() {
       ? '<span style="font-size:.68rem;color:var(--green);font-weight:600;">Background removed \u2713</span>'
       : '<span style="font-size:.68rem;color:var(--text-3);">Plain-bg photo do to background auto-hat jaayega</span>';
     return '<div style="display:flex;align-items:center;gap:12px;">'
-      + '<img src="' + window._thumbPhoto.dataUrl + '" style="width:64px;height:64px;object-fit:cover;border-radius:10px;border:1px solid var(--glass-border);">'
+      + '<img src="' + escapeHtml(validatedRasterDataUrl(window._thumbPhoto.dataUrl)) + '" style="width:64px;height:64px;object-fit:cover;border-radius:10px;border:1px solid var(--glass-border);">'
       + '<div style="display:flex;flex-direction:column;gap:4px;">' + tag
       + '<button class="btn btn-ghost btn-sm" onclick="removeThumbPhoto()">Remove photo</button></div>'
       + '</div>';
@@ -206,7 +206,7 @@ function _updatePhotoUI() { const el = document.getElementById('thumb-photo-ui')
 
 function onThumbPhoto(input) {
   const f = input.files && input.files[0]; if (!f) return;
-  if (!/^image\//.test(f.type)) { showToast('Please select an image file', 'warn', ''); return; }
+  if (!/^image\/(?:png|jpe?g|webp|gif)$/i.test(f.type)) { showToast('Please select a PNG, JPEG, WebP or GIF image', 'warn', ''); return; }
   if (f.size > 12 * 1024 * 1024) { showToast('Image too large (max 12MB)', 'warn', ''); return; }
   const rd = new FileReader();
   rd.onload = function () {
@@ -225,30 +225,30 @@ function removeThumbPhoto() { window._thumbPhoto = null; _updatePhotoUI(); _ensu
 
 /* ---------- RESULT CARDS ---------- */
 function renderThumbCards(designs) {
-  if (!designs || !designs.length) return '';
+  if (!Array.isArray(designs) || !designs.length) return '';
   const cards = designs.map(function (d, i) {
-    const sw = THUMB_PALETTES.map(function (p, pi) {
-      return '<button title="' + p.name + '" onclick="setThumbPalette(' + i + ',' + pi + ')" style="width:22px;height:22px;border-radius:6px;border:2px solid var(--glass-border);cursor:pointer;background:linear-gradient(135deg,' + p.bg1 + ',' + p.bg2 + ');"></button>';
+    const swatches = THUMB_PALETTES.map(function (palette, pi) {
+      return `<button title="${escapeHtml(palette.name)}" data-app-click="${appEvent('setThumbPalette', [i, pi])}" style="width:22px;height:22px;border-radius:6px;border:2px solid var(--glass-border);cursor:pointer;background:linear-gradient(135deg,${escapeHtml(palette.bg1)},${escapeHtml(palette.bg2)});"></button>`;
     }).join('');
     const s = _san(d);
-    return '<div style="background:var(--surface);border:1px solid var(--glass-border);border-radius:14px;overflow:hidden;box-shadow:var(--shadow-sm);">'
-      + '<canvas id="thumb-canvas-' + i + '" width="1280" height="720" style="width:100%;height:auto;display:block;background:#111;"></canvas>'
-      + '<div style="padding:12px 13px 14px;">'
-      +   '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:9px;">'
-      +     '<span style="font-size:.74rem;font-weight:700;color:var(--text-2);">' + escapeHtml(s.style) + '</span>'
-      +     '<div style="display:flex;gap:6px;">'
-      +       '<button class="btn btn-light btn-sm" onclick="openThumbInCanva(' + i + ')">Open in Canva</button>'
-      +       '<button class="btn btn-primary btn-sm" onclick="downloadThumb(' + i + ')">Download</button>'
-      +     '</div>'
-      +   '</div>'
-      +   '<input value="' + escapeHtml(s.headline) + '" oninput="editThumb(' + i + ',\'headline\',this.value)" style="width:100%;box-sizing:border-box;padding:7px 9px;border:1px solid var(--glass-border);border-radius:8px;background:var(--surface2);color:var(--text);font-size:.78rem;font-weight:700;margin-bottom:6px;" placeholder="Main text">'
-      +   '<input value="' + escapeHtml(s.subText) + '" oninput="editThumb(' + i + ',\'subText\',this.value)" style="width:100%;box-sizing:border-box;padding:7px 9px;border:1px solid var(--glass-border);border-radius:8px;background:var(--surface2);color:var(--text);font-size:.75rem;margin-bottom:8px;" placeholder="Sub text (optional)">'
-      +   '<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">'
-      +     sw
-      +     '<button class="btn btn-ghost btn-sm" style="margin-left:auto;" onclick="cycleThumbTemplate(' + i + ')">Layout &#8635;</button>'
-      +   '</div>'
-      + '</div>'
-      + '</div>';
+    return `<div style="background:var(--surface);border:1px solid var(--glass-border);border-radius:14px;overflow:hidden;box-shadow:var(--shadow-sm);">
+      <canvas id="thumb-canvas-${i}" width="1280" height="720" style="width:100%;height:auto;display:block;background:#111;"></canvas>
+      <div style="padding:12px 13px 14px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:9px;">
+          <span style="font-size:.74rem;font-weight:700;color:var(--text-2);">${escapeHtml(s.style)}</span>
+          <div style="display:flex;gap:6px;">
+            <button class="btn btn-light btn-sm" data-app-click="${appEvent('openThumbInCanva', [i])}">Open in Canva</button>
+            <button class="btn btn-primary btn-sm" data-app-click="${appEvent('downloadThumb', [i])}">Download</button>
+          </div>
+        </div>
+        <input value="${escapeHtml(s.headline)}" data-app-input="${appEvent('editThumb', [i, 'headline', { appRef: 'value' }])}" style="width:100%;box-sizing:border-box;padding:7px 9px;border:1px solid var(--glass-border);border-radius:8px;background:var(--surface2);color:var(--text);font-size:.78rem;font-weight:700;margin-bottom:6px;" placeholder="Main text">
+        <input value="${escapeHtml(s.subText)}" data-app-input="${appEvent('editThumb', [i, 'subText', { appRef: 'value' }])}" style="width:100%;box-sizing:border-box;padding:7px 9px;border:1px solid var(--glass-border);border-radius:8px;background:var(--surface2);color:var(--text);font-size:.75rem;margin-bottom:8px;" placeholder="Sub text (optional)">
+        <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+          ${swatches}
+          <button class="btn btn-ghost btn-sm" style="margin-left:auto;" data-app-click="${appEvent('cycleThumbTemplate', [i])}">Layout &#8635;</button>
+        </div>
+      </div>
+    </div>`;
   }).join('');
   return '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:16px;">' + cards + '</div>';
 }

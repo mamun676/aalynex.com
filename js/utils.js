@@ -39,7 +39,13 @@ function showToast(msg, type = 'ok', icon = '') {
   const t = document.createElement('div');
   const colors = { ok: 'var(--green)', err: 'var(--red)', info: 'var(--accent)', warn: 'var(--yellow)' };
   t.className = 'toast';
-  t.innerHTML = `<span class="toast-icon" style="color:${colors[type] || colors.ok}">${icon}</span><span>${msg}</span>`;
+  const iconEl = document.createElement('span');
+  iconEl.className = 'toast-icon';
+  iconEl.style.color = colors[type] || colors.ok;
+  iconEl.textContent = icon;
+  const textEl = document.createElement('span');
+  textEl.textContent = msg;
+  t.append(iconEl, textEl);
   wrap.appendChild(t);
   setTimeout(() => { t.classList.add('hide'); setTimeout(() => t.remove(), 300); }, 3200);
 }
@@ -83,10 +89,71 @@ function _pushNav(state) {
   if (cur && cur.view === state.view && cur.page === state.page) return;
   try { history.pushState(state, ''); } catch (e) {}
 }
+/* ── BRAND SPLASH ──────────────────────────────────────────────────
+   NOT shown when the site first opens. It only covers the two slow
+   moments: (1) opening Login / Sign Up, (2) entering a dashboard after
+   logging in, so the empty white dashboard is never visible.
+   If the network never comes back, the curtain turns into a
+   "No internet connection" card instead of hanging forever. */
+var SPLASH_OFFLINE_MS = 7000;   // how long to wait before giving up
+window._splashShownAt = 0;
+window._splashTimer = null;
+window._splashOffTimer = null;
+function _splashEl() { return document.getElementById('app-splash'); }
+function showSplash() {
+  var el = _splashEl();
+  if (!el) return;
+  if (window._splashTimer) { clearTimeout(window._splashTimer); window._splashTimer = null; }
+  if (window._splashOffTimer) clearTimeout(window._splashOffTimer);
+  window._splashShownAt = Date.now();
+  el.classList.remove('is-offline');
+  el.classList.remove('splash-hide');
+  // already offline? say so straight away, else wait and then give up
+  if (navigator.onLine === false) { el.classList.add('is-offline'); }
+  window._splashOffTimer = setTimeout(function () {
+    var e = _splashEl();
+    if (e && !e.classList.contains('splash-hide')) e.classList.add('is-offline');
+  }, SPLASH_OFFLINE_MS);
+}
+/* minMs = keep the lockup on screen at least this long so it never flickers */
+function hideSplash(minMs) {
+  var el = _splashEl();
+  if (!el) return;
+  if (el.classList.contains('is-offline')) return;   // let the user read it / retry
+  var min = (typeof minMs === 'number') ? minMs : 700;
+  var left = Math.max(0, min - (Date.now() - (window._splashShownAt || 0)));
+  if (window._splashTimer) clearTimeout(window._splashTimer);
+  window._splashTimer = setTimeout(function () {
+    if (window._splashOffTimer) { clearTimeout(window._splashOffTimer); window._splashOffTimer = null; }
+    el.classList.add('splash-hide');
+    el.classList.remove('is-offline');
+  }, left);
+}
+function splashRetry() {
+  if (navigator.onLine === false) { showToast('Still offline. Check your connection.', 'err', ''); return; }
+  location.reload();
+}
+/* connection dropped mid-load -> switch to the offline card immediately */
+window.addEventListener('offline', function () {
+  var el = _splashEl();
+  if (el && !el.classList.contains('splash-hide')) el.classList.add('is-offline');
+});
+
 function showScreen(id) {
+  var prev = document.querySelector('.screen.active');
+  var fromAuth = prev && prev.id === 'screen-auth';
+  var toDash = (id === 'screen-creator' || id === 'screen-freelancer');
+  // The curtain must go UP FIRST, before the new screen is revealed,
+  // otherwise the login page paints for a moment and the logo arrives
+  // late (looked like a glitch). Two slow moments: opening Login /
+  // Sign Up, and landing on a dashboard after logging in.
+  var curtain = (id === 'screen-auth' && !fromAuth) ? 700
+               : (fromAuth && toDash) ? 1400 : 0;
+  if (curtain) showSplash();
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
   window.scrollTo(0, 0);
+  if (curtain) hideSplash(curtain);
   if (id === 'screen-landing')          _pushNav({ view: 'landing' });
   else if (id === 'screen-auth')        _pushNav({ view: 'auth' });
   else if (id === 'screen-creator')     _pushNav({ view: 'creator',    page: (typeof currentCreatorPage   !== 'undefined' ? currentCreatorPage   : 'home') });
@@ -120,6 +187,9 @@ document.addEventListener('keydown', function (e) {
   if (el && el.classList && el.classList.contains('logo-home')) goHome(e);
 });
 function goAuth(tab, role) {
+  // raise the curtain on the click itself so the Aalynex lockup is the
+  // FIRST thing seen, then build the login/signup screen behind it
+  showSplash();
   showScreen('screen-auth');
   switchTab(tab);
   if (role) { tab === 'signup' ? setSRole(role) : setLRole(role); }
@@ -141,28 +211,111 @@ function closeSidebar(role) {
 }
 
 /* ── HTML ESCAPE + RATING + ROW + STATUS ── */
-function escapeHtml(str) {
-  return String(str).replace(/[&<>"']/g, function (c) {
-    return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
-  });
+// SECURITY: text/attribute escaping. This does not sanitize arbitrary HTML.
+function escapeHtml(value) {
+  return String(value == null ? '' : value).replace(/[&<>"']/g, c =>
+    ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
 }
 
-// SECURITY: sirf safe http(s)/mailto links allow karo. javascript: jaise payloads block.
-function safeUrl(url) {
-  const s = String(url == null ? '' : url).trim();
-  if (/^https?:\/\//i.test(s) || /^mailto:/i.test(s)) return escapeHtml(s);
+// Return a raw, validated URL for DOM properties. Keep encoding separate.
+function validatedHttpUrl(value) {
+  const raw = String(value == null ? '' : value).trim();
+  if (!/^https?:\/\//i.test(raw) || /[\u0000-\u001f\u007f]/.test(raw)) return '';
+  try {
+    const url = new URL(raw);
+    if (!['https:', 'http:'].includes(url.protocol) || !url.hostname || url.username || url.password) return '';
+    return url.href;
+  } catch (_) { return ''; }
+}
+
+// Safe HTML href value; arbitrary data:, javascript:, relative/protocol-relative URLs are rejected.
+function safeUrl(value) {
+  const raw = String(value == null ? '' : value).trim();
+  const http = validatedHttpUrl(raw);
+  if (http) return escapeHtml(http);
+  if (/^mailto:[^\s<>"'?#]+@[^\s<>"'?#]+$/i.test(raw) && !/%(?:0a|0d)/i.test(raw)) return escapeHtml(raw);
   return '#';
 }
+
+// Media supplied from profiles/messages must be an absolute HTTP(S) URL.
+function safeMediaUrl(value) { return escapeHtml(validatedHttpUrl(value)); }
+
+// Thumbnail/photo canvas accepts raster data URLs, never SVG/HTML documents or remote script schemes.
+function validatedRasterDataUrl(value) {
+  const raw = typeof value === 'string' ? value : '';
+  return /^data:image\/(?:png|jpeg|jpg|webp|gif);base64,[a-z0-9+/]+={0,2}$/i.test(raw) ? raw : '';
+}
+
+// Values are serialized as inert JSON in data-* attributes, never as JavaScript source.
+function appEvent(action, args, options) {
+  return escapeHtml(JSON.stringify({ action, args: args || [], ...(options || {}) }));
+}
+
+(function bindAppActions() {
+  // Fixed allowlist. A data attribute cannot call arbitrary window functions.
+  const allowed = new Set([
+    'viewAISuggestHistory', 'switchChat', 'handleChatUpload', 'sendMsg',
+    'triggerApproveAndPay', 'requestRevision', 'acceptNegotiation', 'rejectNegotiation',
+    'openProjectFile', 'cProjectEdit', 'deleteProjectConfirm', 'manageProject',
+    'saveProjectEdit', 'toggleRemoveAtt', 'viewFreelancerPortfolio', 'openSendRequestModal',
+    'selCT', 'selFL', 'downloadEditedVideo', 'rateStar', 'filterProjects', 'cViewPayment',
+    'saveRating', 'cBrowseSort', 'requestManagedEditor', 'fViewProject', 'acceptProject',
+    'viewProject', 'fViewOngoing', 'fViewNegotiate', 'fViewUpload', 'onFinalFileSelect',
+    'uploadFinalVideo', 'fViewEarning', 'editExperience', 'deleteExperience', 'removeSkill',
+    'addSkill', 'removeDraftFile', 'nativeShare', 'copyProfileLink',
+    'fOpenChatWith', 'setThumbPalette', 'openThumbInCanva', 'downloadThumb', 'editThumb', 'cycleThumbTemplate'
+  ]);
+
+  function dispatch(event) {
+    let element = event.target instanceof Element ? event.target : event.target?.parentElement;
+    const attribute = 'data-app-' + event.type;
+    while (element && element !== document.documentElement.parentElement) {
+      if (element.hasAttribute(attribute)) {
+        let binding;
+        try { binding = JSON.parse(element.getAttribute(attribute)); } catch (_) { return; }
+        if (!binding || typeof binding !== 'object' || !Array.isArray(binding.args)) return;
+        if (binding.key && event.key !== binding.key) return;
+        if (event.isComposing || element.matches(':disabled') || element.getAttribute('aria-disabled') === 'true') return;
+        if (binding.stop) event.stopPropagation();
+        if (binding.key === 'Enter') event.preventDefault();
+
+        if (event.type === 'error' && binding.action === 'fallbackTeamImage' && element.tagName === 'IMG') {
+          element.removeAttribute(attribute); // Retry only once, even if the fallback fails.
+          const fallback = validatedHttpUrl(binding.args[0]);
+          if (fallback && new URL(fallback).origin === 'https://api.dicebear.com') element.src = fallback;
+          return;
+        }
+        if (!allowed.has(binding.action) || typeof window[binding.action] !== 'function') return;
+        const args = binding.args.map(arg => arg && typeof arg === 'object' && arg.appRef === 'element'
+          ? element : arg && typeof arg === 'object' && arg.appRef === 'value' ? element.value : arg);
+        try {
+          const result = window[binding.action](...args);
+          if (result && typeof result.catch === 'function') result.catch(error => {
+            console.error('[App action]', binding.action, error);
+            showToast('Action failed. Please try again.', 'err');
+          });
+        } catch (error) {
+          console.error('[App action]', binding.action, error);
+          showToast('Action failed. Please try again.', 'err');
+        }
+        if (binding.stop) return;
+      }
+      element = element.parentElement;
+    }
+  }
+  // Capture preserves child stopPropagation semantics before any parent inline handler.
+  ['click', 'change', 'keydown', 'input', 'error'].forEach(type => document.addEventListener(type, dispatch, true));
+})();
 
 // SECURITY: HTML-attribute / inline-onclick ke andar daalne se pehle khatarnak chars hatao.
 function attrSafe(s) {
   return String(s == null ? '' : s).replace(/[^a-zA-Z0-9_\-:.,@ ]/g, '');
 }
 function rateStar(id, n) {
-  document.querySelectorAll('#' + id + ' span').forEach((s, i) => s.className = i < n ? 'lit' : '');
+  (document.getElementById(id)?.querySelectorAll('span') || []).forEach((s, i) => s.className = i < n ? 'lit' : '');
 }
 function pRow(ic, t, m, sc, sl) {
-  return `<div class="pc"><div class="pico">${ic}</div><div class="pinfo"><div class="ptitle">${t}</div><div class="pmeta">${m}</div></div><div class="pstatus ${sc}">${sl}</div></div>`;
+  return `<div class="pc"><div class="pico">${ic}</div><div class="pinfo"><div class="ptitle">${escapeHtml(t)}</div><div class="pmeta">${escapeHtml(m)}</div></div><div class="pstatus ${escapeHtml(sc)}">${escapeHtml(sl)}</div></div>`;
 }
 function statusClass(s) { return { open: 's-pe', ongoing: 's-on', completed: 's-co', cancelled: 's-wa' }[s] || 's-pe'; }
 function statusLabel(s) { return { open: 'Open', ongoing: 'In Progress', completed: 'Completed', cancelled: 'Cancelled' }[s] || s; }
@@ -200,19 +353,19 @@ async function _sendAalynexEmail(toUserId, subject, html) {
 
 function sendProjectNotificationEmail(freelancerId, title, budget, deadline, contentType) {
   _sendAalynexEmail(freelancerId, `New project request: ${title}`,
-    `<p>You have a new project request on Aalynex.</p><p><b>${title}</b><br>Budget: ₹${fmt(budget)}<br>Type: ${contentType}<br>Deadline: ${fmtDate(deadline)}</p>`);
+    `<p>You have a new project request on Aalynex.</p><p><b>${escapeHtml(title)}</b><br>Budget: ₹${escapeHtml(fmt(budget))}<br>Type: ${escapeHtml(contentType)}<br>Deadline: ${escapeHtml(fmtDate(deadline))}</p>`);
 }
 function sendAcceptanceNotificationEmail(creatorId, title, budget, deadline, contentType) {
   _sendAalynexEmail(creatorId, `Your project was accepted: ${title}`,
-    `<p>An editor accepted your project on Aalynex.</p><p><b>${title}</b><br>Budget: ₹${fmt(budget)}<br>Type: ${contentType}<br>Deadline: ${fmtDate(deadline)}</p>`);
+    `<p>An editor accepted your project on Aalynex.</p><p><b>${escapeHtml(title)}</b><br>Budget: ₹${escapeHtml(fmt(budget))}<br>Type: ${escapeHtml(contentType)}<br>Deadline: ${escapeHtml(fmtDate(deadline))}</p>`);
 }
 function sendFinalUploadNotificationEmail(creatorId, title) {
   _sendAalynexEmail(creatorId, `Final video delivered: ${title}`,
-    `<p>Your editor uploaded the final edited video for <b>${title}</b>. Log in to review, approve & pay.</p>`);
+    `<p>Your editor uploaded the final edited video for <b>${escapeHtml(title)}</b>. Log in to review, approve & pay.</p>`);
 }
 function sendPaymentDoneEmail(freelancerId, title, amount, rating) {
   _sendAalynexEmail(freelancerId, `Payment received: ${title}`,
-    `<p>Payment of ₹${fmt(amount)} for <b>${title}</b> is complete.${rating ? ` Rating: ${rating}★` : ''}</p>`);
+    `<p>Payment of ₹${escapeHtml(fmt(amount))} for <b>${escapeHtml(title)}</b> is complete.${escapeHtml(rating ? ` Rating: ${rating}★` : '')}</p>`);
 }
 /* ---- THEME (dark / light) ---- */
 /* The two icons live in the markup as <svg class="ic-moon"> and <svg class="ic-sun">

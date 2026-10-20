@@ -187,7 +187,7 @@ async function doSignup() {
       otpFg.className = 'fg';
       otpFg.id = 'signup-otp-fg';
       otpFg.innerHTML = `
-        <label>Verification code sent to ${email}</label>
+        <label>Verification code sent to ${escapeHtml(email)}</label>
         <input id="signup-otp" type="text" inputmode="numeric"
           maxlength="6" placeholder="Enter 6-digit code"
           autocomplete="one-time-code"/>
@@ -290,6 +290,7 @@ function _resetSignupForm() {
 }
 
 async function loginSuccess(u) {
+  resetPremiumSession();
   CU = u;
   DB.setCurrentUser(u);
 
@@ -398,6 +399,7 @@ else if (CU.role === 'freelancer' && currentFreelancerPage !== 'chat') renderF(c
 
 function logout() {
   showModal('Log Out', 'Are you sure you want to log out?', async () => {
+    resetPremiumSession();
     if (supaClient) {
       try { await supaClient.auth.signOut(); } catch (e) {}
     }
@@ -449,7 +451,7 @@ async function doForgotPassword() {
     _resetEmail = email;
     showToast('OTP sent to your email!', 'ok', '');
     const body = `
-      <p style="font-size:.85rem;color:var(--text-3);margin-bottom:12px;">Enter the OTP sent to <b>${email}</b> and set a new password.</p>
+      <p style="font-size:.85rem;color:var(--text-3);margin-bottom:12px;">Enter the OTP sent to <b>${escapeHtml(email)}</b> and set a new password.</p>
       <div class="fg"><label>OTP Code</label><input id="reset-otp" type="text" inputmode="numeric" placeholder="6-digit code"/></div>
       <div class="fg"><label>New Password</label><input type="password" id="reset-pw" placeholder="At least 6 characters"/></div>
       <div class="fg"><label>Confirm Password</label><input type="password" id="reset-pw2" placeholder="Re-enter new password"/></div>

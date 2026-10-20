@@ -1,3 +1,31 @@
+// Premium is a server decision. This is a short-lived display cache, never authorization.
+window._premiumEpoch = window._premiumEpoch || 0;
+window._premiumStatusSeq = window._premiumStatusSeq || 0;
+function resetPremiumSession() {
+  window._premiumEpoch++;
+  window._premiumStatusSeq++;
+  window._premiumActive = false;
+  window._premiumUserId = null;
+  window._premiumCheckedAt = 0;
+  window._premiumCheckoutBusy = false;
+  window._premiumPlan = null;
+  if (typeof _pendingManagedId !== 'undefined') { _pendingManagedId = null; _pendingManagedName = null; }
+}
+async function refreshPremiumStatus(user) {
+  if (!supaClient || !user || !CU || user.id !== CU.id) return false;
+  const epoch = window._premiumEpoch, userId = user.id, seq = ++window._premiumStatusSeq;
+  let active = false;
+  try {
+    const { data, error } = await supaClient.rpc('has_verified_premium', { p_user_id: userId });
+    active = !error && data === true;
+  } catch (_) { active = false; }
+  if (!CU || CU.id !== userId || window._premiumEpoch !== epoch || seq !== window._premiumStatusSeq) return false;
+  window._premiumActive = active;
+  window._premiumUserId = userId;
+  window._premiumCheckedAt = Date.now();
+  return active;
+}
+
 // ═══════════════════════════════════════════════
 //  SYNC — pull profiles, projects, attachments, conversations, messages
 // ═══════════════════════════════════════════════
@@ -49,24 +77,13 @@ DB.saveUsers(localUsers);
       } catch (e) { /* managed_editors optional */ }
     }
 
-    // ── Premium subscription status (creator access to Managed Editing) ──
-    try {
-      const { data: subs } = await supaClient
-        .from('subscriptions')
-        .select('status, current_period_end, trial_ends_at')
-        .eq('user_id', u.id)
-        .in('status', ['active', 'trialing']);
-      const _pnow = Date.now();
-      window._premiumActive = (subs || []).some(s => {
-        const end = s.current_period_end || s.trial_ends_at;
-        return !end || new Date(end).getTime() > _pnow;
-      });
-    } catch (e) { if (typeof window._premiumActive === 'undefined') window._premiumActive = false; }
+    // Fail closed: read server-verified entitlement, never trust browser-written status.
+    await refreshPremiumStatus(u);
 
     // ── Premium plan (admin-controlled price → shown live on main site) ──
     try {
       const { data: _plan } = await supaClient.from('subscription_plans')
-        .select('id, name, price, trial_days, features').eq('plan_key', 'aalynex_premium').maybeSingle();
+        .select('id, name, price, trial_days, features').eq('plan_key', 'aalynex_premium').eq('is_active', true).maybeSingle();
       if (_plan) window._premiumPlan = _plan;
     } catch (e) {}
 

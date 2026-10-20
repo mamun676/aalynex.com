@@ -3,7 +3,7 @@
 //  Logged-out (anon) users ke liye public read.
 // ════════════════════════════════════
 function publicProfileUrl(id) {
-  return location.origin + location.pathname + '?profile=' + id;
+  return location.origin + location.pathname + '?profile=' + encodeURIComponent(String(id));
 }
 
 // 1) Route check — main.js isko call karta hai (ya publicProfileGuard IIFE).
@@ -64,24 +64,24 @@ function renderPublicProfile(profile, stats) {
   const completed = (stats && stats.completed_count) ? stats.completed_count : 0;
 
   const photoHtml = profile.photo_url
-    ? `<img src="${escapeHtml(profile.photo_url)}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`
-    : (profile.name ? profile.name.charAt(0).toUpperCase() : 'F');
+    ? `<img src="${safeMediaUrl(profile.photo_url)}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`
+    : escapeHtml(profile.name ? profile.name.charAt(0).toUpperCase() : 'F');
 
   const stars = avg
-    ? Array.from({ length: 5 }, (_, i) => `<span style="color:${i < Math.round(avg) ? 'var(--yellow)' : 'rgba(0,0,0,0.15)'}">&#9733;</span>`).join('')
+    ? Array.from({ length: 5 }, (_, i) => `<span style="color:${escapeHtml(i < Math.round(avg) ? 'var(--yellow)' : 'rgba(0,0,0,0.15)')}">&#9733;</span>`).join('')
     : `<span style="color:rgba(0,0,0,0.15)">&#9733;&#9733;&#9733;&#9733;&#9733;</span>`;
 
   host.innerHTML = `
     <div style="max-width:560px;margin:0 auto;padding:32px 18px;">
       <div style="display:flex;flex-direction:column;align-items:center;text-align:center;gap:10px;">
-        <div class="f-avatar" style="width:96px;height:96px;font-size:2.4rem;${profile.photo_url ? 'background:transparent;' : ''}">${photoHtml}</div>
+        <div class="f-avatar" style="width:96px;height:96px;font-size:2.4rem;${escapeHtml(profile.photo_url ? 'background:transparent;' : '')}">${photoHtml}</div>
         <div>
           <div style="font-family:'Outfit',sans-serif;font-size:1.4rem;font-weight:700;color:var(--text);">${escapeHtml(profile.name)}</div>
           <div style="font-size:.9rem;color:var(--accent2);font-weight:500;">${escapeHtml(profile.profession || 'Video Editor')}</div>
         </div>
         <div style="font-size:.85rem;display:flex;align-items:center;gap:6px;">
           ${stars}
-          <span style="color:var(--text-3);">${avg ? `(${avg} &bull; ${completed} Projects)` : `(New &bull; ${completed} Projects)`}</span>
+          <span style="color:var(--text-3);">${escapeHtml(avg ? `(${avg} • ${completed} Projects)` : `(New • ${completed} Projects)`)}</span>
         </div>
       </div>
 
@@ -102,9 +102,9 @@ function renderPublicProfile(profile, stats) {
       </div>` : ''}
 
       <div style="margin-top:24px;display:flex;flex-wrap:wrap;gap:8px;justify-content:center;">
-        ${links.instagram ? `<a href="${safeUrl(links.instagram)}" target="_blank" class="btn btn-ghost btn-sm" style="text-decoration:none;">Instagram</a>` : ''}
-        ${links.youtube ? `<a href="${safeUrl(links.youtube)}" target="_blank" class="btn btn-ghost btn-sm" style="text-decoration:none;">YouTube</a>` : ''}
-        ${links.video_link ? `<a href="${safeUrl(links.video_link)}" target="_blank" class="btn btn-ghost btn-sm" style="text-decoration:none;">Work Video</a>` : ''}
+        ${links.instagram ? `<a href="${safeUrl(links.instagram)}" target="_blank" rel="noopener noreferrer" class="btn btn-ghost btn-sm" style="text-decoration:none;">Instagram</a>` : ''}
+        ${links.youtube ? `<a href="${safeUrl(links.youtube)}" target="_blank" rel="noopener noreferrer" class="btn btn-ghost btn-sm" style="text-decoration:none;">YouTube</a>` : ''}
+        ${links.video_link ? `<a href="${safeUrl(links.video_link)}" target="_blank" rel="noopener noreferrer" class="btn btn-ghost btn-sm" style="text-decoration:none;">Work Video</a>` : ''}
       </div>
 
       ${shareButtonsHtml(profile.id, profile.name)}
@@ -124,9 +124,9 @@ function shareButtonsHtml(id, name) {
     <div style="margin-top:24px;border-top:1px solid var(--glass-border);padding-top:16px;">
       <div style="font-size:.7rem;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;text-align:center;">Share this profile</div>
       <div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center;">
-        <button class="btn btn-ghost btn-sm" onclick="nativeShare('${id}','${(name||'').replace(/'/g, "\\'")}')">Share</button>
-        <button class="btn btn-ghost btn-sm" onclick="copyProfileLink('${id}')">Copy Link</button>
-        <a class="btn btn-ghost btn-sm" style="text-decoration:none;" target="_blank" href="https://wa.me/?text=${encText}%20${encURL}">WhatsApp</a>
+        <button class="btn btn-ghost btn-sm" data-app-click="${appEvent("nativeShare", [String(id ?? ''), String((name||'') ?? '')])}">Share</button>
+        <button class="btn btn-ghost btn-sm" data-app-click="${appEvent("copyProfileLink", [String(id ?? '')])}">Copy Link</button>
+        <a class="btn btn-ghost btn-sm" style="text-decoration:none;" target="_blank" rel="noopener noreferrer" href="https://wa.me/?text=${escapeHtml(encText)}%20${escapeHtml(encURL)}">WhatsApp</a>
       </div>
     </div>`;
 }
@@ -174,8 +174,8 @@ function addPublicShareCard() {
     <h4>Your Public Profile</h4>
     <p style="font-size:.82rem;color:var(--text-2);margin-bottom:10px;">Share this link with creators — logged-out log bhi dekh sakte hain.</p>
     <div style="display:flex;gap:8px;flex-wrap:wrap;">
-      <button class="btn btn-primary btn-sm" onclick="nativeShare('${CU.id}','${(CU.name||'').replace(/'/g, "\\'")}')">Share Profile</button>
-      <button class="btn btn-ghost btn-sm" onclick="copyProfileLink('${CU.id}')">Copy Link</button>
+      <button class="btn btn-primary btn-sm" data-app-click="${appEvent("nativeShare", [String(CU.id ?? ''), String((CU.name||'') ?? '')])}">Share Profile</button>
+      <button class="btn btn-ghost btn-sm" data-app-click="${appEvent("copyProfileLink", [String(CU.id ?? '')])}">Copy Link</button>
     </div>`;
   fMain.appendChild(card);
 }
