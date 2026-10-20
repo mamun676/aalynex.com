@@ -75,31 +75,31 @@ function buildChat(myId, otherDefaultId) {
   <div class="chat-wrap">
     <button id="chatToggleBtn" class="chat-toggle" onclick="toggleChat()">Chats</button>
     <div class="chat-list">${conversations.map(c => `
-        <div class="cc-item${c.key === activeKey ? ' active' : ''}" data-uid="${c.user.id}" onclick="switchChat('${myId}','${c.user.id}')">
-          <div class="c-av">${c.user.avatar}</div>
+        <div class="cc-item${escapeHtml(c.key === activeKey ? ' active' : '')}" data-uid="${escapeHtml(c.user.id)}" data-app-click="${appEvent("switchChat", [String(myId ?? ''), String(c.user.id ?? '')])}">
+          <div class="c-av">${escapeHtml(c.user.avatar)}</div>
           <div style="min-width:0;">
-            <div class="cc-name">${c.user.name}</div>
-            <div class="cc-prev">${c.last?.file_url ? 'Video Attachment' : (c.last?.text?.includes('[NEGOTIATION') ? 'New Offer' : (c.last?.text || 'No messages yet'))}</div>
+            <div class="cc-name">${escapeHtml(c.user.name)}</div>
+            <div class="cc-prev">${escapeHtml(c.last?.file_url ? 'Video Attachment' : (c.last?.text?.includes('[NEGOTIATION') ? 'New Offer' : (c.last?.text || 'No messages yet')))}</div>
           </div>
         </div>`).join('') || `<div style="padding:14px;font-size:.78rem;color:var(--text-3);">You must accept a project first</div>`}
     </div>
     <div class="chat-area">${activeConvo ? `
         <div class="ch-header">
           <button class="chat-back" onclick="chatBack()" aria-label="Back">‹</button>
-          <div class="c-av" style="width:28px;height:28px;font-size:.7rem;">${activeConvo.user.avatar}</div>
+          <div class="c-av" style="width:28px;height:28px;font-size:.7rem;">${escapeHtml(activeConvo.user.avatar)}</div>
           <div class="online-dot" id="chat-online-dot"></div>
-          <span>${activeConvo.user.name}</span>
+          <span>${escapeHtml(activeConvo.user.name)}</span>
           <span id="chat-status-text" style="font-size:.7rem;margin-left:4px;color:var(--text-3);">Connecting…</span>
         </div>
         <div class="chat-msgs" id="chat-msgs-el">${renderMsgs(activeConvo.msgs, myId)}</div>
         <div class="chat-inp-bar">
-          <label for="chat-upload-${activeConvo.user.id}" style="cursor:pointer; display:flex; align-items:center; margin-right:4px; color:var(--text-3); transition:color .2s;" onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--text-3)'">
+          <label for="chat-upload-${escapeHtml(activeConvo.user.id)}" style="cursor:pointer; display:flex; align-items:center; margin-right:4px; color:var(--text-3); transition:color .2s;" onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--text-3)'">
              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
           </label>
-          <input type="file" id="chat-upload-${activeConvo.user.id}" accept="video/*" style="display:none;" onchange="handleChatUpload(this, '${myId}', '${activeConvo.user.id}')"/>
+          <input type="file" id="chat-upload-${escapeHtml(activeConvo.user.id)}" accept="video/*" style="display:none;" data-app-change="${appEvent("handleChatUpload", [{ appRef: "element" }, String(myId ?? ''), String(activeConvo.user.id ?? '')])}"/>
           <input class="chat-inp" id="chat-inp-el" placeholder="Type a message…"
-            onkeydown="if(event.key==='Enter')sendMsg('${myId}','${activeConvo.user.id}')"/>
-          <button class="btn btn-primary btn-sm" onclick="sendMsg('${myId}','${activeConvo.user.id}')">Send</button>
+            data-app-keydown="${appEvent("sendMsg", [String(myId ?? ''), String(activeConvo.user.id ?? '')], { key: 'Enter' })}"/>
+          <button class="btn btn-primary btn-sm" data-app-click="${appEvent("sendMsg", [String(myId ?? ''), String(activeConvo.user.id ?? '')])}">Send</button>
         </div>`
       : '<div style="flex:1;display:flex;align-items:center;justify-content:center;color:var(--text-3);font-size:.85rem;">No active conversations</div>'}
     </div>
@@ -136,7 +136,7 @@ function renderMsgs(msgs, myId) {
 
           if (isFinal) {
             // ONLY Approve & Pay for Final Delivery (No Revision option)
-            actionBtns += `<button class="btn btn-green-btn btn-xs" style="margin-top:6px; font-size:0.65rem; margin-right:6px;" onclick="triggerApproveAndPay('${proj?.id}')">✅ Approve & Pay</button>`;
+            actionBtns += `<button class="btn btn-green-btn btn-xs" style="margin-top:6px; font-size:0.65rem; margin-right:6px;" data-app-click="${appEvent("triggerApproveAndPay", [String(proj?.id ?? '')])}">✅ Approve & Pay</button>`;
           } else {
             const hasRequestedRevision = msgs.slice(idx + 1).some(msg =>
               String(msg.from).toLowerCase() === String(myId).toLowerCase() &&
@@ -146,32 +146,32 @@ function renderMsgs(msgs, myId) {
             if (hasRequestedRevision) {
               actionBtns += `<span style="margin-top:6px; font-size:0.7rem; color:var(--yellow); display:inline-flex; align-items:center; padding:2px 4px;">🔄 Revision Requested</span>`;
             } else {
-              actionBtns += `<button class="btn btn-danger btn-xs" style="margin-top:6px; font-size:0.65rem; border:1px solid var(--red); color:var(--red); background:transparent;" onclick="requestRevision('${m.from}')">🔄 Request Revision</button>`;
+              actionBtns += `<button class="btn btn-danger btn-xs" style="margin-top:6px; font-size:0.65rem; border:1px solid var(--red); color:var(--red); background:transparent;" data-app-click="${appEvent("requestRevision", [String(m.from ?? '')])}">🔄 Request Revision</button>`;
             }
           }
         } else {
-          downloadBtn = `<a href="${m.file_url}" target="_blank" download class="btn btn-ghost btn-xs" style="margin-top:6px; display:inline-block; font-size:0.65rem;">⬇ Download File</a>`;
+          downloadBtn = `<a href="${safeUrl(m.file_url)}" target="_blank" rel="noopener noreferrer" download class="btn btn-ghost btn-xs" style="margin-top:6px; display:inline-block; font-size:0.65rem;">⬇ Download File</a>`;
         }
       } else {
-        downloadBtn = `<a href="${m.file_url}" target="_blank" download class="btn btn-ghost btn-xs" style="margin-top:6px; display:inline-block; font-size:0.65rem;">⬇ Download File</a>`;
+        downloadBtn = `<a href="${safeUrl(m.file_url)}" target="_blank" rel="noopener noreferrer" download class="btn btn-ghost btn-xs" style="margin-top:6px; display:inline-block; font-size:0.65rem;">⬇ Download File</a>`;
       }
 
       return `
-      <div style="display:flex; flex-direction:column; align-items:${flexAlign}; margin-bottom:8px; width:100%;">
-        <div class="msg-video ${isMine ? 'sent-video' : ''}">
+      <div style="display:flex; flex-direction:column; align-items:${escapeHtml(flexAlign)}; margin-bottom:8px; width:100%;">
+        <div class="msg-video ${escapeHtml(isMine ? 'sent-video' : '')}">
           <div class="msg-video-inner">
             <div class="msg-video-label">
               <div class="vico">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="15" height="13" rx="2"/><polygon points="22 7 17 10 22 13 22 7"/></svg>
               </div>
-              <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:180px;">${fname}</span>
+              <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:180px;">${escapeHtml(fname)}</span>
             </div>
-            <video class="msg-video-player" controls preload="metadata" src="${m.file_url}" ${restrictDownloadAttr}>
+            <video class="msg-video-player" controls preload="metadata" src="${safeMediaUrl(m.file_url)}" ${restrictDownloadAttr}>
               Your browser does not support the video tag.
             </video>
             <div class="msg-video-footer">
-              <span>${isMine ? 'You' : 'Sent'}</span>
-              <span>${fmtTime(m.time)}</span>
+              <span>${escapeHtml(isMine ? 'You' : 'Sent')}</span>
+              <span>${escapeHtml(fmtTime(m.time))}</span>
             </div>
           </div>
           <div style="display:flex; gap:6px; flex-wrap:wrap;">
@@ -198,29 +198,29 @@ function renderMsgs(msgs, myId) {
         } else {
           buttonsHtml = `
             <div style="display:flex; gap:6px; margin-top:10px;">
-              <button class="btn btn-green-btn btn-xs" onclick="acceptNegotiation(this, '${attrSafe(projId)}', '${attrSafe(newPrice)}', '${attrSafe(newDate)}', '${attrSafe(m.from)}')">Accept Offer</button>
-              <button class="btn btn-danger btn-xs" style="border:1px solid var(--red); color:var(--red);" onclick="rejectNegotiation(this, '${attrSafe(projId)}', '${attrSafe(m.from)}')">Reject</button>
+              <button class="btn btn-green-btn btn-xs" data-app-click="${appEvent("acceptNegotiation", [{ appRef: "element" }, String(attrSafe(projId) ?? ''), String(attrSafe(newPrice) ?? ''), String(attrSafe(newDate) ?? ''), String(attrSafe(m.from) ?? '')])}">Accept Offer</button>
+              <button class="btn btn-danger btn-xs" style="border:1px solid var(--red); color:var(--red);" data-app-click="${appEvent("rejectNegotiation", [{ appRef: "element" }, String(attrSafe(projId) ?? ''), String(attrSafe(m.from) ?? '')])}">Reject</button>
             </div>`;
         }
       }
 
       return `
-      <div style="display:flex; flex-direction:column; align-items:${flexAlign}; margin-bottom:8px; width:100%;">
-        <div class="msg ${isMine ? 'sent' : 'received'}" style="border:2px solid var(--accent); background: ${isMine ? 'var(--accent)' : 'var(--accent-soft)'};">
+      <div style="display:flex; flex-direction:column; align-items:${escapeHtml(flexAlign)}; margin-bottom:8px; width:100%;">
+        <div class="msg ${escapeHtml(isMine ? 'sent' : 'received')}" style="border:2px solid var(--accent); background: ${escapeHtml(isMine ? 'var(--accent)' : 'var(--accent-soft)')};">
           <strong style="display:block; margin-bottom:4px;">Negotiation Offer</strong>
-          <div>New Price: <strong>₹${fmt(newPrice)}</strong></div>
-          <div>New Deadline: <strong>${fmtDate(newDate)}</strong></div>
+          <div>New Price: <strong>₹${escapeHtml(fmt(newPrice))}</strong></div>
+          <div>New Deadline: <strong>${escapeHtml(fmtDate(newDate))}</strong></div>
           ${note ? `<div style="margin-top:6px; font-style:italic;">"${escapeHtml(note)}"</div>` : ''}
           ${buttonsHtml}
         </div>
-        <div class="msg-time" style="${timeAlign}; width:100%; margin-top:2px;">${fmtTime(m.time)}</div>
+        <div class="msg-time" style="${escapeHtml(timeAlign)}; width:100%; margin-top:2px;">${escapeHtml(fmtTime(m.time))}</div>
       </div>`;
     }
 
     return `
-      <div style="display:flex; flex-direction:column; align-items:${flexAlign}; margin-bottom:8px; width:100%;">
-        <div class="msg ${isMine ? 'sent' : 'received'}">${escapeHtml(m.text)}</div>
-        <div class="msg-time" style="${timeAlign}; width:100%; margin-top:2px;">${fmtTime(m.time)}</div>
+      <div style="display:flex; flex-direction:column; align-items:${escapeHtml(flexAlign)}; margin-bottom:8px; width:100%;">
+        <div class="msg ${escapeHtml(isMine ? 'sent' : 'received')}">${escapeHtml(m.text)}</div>
+        <div class="msg-time" style="${escapeHtml(timeAlign)}; width:100%; margin-top:2px;">${escapeHtml(fmtTime(m.time))}</div>
       </div>`;
   }).join('');
 }
@@ -617,14 +617,14 @@ async function switchChat(myId, otherId) {
     area.innerHTML = `
       <div class="ch-header">
         <button class="chat-back" onclick="chatBack()" aria-label="Back">‹</button>
-        <div class="c-av" style="width:28px;height:28px;font-size:.7rem;">${other.avatar}</div>
+        <div class="c-av" style="width:28px;height:28px;font-size:.7rem;">${escapeHtml(other.avatar)}</div>
         <div class="online-dot" id="chat-online-dot" style="background:var(--text-3);"></div>
-        <span>${other.name}</span>
+        <span>${escapeHtml(other.name)}</span>
         <span id="chat-status-text" style="font-size:.7rem;margin-left:4px;color:var(--text-3);">–</span>
       </div>
       <div class="chat-msgs" id="chat-msgs-el">${renderMsgs(msgs, myId)}</div>
       <div class="chat-inp-bar">
-        <label for="chat-upload-${otherId}"
+        <label for="chat-upload-${escapeHtml(otherId)}"
           style="cursor:pointer;display:flex;align-items:center;margin-right:4px;color:var(--text-3);transition:color .2s;"
           onmouseover="this.style.color='var(--accent)'"
           onmouseout="this.style.color='var(--text-3)'">
@@ -633,12 +633,12 @@ async function switchChat(myId, otherId) {
             <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
           </svg>
         </label>
-        <input type="file" id="chat-upload-${otherId}" accept="video/*" style="display:none;"
-          onchange="handleChatUpload(this,'${myId}','${otherId}')"/>
+        <input type="file" id="chat-upload-${escapeHtml(otherId)}" accept="video/*" style="display:none;"
+          data-app-change="${appEvent("handleChatUpload", [{ appRef: "element" }, String(myId ?? ''), String(otherId ?? '')])}"/>
         <input class="chat-inp" id="chat-inp-el" placeholder="Type a message…"
-          onkeydown="if(event.key==='Enter') sendMsg('${myId}','${otherId}')"/>
+          data-app-keydown="${appEvent("sendMsg", [String(myId ?? ''), String(otherId ?? '')], { key: 'Enter' })}"/>
         <button class="btn btn-primary btn-sm"
-          onclick="sendMsg('${myId}','${otherId}')">Send</button>
+          data-app-click="${appEvent("sendMsg", [String(myId ?? ''), String(otherId ?? '')])}">Send</button>
       </div>`;
 
     document.querySelector('.chat-wrap')?.classList.add('show-chat');

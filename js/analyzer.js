@@ -146,7 +146,7 @@ function renderAnalyzerReport(d) {
 
   const idCard = '' +
     '<div style="display:flex;align-items:center;gap:14px;background:var(--surface);border:1px solid var(--glass-border);border-radius:var(--radius-lg);padding:18px;box-shadow:var(--shadow-sm);margin-bottom:14px;">' +
-      (ch.thumbnail ? '<img src="' + escapeHtml(ch.thumbnail) + '" alt="" style="width:56px;height:56px;border-radius:50%;object-fit:cover;flex-shrink:0;border:2px solid var(--glass-border-strong);">' : '') +
+      (ch.thumbnail ? '<img src="' + safeMediaUrl(ch.thumbnail) + '" alt="" style="width:56px;height:56px;border-radius:50%;object-fit:cover;flex-shrink:0;border:2px solid var(--glass-border-strong);">' : '') +
       '<div style="min-width:0;">' +
         '<div style="font-family:\'Outfit\',sans-serif;font-weight:700;font-size:1.1rem;color:var(--text);">' + escapeHtml(ch.title || 'Unknown channel') + '</div>' +
         '<div style="font-size:.78rem;color:var(--text-3);">' + escapeHtml(ch.handle || '') + (ch.country ? ' &middot; ' + escapeHtml(ch.country) : '') + '</div>' +
@@ -177,7 +177,7 @@ function renderAnalyzerReport(d) {
       vids.map(function (v, i) {
         return '<div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--glass-border);">' +
           '<span style="font-family:\'Outfit\',sans-serif;font-weight:700;font-size:.9rem;color:var(--text-3);width:20px;flex-shrink:0;">' + (i + 1) + '</span>' +
-          (v.thumbnail ? '<img src="' + escapeHtml(v.thumbnail) + '" alt="" style="width:74px;height:42px;border-radius:6px;object-fit:cover;flex-shrink:0;">' : '') +
+          (v.thumbnail ? '<img src="' + safeMediaUrl(v.thumbnail) + '" alt="" style="width:74px;height:42px;border-radius:6px;object-fit:cover;flex-shrink:0;">' : '') +
           '<div style="flex:1;min-width:0;">' +
             '<div style="font-size:.83rem;font-weight:600;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + escapeHtml(v.title || '') + '</div>' +
             '<div style="font-size:.73rem;color:var(--text-3);">' + _azNum(v.views) + ' views &middot; ' + _azNum(v.likes) + ' likes &middot; ' + _azNum(v.comments) + ' comments</div>' +

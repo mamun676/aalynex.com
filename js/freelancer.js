@@ -121,14 +121,14 @@ function fHome() {
   return `
   <div class="page-head"><h2>Dashboard</h2><p>Your freelancing overview</p></div>
   <div class="cards-grid">
-    <div class="mc a"><div class="label">Ongoing</div><div class="value">${projs.filter(p => p.status === 'ongoing').length}</div></div>
-    <div class="mc g"><div class="label">Total Earned</div><div class="value">₹${fmt(earned)}</div></div>
-    <div class="mc p"><div class="label">Completed</div><div class="value">${projs.filter(p => p.status === 'completed').length}</div></div>
-    <div class="mc b"><div class="label">Requests</div><div class="value">${openProjs.length}</div></div>
+    <div class="mc a"><div class="label">Ongoing</div><div class="value">${escapeHtml(projs.filter(p => p.status === 'ongoing').length)}</div></div>
+    <div class="mc g"><div class="label">Total Earned</div><div class="value">₹${escapeHtml(fmt(earned))}</div></div>
+    <div class="mc p"><div class="label">Completed</div><div class="value">${escapeHtml(projs.filter(p => p.status === 'completed').length)}</div></div>
+    <div class="mc b"><div class="label">Requests</div><div class="value">${escapeHtml(openProjs.length)}</div></div>
   </div>
   <div class="section-title">Your Ongoing Projects</div>
   <div class="project-list">
-    ${projs.filter(p => p.status === 'ongoing').map(p => { const c = DB.users().find(u => u.id === p.creatorId); return `<div class="pc" style="cursor:pointer;" onclick="fViewProject('${p.id}')"><div class="pico">${contentIconSvg(p.contentType)}</div><div class="pinfo"><div class="ptitle">${p.title}</div><div class="pmeta">From ${c?.name || 'Creator'} &#183; &#8377;${fmt(p.budget)}</div></div><div class="pstatus ${statusClass(p.status)}">${statusLabel(p.status)}</div></div>`; }).join('')
+    ${projs.filter(p => p.status === 'ongoing').map(p => { const c = DB.users().find(u => u.id === p.creatorId); return `<div class="pc" style="cursor:pointer;" data-app-click="${appEvent("fViewProject", [String(p.id ?? '')])}"><div class="pico">${contentIconSvg(p.contentType)}</div><div class="pinfo"><div class="ptitle">${escapeHtml(p.title)}</div><div class="pmeta">From ${escapeHtml(c?.name || 'Creator')} &#183; &#8377;${escapeHtml(fmt(p.budget))}</div></div><div class="pstatus ${escapeHtml(statusClass(p.status))}">${escapeHtml(statusLabel(p.status))}</div></div>`; }).join('')
       || '<div style="color:var(--text-3);font-size:.85rem;padding:16px 0;">No ongoing projects. <a style="color:var(--accent);cursor:pointer;" onclick="fPage(\'browse\',null)">Browse open projects &rarr;</a></div>'}
   </div>
   <div style="margin-top:18px;display:flex;gap:10px;flex-wrap:wrap;">
@@ -138,6 +138,7 @@ function fHome() {
 }
 function fOpenChatWith(otherId) {
   if (!otherId) { showToast('Chat unavailable for this project', 'err', ''); return; }
+  closeModal();
   currentChatUserId = otherId;
   const chatNav = document.querySelector('#screen-freelancer .nav-item[data-page="chat"]');
   fPage('chat', chatNav);
@@ -149,13 +150,13 @@ function fViewProject(id) {
   const c = DB.users().find(u => u.id === p.creatorId);
   const bodyHtml = `
     <div style="display:flex;flex-direction:column;gap:2px;">
-      <div class="info-row"><span class="key">Client</span><span>${c?.name || 'Creator'}</span></div>
-      <div class="info-row"><span class="key">Budget</span><span>&#8377;${fmt(p.budget)}</span></div>
-      <div class="info-row"><span class="key">Type</span><span>${p.contentType}</span></div>
-      <div class="info-row"><span class="key">Deadline</span><span>${fmtDate(p.deadline)}</span></div>
-      <div class="info-row"><span class="key">Priority</span><span>${p.priority || 'Normal'}</span></div>
-      <div class="info-row"><span class="key">Status</span><span>${statusLabel(p.status)}</span></div>
-      ${p.description ? `<div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--glass-border);font-size:.85rem;color:var(--text-2);line-height:1.6;">${p.description}</div>` : ''}
+      <div class="info-row"><span class="key">Client</span><span>${escapeHtml(c?.name || 'Creator')}</span></div>
+      <div class="info-row"><span class="key">Budget</span><span>&#8377;${escapeHtml(fmt(p.budget))}</span></div>
+      <div class="info-row"><span class="key">Type</span><span>${escapeHtml(p.contentType)}</span></div>
+      <div class="info-row"><span class="key">Deadline</span><span>${escapeHtml(fmtDate(p.deadline))}</span></div>
+      <div class="info-row"><span class="key">Priority</span><span>${escapeHtml(p.priority || 'Normal')}</span></div>
+      <div class="info-row"><span class="key">Status</span><span>${escapeHtml(statusLabel(p.status))}</span></div>
+      ${p.description ? `<div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--glass-border);font-size:.85rem;color:var(--text-2);line-height:1.6;">${escapeHtml(p.description)}</div>` : ''}
     </div>`;
   showModal(p.title, bodyHtml, () => { fOpenChatWith(p.creatorId); });
   document.getElementById('modal-confirm').textContent = 'Chat with Creator';
@@ -164,22 +165,22 @@ function fViewProject(id) {
 function fBrowse() {
   const open = DB.projects().filter(p => p.status === 'open' && (p.invited_freelancers || []).includes(CU.id));
   return `
-  <div class="page-head"><h2>Project Requests</h2><p>${open.length} request${open.length !== 1 ? 's' : ''} waiting for you</p></div>
+  <div class="page-head"><h2>Project Requests</h2><p>${escapeHtml(open.length)} request${escapeHtml(open.length !== 1 ? 's' : '')} waiting for you</p></div>
   <div class="project-list">
     ${open.length
       ? open.map(p => { const c = DB.users().find(u => u.id === p.creatorId); return `
         <div class="pc">
   <div class="pico">${contentIconSvg(p.contentType)}</div>
   <div class="pinfo">
-    <div class="ptitle">${p.title}</div>
-              <div class="pmeta">By ${c?.name || 'Creator'} · <strong style="color:var(--accent)">₹${fmt(p.budget)}</strong> · Due ${fmtDate(p.deadline)}</div>
+    <div class="ptitle">${escapeHtml(p.title)}</div>
+              <div class="pmeta">By ${escapeHtml(c?.name || 'Creator')} · <strong style="color:var(--accent)">₹${escapeHtml(fmt(p.budget))}</strong> · Due ${escapeHtml(fmtDate(p.deadline))}</div>
               <div style="margin-top:5px;display:flex;gap:5px;flex-wrap:wrap;">
-                <span class="tag">${p.contentType}</span><span class="tag b">${p.priority}</span>
+                <span class="tag">${escapeHtml(p.contentType)}</span><span class="tag b">${escapeHtml(p.priority)}</span>
               </div>
             </div>
             <div style="display:flex;flex-direction:column;gap:6px;flex-shrink:0;">
-              <button class="btn btn-primary btn-sm" onclick="acceptProject('${p.id}')">Accept First</button>
-              <button class="btn btn-ghost btn-sm"   onclick="viewProject('${p.id}')">View Details</button>
+              <button class="btn btn-primary btn-sm" data-app-click="${appEvent("acceptProject", [String(p.id ?? '')])}">Accept First</button>
+              <button class="btn btn-ghost btn-sm"   data-app-click="${appEvent("viewProject", [String(p.id ?? '')])}">View Details</button>
             </div>
           </div>`; }).join('')
       : '<div class="alert alert-i">No project requests right now. Wait for creators to invite you!</div>'}
@@ -245,10 +246,10 @@ function viewProject(id) {
   const atts = (DB.attachments() || []).filter(a => a.projectId === id);
 
   let bodyHtml = `<div style="font-size:0.85rem; color:var(--text-2); margin-bottom:12px;">
-     <strong>Budget:</strong> ₹${fmt(p.budget)}<br/>
-     <strong>Type:</strong> ${p.contentType}<br/>
-     <strong>Deadline:</strong> ${fmtDate(p.deadline)}<br/><br/>
-     ${p.description || ''}
+     <strong>Budget:</strong> ₹${escapeHtml(fmt(p.budget))}<br/>
+     <strong>Type:</strong> ${escapeHtml(p.contentType)}<br/>
+     <strong>Deadline:</strong> ${escapeHtml(fmtDate(p.deadline))}<br/><br/>
+     ${escapeHtml(p.description || '')}
   </div>`;
 
   if (atts.length > 0) {
@@ -257,9 +258,9 @@ function viewProject(id) {
           <div style="display:flex;flex-direction:column;gap:6px;">${atts.map(a => {
       let icon = '📄'; if (a.type === 'video') icon = '🎬'; else if (a.type === 'image') icon = '🖼️'; else if (a.type === 'audio') icon = '🎵';
       return `<div style="display:flex;align-items:center;gap:8px;font-size:.8rem;color:var(--text-2); background:var(--bg2); padding:6px 10px; border-radius:6px;">
-                       <span>${icon}</span>
-                       <span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1;">${a.name}</span>
-                       ${a.duration ? `<span style="color:var(--text-3);font-size:.7rem;font-weight:500;">(⏱ ${a.duration})</span>` : ''}
+                       <span>${escapeHtml(icon)}</span>
+                       <span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1;">${escapeHtml(a.name)}</span>
+                       ${a.duration ? `<span style="color:var(--text-3);font-size:.7rem;font-weight:500;">(⏱ ${escapeHtml(a.duration)})</span>` : ''}
                   </div>`;
     }).join('')}
           </div>
@@ -273,18 +274,18 @@ function viewProject(id) {
 function fOngoing() {
   const projs = DB.projects().filter(p => p.freelancerId === CU.id && p.status === 'ongoing');
   return `
-  <div class="page-head"><h2>Ongoing Projects</h2><p>${projs.length} active project${projs.length !== 1 ? 's' : ''}</p></div>
+  <div class="page-head"><h2>Ongoing Projects</h2><p>${escapeHtml(projs.length)} active project${escapeHtml(projs.length !== 1 ? 's' : '')}</p></div>
   <div class="project-list">
     ${projs.length
       ? projs.map(p => {
         const c    = DB.users().find(u => u.id === p.creatorId);
         const prog = p.editedUploaded ? 100 : 50;
         return `
-        <div class="pc" style="cursor:pointer;" onclick="fViewOngoing('${p.id}')">
+        <div class="pc" style="cursor:pointer;" data-app-click="${appEvent("fViewOngoing", [String(p.id ?? '')])}">
   <div class="pico">${contentIconSvg(p.contentType)}</div>
   <div class="pinfo">
-    <div class="ptitle">${p.title}</div>
-    <div class="pmeta">${c?.name || 'Creator'} &#183; &#8377;${fmt(p.budget)} &#183; ${prog}% done</div>
+    <div class="ptitle">${escapeHtml(p.title)}</div>
+    <div class="pmeta">${escapeHtml(c?.name || 'Creator')} &#183; &#8377;${escapeHtml(fmt(p.budget))} &#183; ${escapeHtml(prog)}% done</div>
   </div>
           <div class="pstatus s-on" style="flex-shrink:0;">In Progress</div>
         </div>`;
@@ -300,18 +301,18 @@ function fViewOngoing(id) {
   const prog = p.editedUploaded ? 100 : 50;
   const bodyHtml = `
     <div style="display:flex;flex-direction:column;gap:2px;">
-      <div class="info-row"><span class="key">Client</span><span>${c?.name || 'Creator'}</span></div>
-      <div class="info-row"><span class="key">Budget</span><span>&#8377;${fmt(p.budget)}</span></div>
-      <div class="info-row"><span class="key">Content Type</span><span>${p.contentType || '-'}</span></div>
-      <div class="info-row"><span class="key">Deadline</span><span>${p.deadline ? fmtDate(p.deadline) : '-'}</span></div>
-      <div class="info-row"><span class="key">Priority</span><span>${p.priority || 'Normal'}</span></div>
+      <div class="info-row"><span class="key">Client</span><span>${escapeHtml(c?.name || 'Creator')}</span></div>
+      <div class="info-row"><span class="key">Budget</span><span>&#8377;${escapeHtml(fmt(p.budget))}</span></div>
+      <div class="info-row"><span class="key">Content Type</span><span>${escapeHtml(p.contentType || '-')}</span></div>
+      <div class="info-row"><span class="key">Deadline</span><span>${escapeHtml(p.deadline ? fmtDate(p.deadline) : '-')}</span></div>
+      <div class="info-row"><span class="key">Priority</span><span>${escapeHtml(p.priority || 'Normal')}</span></div>
       <div class="info-row"><span class="key">Raw Files</span><span><span class="tag g">Received</span></span></div>
       <div style="margin-top:10px;">
-        <div style="display:flex;justify-content:space-between;font-size:.72rem;color:var(--text-3);margin-bottom:4px;"><span>Progress</span><span>${prog}%</span></div>
-        <div class="pb"><div class="pf" style="width:${prog}%;"></div></div>
+        <div style="display:flex;justify-content:space-between;font-size:.72rem;color:var(--text-3);margin-bottom:4px;"><span>Progress</span><span>${escapeHtml(prog)}%</span></div>
+        <div class="pb"><div class="pf" style="width:${escapeHtml(prog)}%;"></div></div>
       </div>
       <div style="display:flex;gap:8px;margin-top:16px;flex-wrap:wrap;">
-        <button class="btn btn-outline-f btn-sm" onclick="closeModal();currentChatUserId='${p.creatorId}';fPage('chat',null)">Chat</button>
+        <button class="btn btn-outline-f btn-sm" data-app-click="${appEvent("fOpenChatWith", [p.creatorId])}">Chat</button>
         <button class="btn btn-primary btn-sm"   onclick="closeModal();fPage('upload',null)">Upload Final</button>
         <button class="btn btn-ghost btn-sm"     onclick="closeModal();fPage('negotiate',null)">Negotiate</button>
       </div>
@@ -323,17 +324,17 @@ function fViewOngoing(id) {
 function fNegotiate() {
   const projs = DB.projects().filter(p => p.freelancerId === CU.id && p.status === 'ongoing');
   return `
-  <div class="page-head"><h2>Negotiate Price & Deadline</h2><p>${projs.length} project${projs.length !== 1 ? 's' : ''} open for negotiation</p></div>
+  <div class="page-head"><h2>Negotiate Price & Deadline</h2><p>${escapeHtml(projs.length)} project${escapeHtml(projs.length !== 1 ? 's' : '')} open for negotiation</p></div>
   <div class="project-list">
     ${projs.length
       ? projs.map(p => {
         const c = DB.users().find(u => u.id === p.creatorId);
         return `
-        <div class="pc" style="cursor:pointer;" onclick="fViewNegotiate('${p.id}')">
+        <div class="pc" style="cursor:pointer;" data-app-click="${appEvent("fViewNegotiate", [String(p.id ?? '')])}">
   <div class="pico">${contentIconSvg(p.contentType)}</div>
   <div class="pinfo">
-    <div class="ptitle">${p.title}</div>
-    <div class="pmeta">${c?.name || 'Creator'} &#183; Offer &#8377;${fmt(p.budget)} &#183; Due ${fmtDate(p.deadline)}</div>
+    <div class="ptitle">${escapeHtml(p.title)}</div>
+    <div class="pmeta">${escapeHtml(c?.name || 'Creator')} &#183; Offer &#8377;${escapeHtml(fmt(p.budget))} &#183; Due ${escapeHtml(fmtDate(p.deadline))}</div>
   </div>
           </div>
           <div class="pstatus s-on" style="flex-shrink:0;">Negotiate</div>
@@ -349,14 +350,14 @@ function fViewNegotiate(id) {
   const c = DB.users().find(u => u.id === p.creatorId);
   const bodyHtml = `
     <div style="display:flex;flex-direction:column;gap:2px;">
-      <div class="info-row"><span class="key">Client</span><span>${c?.name || 'Creator'}</span></div>
-      <div class="info-row"><span class="key">Client's Offer</span><span style="font-weight:600;">&#8377;${fmt(p.budget)}</span></div>
-      <div class="info-row"><span class="key">Current Deadline</span><span>${p.deadline ? fmtDate(p.deadline) : '-'}</span></div>
+      <div class="info-row"><span class="key">Client</span><span>${escapeHtml(c?.name || 'Creator')}</span></div>
+      <div class="info-row"><span class="key">Client's Offer</span><span style="font-weight:600;">&#8377;${escapeHtml(fmt(p.budget))}</span></div>
+      <div class="info-row"><span class="key">Current Deadline</span><span>${escapeHtml(p.deadline ? fmtDate(p.deadline) : '-')}</span></div>
       <div class="two-col" style="margin-top:14px;">
-        <div class="fg"><label>Your Counter-Price (&#8377;)</label><input type="number" id="neg-price-${p.id}" value="${Math.round(p.budget * 1.15)}"/></div>
-        <div class="fg"><label>Proposed Deadline</label><input type="date" id="neg-date-${p.id}" value="${new Date(Date.now() + 7 * 86400000).toISOString().split('T')[0]}"/></div>
+        <div class="fg"><label>Your Counter-Price (&#8377;)</label><input type="number" id="neg-price-${escapeHtml(p.id)}" value="${escapeHtml(Math.round(p.budget * 1.15))}"/></div>
+        <div class="fg"><label>Proposed Deadline</label><input type="date" id="neg-date-${escapeHtml(p.id)}" value="${escapeHtml(new Date(Date.now() + 7 * 86400000).toISOString().split('T')[0])}"/></div>
       </div>
-      <div class="fg"><label>Message to Client</label><input id="neg-msg-${p.id}" placeholder="I can complete this at the revised price..."/></div>
+      <div class="fg"><label>Message to Client</label><input id="neg-msg-${escapeHtml(p.id)}" placeholder="I can complete this at the revised price..."/></div>
       <button class="btn btn-green-btn btn-sm" style="margin-top:4px;" onclick="closeModal();showToast('Accepted at original terms!','ok','')">Accept Original Terms</button>
     </div>`;
   showModal(p.title, bodyHtml, () => { sendCounter(p.id); });
@@ -475,20 +476,20 @@ async function uploadFinalVideo(pid) {
 function fUpload() {
   const projs = DB.projects().filter(p => p.freelancerId === CU.id && p.status === 'ongoing');
   return `
-  <div class="page-head"><h2>Upload Edited Video</h2><p>${projs.length} project${projs.length !== 1 ? 's' : ''} ready for delivery</p></div>
+  <div class="page-head"><h2>Upload Edited Video</h2><p>${escapeHtml(projs.length)} project${escapeHtml(projs.length !== 1 ? 's' : '')} ready for delivery</p></div>
   <div class="alert alert-i">Upload final video here OR securely inside the Chat menu!</div>
   <div class="project-list">
     ${projs.length
       ? projs.map(p => {
         const c = DB.users().find(u => u.id === p.creatorId);
         return `
-        <div class="pc" style="cursor:pointer;" onclick="fViewUpload('${p.id}')">
+        <div class="pc" style="cursor:pointer;" data-app-click="${appEvent("fViewUpload", [String(p.id ?? '')])}">
   <div class="pico">${contentIconSvg(p.contentType)}</div>
   <div class="pinfo">
-    <div class="ptitle">${p.title}</div>
-    <div class="pmeta">${c?.name || 'Creator'} &#183; &#8377;${fmt(p.budget)} &#183; ${p.editedUploaded ? 'Final delivered' : 'Awaiting final upload'}</div>
+    <div class="ptitle">${escapeHtml(p.title)}</div>
+    <div class="pmeta">${escapeHtml(c?.name || 'Creator')} &#183; &#8377;${escapeHtml(fmt(p.budget))} &#183; ${escapeHtml(p.editedUploaded ? 'Final delivered' : 'Awaiting final upload')}</div>
   </div>
-          <div class="pstatus ${p.editedUploaded ? 's-co' : 's-on'}" style="flex-shrink:0;">${p.editedUploaded ? 'Delivered' : 'Upload'}</div>
+          <div class="pstatus ${escapeHtml(p.editedUploaded ? 's-co' : 's-on')}" style="flex-shrink:0;">${escapeHtml(p.editedUploaded ? 'Delivered' : 'Upload')}</div>
         </div>`;
       }).join('')
       : '<div class="alert alert-i">No projects ready for upload.</div>'}
@@ -498,19 +499,19 @@ function fViewUpload(id) {
   const p = DB.projects().find(x => x.id === id);
   if (!p) return;
   const bodyHtml = `
-    <label class="upload-area-lg" for="final-video-input-${p.id}" id="final-drop-zone-${p.id}">
-      <div class="upload-icon" id="final-upload-icon-${p.id}">
+    <label class="upload-area-lg" for="final-video-input-${escapeHtml(p.id)}" id="final-drop-zone-${escapeHtml(p.id)}">
+      <div class="upload-icon" id="final-upload-icon-${escapeHtml(p.id)}">
         <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="rgba(0,0,0,0.25)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg>
       </div>
-      <div class="upload-label" id="final-file-label-${p.id}">Drag & drop your final edited video or click to browse</div>
+      <div class="upload-label" id="final-file-label-${escapeHtml(p.id)}">Drag & drop your final edited video or click to browse</div>
       <div class="upload-sub">MP4, MOV &middot; Up to 10 GB</div>
-      <input type="file" id="final-video-input-${p.id}" accept="video/*" style="display:none;" onchange="onFinalFileSelect(this, '${p.id}')"/>
+      <input type="file" id="final-video-input-${escapeHtml(p.id)}" accept="video/*" style="display:none;" data-app-change="${appEvent("onFinalFileSelect", [{ appRef: "element" }, String(p.id ?? '')])}"/>
     </label>
-    <div class="upload-progress-wrap" id="final-progress-wrap-${p.id}">
-      <div class="upload-progress-bar"><div class="upload-progress-fill" id="final-progress-fill-${p.id}"></div></div>
+    <div class="upload-progress-wrap" id="final-progress-wrap-${escapeHtml(p.id)}">
+      <div class="upload-progress-bar"><div class="upload-progress-fill" id="final-progress-fill-${escapeHtml(p.id)}"></div></div>
     </div>
-    <div class="fg"><label>Version Notes</label><input id="final-note-${p.id}" placeholder="v1 &#8211; Color graded, audio synced..."/></div>
-    <button class="btn btn-primary" style="width:100%;" id="final-video-btn-${p.id}" onclick="uploadFinalVideo('${p.id}')">Upload Final Video &#8594;</button>`;
+    <div class="fg"><label>Version Notes</label><input id="final-note-${escapeHtml(p.id)}" placeholder="v1 &#8211; Color graded, audio synced..."/></div>
+    <button class="btn btn-primary" style="width:100%;" id="final-video-btn-${escapeHtml(p.id)}" data-app-click="${appEvent("uploadFinalVideo", [String(p.id ?? '')])}">Upload Final Video &#8594;</button>`;
   showModal('Upload for: ' + p.title, bodyHtml, () => {});
   document.getElementById('modal-confirm').textContent = 'Close';
 }
@@ -522,20 +523,20 @@ function fEarnings() {
   return `
   <div class="page-head"><h2>Earnings</h2></div>
   <div class="cards-grid">
-    <div class="mc g"><div class="label">Total Received</div><div class="value">&#8377;${fmt(received)}</div></div>
-    <div class="mc a"><div class="label">Pending Payout</div><div class="value">&#8377;${fmt(pending)}</div></div>
-    <div class="mc"><div class="label">Projects</div><div class="value">${projs.length}</div></div>
+    <div class="mc g"><div class="label">Total Received</div><div class="value">&#8377;${escapeHtml(fmt(received))}</div></div>
+    <div class="mc a"><div class="label">Pending Payout</div><div class="value">&#8377;${escapeHtml(fmt(pending))}</div></div>
+    <div class="mc"><div class="label">Projects</div><div class="value">${escapeHtml(projs.length)}</div></div>
   </div>
   <div class="section-title">Transaction History</div>
   <div class="project-list">
     ${projs.length
       ? projs.map(p => { const c = DB.users().find(u => u.id === p.creatorId); return `
-          <div class="pc" style="cursor:pointer;" onclick="fViewEarning('${p.id}')">
+          <div class="pc" style="cursor:pointer;" data-app-click="${appEvent("fViewEarning", [String(p.id ?? '')])}">
             <div class="pico pico-pay"><svg class="pico-icon pico-wallet" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 18v1c0 1.1-.9 2-2 2H5c-1.11 0-2-.9-2-2V5c0-1.1.89-2 2-2h14c1.1 0 2 .9 2 2v1h-9c-1.11 0-2 .9-2 2v8c0 1.1.89 2 2 2h9zm-9-2h10V8H12v8zm4-2.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/></svg></div>
-            <div class="pinfo"><div class="ptitle">${p.title}</div><div class="pmeta">From ${c?.name || 'Creator'} &#183; ${fmtDate(p.createdAt)}</div></div>
+            <div class="pinfo"><div class="ptitle">${escapeHtml(p.title)}</div><div class="pmeta">From ${escapeHtml(c?.name || 'Creator')} &#183; ${escapeHtml(fmtDate(p.createdAt))}</div></div>
             <div style="display:flex;align-items:center;gap:8px;">
-              <div style="font-weight:600;font-size:.9rem;">&#8377;${fmt(p.budget)}</div>
-              <div class="pstatus ${p.paid ? 's-co' : 's-pe'}">${p.paid ? 'Received' : 'Pending'}</div>
+              <div style="font-weight:600;font-size:.9rem;">&#8377;${escapeHtml(fmt(p.budget))}</div>
+              <div class="pstatus ${escapeHtml(p.paid ? 's-co' : 's-pe')}">${escapeHtml(p.paid ? 'Received' : 'Pending')}</div>
             </div>
           </div>`; }).join('')
       : '<div style="color:var(--text-3);font-size:.85rem;padding:20px 0;">No transactions yet.</div>'}
@@ -551,27 +552,27 @@ function fViewEarning(id) {
   const statusText  = paid ? 'Received' : 'Pending';
   let note;
   if (paid) {
-    note = `Payment of &#8377;${fmt(p.budget)} has been received from ${c?.name || 'the client'}.`;
+    note = `Payment of ₹${fmt(p.budget)} has been received from ${c?.name || 'the client'}.`;
   } else if (p.status === 'completed') {
-    note = `Project is completed. Payout of &#8377;${fmt(p.budget)} is pending from ${c?.name || 'the client'} - you can follow up via Chat.`;
+    note = `Project is completed. Payout of ₹${fmt(p.budget)} is pending from ${c?.name || 'the client'} - you can follow up via Chat.`;
   } else if (p.editedUploaded) {
-    note = `Final video delivered. Payment of &#8377;${fmt(p.budget)} will be released after ${c?.name || 'the client'} approves the work.`;
+    note = `Final video delivered. Payment of ₹${fmt(p.budget)} will be released after ${c?.name || 'the client'} approves the work.`;
   } else {
-    note = `Complete and deliver this project to receive your payout of &#8377;${fmt(p.budget)}.`;
+    note = `Complete and deliver this project to receive your payout of ₹${fmt(p.budget)}.`;
   }
   const stars = p.rating ? ('&#9733;'.repeat(p.rating) + '&#9734;'.repeat(5 - p.rating)) : '';
   const bodyHtml = `
     <div style="display:flex;flex-direction:column;gap:2px;">
-      <div class="info-row"><span class="key">Payment Status</span><span style="color:${statusColor};font-weight:600;">${statusText}</span></div>
-      <div class="info-row"><span class="key">Amount</span><span style="font-weight:600;">&#8377;${fmt(p.budget)}</span></div>
-      <div class="info-row"><span class="key">Client</span><span>${c?.name || 'Creator'}</span></div>
-      <div class="info-row"><span class="key">Content Type</span><span>${p.contentType || '-'}</span></div>
-      <div class="info-row"><span class="key">Project Status</span><span>${statusLabel(p.status)}</span></div>
-      <div class="info-row"><span class="key">Final Video</span><span>${p.editedUploaded ? 'Delivered' : 'Not delivered'}</span></div>
-      <div class="info-row"><span class="key">Deadline</span><span>${p.deadline ? fmtDate(p.deadline) : '-'}</span></div>
-      <div class="info-row"><span class="key">Created</span><span>${fmtDate(p.createdAt)}</span></div>
+      <div class="info-row"><span class="key">Payment Status</span><span style="color:${escapeHtml(statusColor)};font-weight:600;">${escapeHtml(statusText)}</span></div>
+      <div class="info-row"><span class="key">Amount</span><span style="font-weight:600;">&#8377;${escapeHtml(fmt(p.budget))}</span></div>
+      <div class="info-row"><span class="key">Client</span><span>${escapeHtml(c?.name || 'Creator')}</span></div>
+      <div class="info-row"><span class="key">Content Type</span><span>${escapeHtml(p.contentType || '-')}</span></div>
+      <div class="info-row"><span class="key">Project Status</span><span>${escapeHtml(statusLabel(p.status))}</span></div>
+      <div class="info-row"><span class="key">Final Video</span><span>${escapeHtml(p.editedUploaded ? 'Delivered' : 'Not delivered')}</span></div>
+      <div class="info-row"><span class="key">Deadline</span><span>${escapeHtml(p.deadline ? fmtDate(p.deadline) : '-')}</span></div>
+      <div class="info-row"><span class="key">Created</span><span>${escapeHtml(fmtDate(p.createdAt))}</span></div>
       ${stars ? `<div class="info-row"><span class="key">Client Rating</span><span style="color:#f59e0b;">${stars}</span></div>` : ''}
-      <div class="alert alert-i" style="margin-top:12px;">${note}</div>
+      <div class="alert alert-i" style="margin-top:12px;">${escapeHtml(note)}</div>
     </div>`;
   showModal(p.title, bodyHtml, () => { currentChatUserId = p.creatorId; fPage('chat', null); });
   document.getElementById('modal-confirm').textContent = 'Chat with Client';
@@ -596,10 +597,10 @@ function fProfile() {
     <div>
       <div class="det-card">
         <h4>Personal Info</h4>
-        <div class="fg"><label>Full Name</label><input id="fprof-name" value="${u.name}"/></div>
-        <div class="fg"><label>Email</label><input value="${u.email}" disabled style="opacity:.5;"/></div>
-        <div class="fg"><label>Phone</label><input id="fprof-phone" value="${u.phone || ''}"/></div>
-        <div class="fg"><label>Profession</label><input id="fprof-profession" value="${u.profession || ''}"/></div>
+        <div class="fg"><label>Full Name</label><input id="fprof-name" value="${escapeHtml(u.name)}"/></div>
+        <div class="fg"><label>Email</label><input value="${escapeHtml(u.email)}" disabled style="opacity:.5;"/></div>
+        <div class="fg"><label>Phone</label><input id="fprof-phone" value="${escapeHtml(u.phone || '')}"/></div>
+        <div class="fg"><label>Profession</label><input id="fprof-profession" value="${escapeHtml(u.profession || '')}"/></div>
         <button class="btn btn-primary" onclick="saveFProfile()">Save Changes</button>
       </div>
 
@@ -607,13 +608,13 @@ function fProfile() {
       <div class="det-card" style="border:1px solid var(--accent);background:linear-gradient(180deg,rgba(224,92,42,.05),transparent);">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
           <h4 style="margin:0;">🏆 Managed Editor</h4>
-          <span class="tag pu" style="font-size:.65rem;">${u.managed_id || 'Verified'}</span>
+          <span class="tag pu" style="font-size:.65rem;">${escapeHtml(u.managed_id || 'Verified')}</span>
         </div>
         <p style="font-size:.75rem;color:var(--text-3);margin:0 0 12px;">You're a verified Managed Editor. Set your specialization &amp; minimum pricing — creators see this on your card.</p>
-        <div class="fg"><label>Specialization</label><input id="me-spec" placeholder="e.g. Long-form documentary edits" value="${u.specialization || ''}"/></div>
+        <div class="fg"><label>Specialization</label><input id="me-spec" placeholder="e.g. Long-form documentary edits" value="${escapeHtml(u.specialization || '')}"/></div>
         <div style="display:flex;gap:10px;">
-          <div class="fg" style="flex:1;"><label>Min Price — Long-form (₹)</label><input id="me-lf" type="number" min="0" placeholder="5000" value="${u.min_price_longform != null ? u.min_price_longform : ''}"/></div>
-          <div class="fg" style="flex:1;"><label>Min Price — Reel/Short (₹)</label><input id="me-reel" type="number" min="0" placeholder="800" value="${u.min_price_reel != null ? u.min_price_reel : ''}"/></div>
+          <div class="fg" style="flex:1;"><label>Min Price — Long-form (₹)</label><input id="me-lf" type="number" min="0" placeholder="5000" value="${escapeHtml(u.min_price_longform != null ? u.min_price_longform : '')}"/></div>
+          <div class="fg" style="flex:1;"><label>Min Price — Reel/Short (₹)</label><input id="me-reel" type="number" min="0" placeholder="800" value="${escapeHtml(u.min_price_reel != null ? u.min_price_reel : '')}"/></div>
         </div>
         <button class="btn btn-primary btn-sm" onclick="saveManagedProfile()">Save Managed Profile</button>
       </div>
@@ -628,15 +629,15 @@ function fProfile() {
         <h4>Account Details</h4>
         <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
           <div class="sb-avatar sb-av-freelancer" style="width:48px;height:48px;font-size:1.2rem;overflow:hidden;">
-            ${u.photo_url ? `<img src="${u.photo_url}" style="width:100%;height:100%;object-fit:cover;">` : u.avatar}
+            ${u.photo_url ? `<img src="${safeMediaUrl(u.photo_url)}" style="width:100%;height:100%;object-fit:cover;">` : escapeHtml(u.avatar)}
           </div>
           <div>
-            <div style="font-weight:600;font-size:1rem;color:var(--text);">${u.name}</div>
+            <div style="font-weight:600;font-size:1rem;color:var(--text);">${escapeHtml(u.name)}</div>
             <span class="tag pu">Freelancer</span>
           </div>
         </div>
-        <div class="info-row"><span class="key">Profession</span><span>${u.profession || 'N/A'}</span></div>
-        <div class="info-row"><span class="key">Member Since</span><span>${new Date(u.createdAt || u.created_at).toLocaleDateString('en-IN', { month: 'long', year: 'numeric' })}</span></div>
+        <div class="info-row"><span class="key">Profession</span><span>${escapeHtml(u.profession || 'N/A')}</span></div>
+        <div class="info-row"><span class="key">Member Since</span><span>${escapeHtml(new Date(u.createdAt || u.created_at).toLocaleDateString('en-IN', { month: 'long', year: 'numeric' }))}</span></div>
       </div>
 
       <div class="det-card">
@@ -659,14 +660,14 @@ function fProfile() {
           ${exp.map((e, i) => `
             <div style="background:var(--surface); border:1px solid var(--glass-border); padding:12px; border-radius:var(--radius-sm);">
               <div style="display:flex; justify-content:space-between;">
-                <strong style="font-size:0.9rem;color:var(--text);">${e.title}</strong>
+                <strong style="font-size:0.9rem;color:var(--text);">${escapeHtml(e.title)}</strong>
                 <div style="display:flex; gap:6px;">
-                  <button class="btn btn-ghost btn-xs" onclick="editExperience(${i})">Edit</button>
-                  <button class="btn btn-danger btn-xs" onclick="deleteExperience(${i})">Del</button>
+                  <button class="btn btn-ghost btn-xs" data-app-click="${appEvent("editExperience", [i])}">Edit</button>
+                  <button class="btn btn-danger btn-xs" data-app-click="${appEvent("deleteExperience", [i])}">Del</button>
                 </div>
               </div>
-              <div style="font-size:0.8rem; color:var(--text-2); margin-bottom:4px; font-weight:500;">${e.company} | ${e.duration}</div>
-              ${e.description ? `<div style="font-size:0.75rem; color:var(--text-3); line-height:1.4;">${e.description}</div>` : ''}
+              <div style="font-size:0.8rem; color:var(--text-2); margin-bottom:4px; font-weight:500;">${escapeHtml(e.company)} | ${escapeHtml(e.duration)}</div>
+              ${e.description ? `<div style="font-size:0.75rem; color:var(--text-3); line-height:1.4;">${escapeHtml(e.description)}</div>` : ''}
             </div>
           `).join('') || '<div style="font-size:0.8rem; color:var(--text-3);">No experience added yet.</div>'}
         </div>
@@ -678,7 +679,7 @@ function fProfile() {
         <h4>Profile Photo</h4>
         <div style="display:flex; flex-direction:column; align-items:center; gap:12px;">
           <div class="sb-avatar sb-av-freelancer" style="width:80px;height:80px;font-size:2rem;overflow:hidden;" id="prof-photo-preview">
-            ${u.photo_url ? `<img src="${u.photo_url}" style="width:100%;height:100%;object-fit:cover;">` : u.avatar}
+            ${u.photo_url ? `<img src="${safeMediaUrl(u.photo_url)}" style="width:100%;height:100%;object-fit:cover;">` : escapeHtml(u.avatar)}
           </div>
           <label class="btn btn-ghost btn-sm" style="cursor:pointer; margin:0;">
             Upload New Photo
@@ -690,7 +691,7 @@ function fProfile() {
       <div class="det-card">
         <h4>My Skills</h4>
         <div style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:12px;">
-          ${skills.map(s => `<span class="tag pu" style="cursor:pointer;" onclick="removeSkill('${s}')">${s} ×</span>`).join('')}
+          ${skills.map(s => `<span class="tag pu" style="cursor:pointer;" data-app-click="${appEvent("removeSkill", [String(s ?? '')])}">${escapeHtml(s)} ×</span>`).join('')}
         </div>
         <div class="fg" style="display:flex; gap:8px; margin-bottom:12px;">
           <input id="bio-skill-input" placeholder="Add a new skill..." style="flex:1;">
@@ -698,15 +699,15 @@ function fProfile() {
         </div>
         <div class="divider">Suggested</div>
         <div style="display:flex; flex-wrap:wrap; gap:8px;">
-          ${['Video Editing', 'Color Grading', 'Motion Graphics', 'Sound Design', 'Thumbnail Design', 'Premiere Pro', 'After Effects', 'DaVinci Resolve', 'CapCut', 'Alight Motion'].map(s => `<div class="ct-pill" onclick="addSkill('${s}')">${s}</div>`).join('')}
+          ${['Video Editing', 'Color Grading', 'Motion Graphics', 'Sound Design', 'Thumbnail Design', 'Premiere Pro', 'After Effects', 'DaVinci Resolve', 'CapCut', 'Alight Motion'].map(s => `<div class="ct-pill" data-app-click="${appEvent("addSkill", [String(s ?? '')])}">${escapeHtml(s)}</div>`).join('')}
         </div>
       </div>
 
       <div class="det-card">
         <h4>Portfolio &amp; Work Links</h4>
-        <div class="fg"><label>Instagram Profile Link</label><input id="bio-ig" placeholder="https://instagram.com/yourhandle" value="${links.instagram || ''}"></div>
-        <div class="fg"><label>YouTube Channel Link</label><input id="bio-yt" placeholder="https://youtube.com/@yourchannel" value="${links.youtube || ''}"></div>
-        <div class="fg"><label>Work Video Link (Best Work)</label><input id="bio-work" placeholder="Paste a link to your best work (YouTube/Drive/Vimeo)" value="${links.video_link || ''}"></div>
+        <div class="fg"><label>Instagram Profile Link</label><input id="bio-ig" placeholder="https://instagram.com/yourhandle" value="${escapeHtml(links.instagram || '')}"></div>
+        <div class="fg"><label>YouTube Channel Link</label><input id="bio-yt" placeholder="https://youtube.com/@yourchannel" value="${escapeHtml(links.youtube || '')}"></div>
+        <div class="fg"><label>Work Video Link (Best Work)</label><input id="bio-work" placeholder="Paste a link to your best work (YouTube/Drive/Vimeo)" value="${escapeHtml(links.video_link || '')}"></div>
         <button class="btn btn-primary btn-sm" onclick="savePortfolioLinks()">Save Links</button>
       </div>
 
@@ -715,7 +716,7 @@ function fProfile() {
         ${u.resume_url ? `
           <div class="alert alert-s" style="align-items:center; display:flex;">
             <span style="flex:1;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Resume Uploaded</span>
-            <a href="${u.resume_url}" target="_blank" class="btn btn-ghost btn-xs" style="margin-right:8px; text-decoration:none;">View</a>
+            <a href="${safeUrl(u.resume_url)}" target="_blank" rel="noopener noreferrer" class="btn btn-ghost btn-xs" style="margin-right:8px; text-decoration:none;">View</a>
             <label class="btn btn-primary btn-xs" style="cursor:pointer; margin:0;">
               Replace
               <input type="file" id="bio-resume-replace" accept="application/pdf" style="display:none;" onchange="uploadResume(this)">
@@ -735,12 +736,12 @@ function fProfile() {
     <h4>Payment Details</h4>
     <div class="fg">
       <label>UPI ID</label>
-      <input id="prof-upi" placeholder="yourname@upi" value="${u.upiId || ''}"/>
+      <input id="prof-upi" placeholder="yourname@upi" value="${escapeHtml(u.upiId || '')}"/>
       <div style="font-size:.7rem;color:var(--text-3);margin-top:4px;">Your payment details are private and only used for payouts.</div>
     </div>
-    <div class="fg"><label>Account Holder Name</label><input id="prof-bank-name" placeholder="Full name as on bank account" value="${u.bankAccountName || ''}"/></div>
-    <div class="fg"><label>Bank Account Number</label><input id="prof-bank-acc" placeholder="Enter account number" value="${u.bankAccountNumber || ''}"/></div>
-    <div class="fg"><label>IFSC Code</label><input id="prof-ifsc" placeholder="e.g. SBIN0001234" maxlength="11" value="${u.ifscCode || ''}"/></div>
+    <div class="fg"><label>Account Holder Name</label><input id="prof-bank-name" placeholder="Full name as on bank account" value="${escapeHtml(u.bankAccountName || '')}"/></div>
+    <div class="fg"><label>Bank Account Number</label><input id="prof-bank-acc" placeholder="Enter account number" value="${escapeHtml(u.bankAccountNumber || '')}"/></div>
+    <div class="fg"><label>IFSC Code</label><input id="prof-ifsc" placeholder="e.g. SBIN0001234" maxlength="11" value="${escapeHtml(u.ifscCode || '')}"/></div>
     <button class="btn btn-primary btn-sm" id="save-payment-btn" onclick="savePaymentDetails()">Save Payment Details</button>
   </div>`;
 }
@@ -856,7 +857,7 @@ function updateAvatarsEverywhere() {
   const fAvEl = document.getElementById('f-sb-avatar');
   if (fAvEl) {
     if (CU.photo_url) {
-      fAvEl.innerHTML = `<img src="${CU.photo_url}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
+      fAvEl.innerHTML = `<img src="${safeMediaUrl(CU.photo_url)}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
     } else {
       fAvEl.textContent = CU.avatar || CU.name.charAt(0).toUpperCase();
     }
@@ -864,7 +865,7 @@ function updateAvatarsEverywhere() {
   const cAvEl = document.getElementById('c-sb-avatar');
   if (cAvEl) {
     if (CU.photo_url) {
-      cAvEl.innerHTML = `<img src="${CU.photo_url}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
+      cAvEl.innerHTML = `<img src="${safeMediaUrl(CU.photo_url)}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
     } else {
       cAvEl.textContent = CU.avatar || CU.name.charAt(0).toUpperCase();
     }
@@ -983,7 +984,7 @@ function checkFProfileCompletion() {
 
   const bannerHtml = `
     <div id="fprofile-completion-banner" style="background:linear-gradient(90deg,rgba(224,92,42,.09),rgba(124,58,237,.07));padding:9px 20px;display:flex;align-items:center;justify-content:space-between;font-size:0.82rem;width:100%;gap:12px;flex-shrink:0;">
-      <span>📝 Complete your profile — <strong>${percent}%</strong> done, <strong>${remaining}</strong> item(s) remaining</span>
+      <span>📝 Complete your profile — <strong>${escapeHtml(percent)}%</strong> done, <strong>${escapeHtml(remaining)}</strong> item(s) remaining</span>
       <button class="btn btn-primary btn-sm" onclick="fPage('profile',null)" style="white-space:nowrap;flex-shrink:0;">Complete Profile →</button>
     </div>`;
 
@@ -1004,6 +1005,10 @@ async function savePortfolioLinks() {
   const ig   = document.getElementById('bio-ig')?.value?.trim() || '';
   const yt   = document.getElementById('bio-yt')?.value?.trim() || '';
   const work = document.getElementById('bio-work')?.value?.trim() || '';
+  if ([ig, yt, work].some(value => value && !validatedHttpUrl(value))) {
+    showToast('Links must be valid http:// or https:// URLs.', 'err');
+    return;
+  }
   CU.portfolio_links = { instagram: ig, youtube: yt, video_link: work };
   if (supaClient) await supaClient.from('profiles').upsert({ id: CU.id, portfolio_links: CU.portfolio_links });
   DB.setCurrentUser(CU);

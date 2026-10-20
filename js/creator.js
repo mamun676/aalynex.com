@@ -144,7 +144,7 @@ function cProjectDetail(pid) {
   const invited    = (p.invited_freelancers || []).map(id => DB.users().find(u => u.id === id)).filter(Boolean);
   const acceptedBy = p.freelancerId ? DB.users().find(u => u.id === p.freelancerId) : null;
 
-  const statusBadge = `<span class="pstatus ${statusClass(p.status)}">${p.status === 'open' ? '🔒 Waiting for acceptance' : statusLabel(p.status)}</span>`;
+  const statusBadge = `<span class="pstatus ${escapeHtml(statusClass(p.status))}">${escapeHtml(p.status === 'open' ? '🔒 Waiting for acceptance' : statusLabel(p.status))}</span>`;
   const acceptedLine = acceptedBy
     ? `Accepted by <strong>${escapeHtml(acceptedBy.name)}</strong>`
     : 'Not accepted yet — waiting for an editor to accept';
@@ -152,8 +152,8 @@ function cProjectDetail(pid) {
   const filesHtml = atts.length
     ? atts.map(a => `
         <div class="info-row">
-          <span>📎 ${escapeHtml(a.name || 'File')}${a.size ? ` <span style="color:var(--text-3);font-size:.75rem;">(${fmtFileSize(a.size)})</span>` : ''}</span>
-          ${a.file_url ? `<button class="btn btn-ghost btn-xs" onclick="openProjectFile('${a.file_url}')">Download</button>` : '<span style="color:var(--text-3);font-size:.75rem;">Uploaded</span>'}
+          <span>📎 ${escapeHtml(a.name || 'File')}${a.size ? ` <span style="color:var(--text-3);font-size:.75rem;">(${escapeHtml(fmtFileSize(a.size))})</span>` : ''}</span>
+          ${a.file_url ? `<button class="btn btn-ghost btn-xs" data-app-click="${appEvent("openProjectFile", [String(a.file_url ?? '')])}">Download</button>` : '<span style="color:var(--text-3);font-size:.75rem;">Uploaded</span>'}
         </div>`).join('')
     : '<div style="color:var(--text-3);font-size:.85rem;">No files uploaded.</div>';
 
@@ -170,9 +170,9 @@ function cProjectDetail(pid) {
   <div class="det-card" style="margin-bottom:16px;">
     <div class="info-row"><span class="key">Description</span><span>${escapeHtml(p.description || '—')}</span></div>
     <div class="info-row"><span class="key">Content Type</span><span>${escapeHtml(p.contentType || '—')}</span></div>
-    <div class="info-row"><span class="key">Budget</span><span>₹${fmt(p.budget || 0)}</span></div>
-    <div class="info-row"><span class="key">Deadline</span><span>${fmtDate(p.deadline)}</span></div>
-    <div class="info-row"><span class="key">Posted On</span><span>${fmtDate(p.createdAt)}</span></div>
+    <div class="info-row"><span class="key">Budget</span><span>₹${escapeHtml(fmt(p.budget || 0))}</span></div>
+    <div class="info-row"><span class="key">Deadline</span><span>${escapeHtml(fmtDate(p.deadline))}</span></div>
+    <div class="info-row"><span class="key">Posted On</span><span>${escapeHtml(fmtDate(p.createdAt))}</span></div>
     <div class="info-row"><span class="key">Status</span><span>${acceptedLine}</span></div>
   </div>
 
@@ -184,8 +184,8 @@ function cProjectDetail(pid) {
 
 <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:8px;">
   <button class="btn btn-ghost" onclick="cPage('projects', document.querySelector('[data-page=projects]'))">← Back</button>
-  <button class="btn btn-primary" onclick="cProjectEdit('${p.id}')"> Edit Project</button>
-  <button class="btn" style="background:#e5484d;color:#fff;margin-left:auto;" onclick="deleteProjectConfirm('${p.id}')"> Remove Project</button>
+  <button class="btn btn-primary" data-app-click="${appEvent("cProjectEdit", [String(p.id ?? '')])}"> Edit Project</button>
+  <button class="btn" style="background:#e5484d;color:#fff;margin-left:auto;" data-app-click="${appEvent("deleteProjectConfirm", [String(p.id ?? '')])}"> Remove Project</button>
 </div>`;
 }
 
@@ -193,7 +193,9 @@ async function openProjectFile(key) {
   try {
     let url = key;
     if (typeof isS3Key === 'function' && isS3Key(key)) url = await s3GetUrl(key);
-    window.open(url, '_blank');
+    const target = validatedHttpUrl(url);
+    if (!target) throw new Error('Invalid file URL');
+    window.open(target, '_blank', 'noopener,noreferrer');
   } catch (e) { showToast('File open nahi ho paayi', 'err', ''); }
 }
 
@@ -227,8 +229,8 @@ function cProjectEdit(pid) {
   <div class="page-head"><h2>Edit Project</h2><p>Update title, description, budget, deadline & files</p></div>
   <div class="fg"><label>Project Title</label><input id="ed-title" value="${escapeHtml(p.title || '')}" placeholder="Project title"/></div>
   <div class="fg"><label>Description</label><textarea id="ed-desc" placeholder="Describe what you need edited…">${escapeHtml(p.description || '')}</textarea></div>
-  <div class="fg"><label>Budget (₹)</label><input id="ed-budget" type="number" min="1" value="${p.budget || ''}"/></div>
-  <div class="fg"><label>Deadline</label><input id="ed-deadline" type="date" value="${p.deadline || ''}"/></div>
+  <div class="fg"><label>Budget (₹)</label><input id="ed-budget" type="number" min="1" value="${escapeHtml(p.budget || '')}"/></div>
+  <div class="fg"><label>Deadline</label><input id="ed-deadline" type="date" value="${escapeHtml(p.deadline || '')}"/></div>
 
   <div class="section-title">Current Files</div>
   <div id="ed-existing-files" style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px;"></div>
@@ -242,8 +244,8 @@ function cProjectEdit(pid) {
   <div id="file-list-preview" style="display:flex;flex-direction:column;gap:8px;margin-top:12px;"></div>
 
   <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:18px;">
-    <button class="btn btn-ghost" onclick="manageProject('${pid}')">Cancel</button>
-    <button class="btn btn-primary" id="ed-save-btn" onclick="saveProjectEdit('${pid}')">Save Changes</button>
+    <button class="btn btn-ghost" data-app-click="${appEvent("manageProject", [String(pid ?? '')])}">Cancel</button>
+    <button class="btn btn-primary" id="ed-save-btn" data-app-click="${appEvent("saveProjectEdit", [String(pid ?? '')])}">Save Changes</button>
   </div>`;
 
   renderEditExistingFiles(pid);
@@ -257,9 +259,9 @@ function renderEditExistingFiles(pid) {
   if (!atts.length) { box.innerHTML = '<div style="color:var(--text-3);font-size:.85rem;">No files uploaded.</div>'; return; }
   box.innerHTML = atts.map(a => {
     const marked = removing.includes(String(a.id));
-    return `<div style="display:flex;align-items:center;justify-content:space-between;padding:10px;background:var(--surface);border:1px solid var(--glass-border);border-radius:var(--radius-sm);${marked ? 'opacity:.5;' : ''}">
-      <span style="${marked ? 'text-decoration:line-through;' : ''}">📎 ${escapeHtml(a.name || 'File')}</span>
-      <button class="btn btn-xs ${marked ? 'btn-ghost' : 'btn-danger'}" style="border:none;" onclick="toggleRemoveAtt('${pid}','${a.id}')">${marked ? 'Undo' : 'Remove'}</button>
+    return `<div style="display:flex;align-items:center;justify-content:space-between;padding:10px;background:var(--surface);border:1px solid var(--glass-border);border-radius:var(--radius-sm);${escapeHtml(marked ? 'opacity:.5;' : '')}">
+      <span style="${escapeHtml(marked ? 'text-decoration:line-through;' : '')}">📎 ${escapeHtml(a.name || 'File')}</span>
+      <button class="btn btn-xs ${escapeHtml(marked ? 'btn-ghost' : 'btn-danger')}" style="border:none;" data-app-click="${appEvent("toggleRemoveAtt", [String(pid ?? ''), String(a.id ?? '')])}">${escapeHtml(marked ? 'Undo' : 'Remove')}</button>
     </div>`;
   }).join('');
 }
@@ -367,11 +369,11 @@ function cHome() {
             const st = getFStats(f.id);
             const skills = (f.skills || []).slice(0, 2);
             const stars = st.avgRating > 0
-              ? Array.from({ length: 5 }, (_, i) => `<span style="color:${i < Math.round(st.avgRating) ? '#D97706' : 'rgba(0,0,0,0.13)'}">★</span>`).join('')
+              ? Array.from({ length: 5 }, (_, i) => `<span style="color:${escapeHtml(i < Math.round(st.avgRating) ? '#D97706' : 'rgba(0,0,0,0.13)')}">★</span>`).join('')
               : `<span style="font-size:.6rem;color:var(--text-3);">New</span>`;
             const photo = (f.photo_url || f.photourl)
-              ? `<img src="${f.photo_url || f.photourl}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" onerror="this.style.display='none'">`
-              : `<span style="font-family:'Outfit',sans-serif;font-weight:700;font-size:1rem;color:#fff;">${(f.avatar || f.name.charAt(0)).toUpperCase()}</span>`;
+              ? `<img src="${safeMediaUrl(f.photo_url || f.photourl)}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" onerror="this.style.display='none'">`
+              : `<span style="font-family:'Outfit',sans-serif;font-weight:700;font-size:1rem;color:#fff;">${escapeHtml((f.avatar || f.name.charAt(0)).toUpperCase())}</span>`;
             return `
             <div style="min-width:140px;max-width:140px;display:flex;flex-direction:column;align-items:center;text-align:center;padding:14px 10px 12px;border-radius:12px;background:var(--bg2);border:1px solid var(--glass-border);flex-shrink:0;gap:5px;transition:border-color .2s,box-shadow .2s;"
             onmouseover="this.style.borderColor='rgba(224,92,42,.3)';this.style.boxShadow='0 4px 14px rgba(224,92,42,.1)'"
@@ -379,16 +381,16 @@ function cHome() {
               <div style="width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;overflow:hidden;border:2px solid var(--glass-border-strong);flex-shrink:0;margin-bottom:2px;">
                 ${photo}
               </div>
-              <div style="font-family:'Outfit',sans-serif;font-weight:700;font-size:.78rem;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:120px;">${f.name}</div>
-              <div style="font-size:.65rem;font-weight:600;color:var(--accent2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:120px;">${f.profession || 'Video Editor'}</div>
+              <div style="font-family:'Outfit',sans-serif;font-weight:700;font-size:.78rem;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:120px;">${escapeHtml(f.name)}</div>
+              <div style="font-size:.65rem;font-weight:600;color:var(--accent2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:120px;">${escapeHtml(f.profession || 'Video Editor')}</div>
               <div style="font-size:.65rem;line-height:1;">${stars}</div>
-              <div style="font-size:.6rem;color:var(--text-3);">${st.avgRating > 0 ? st.avgRating.toFixed(1) : 'New'} · ${st.completedCount} done</div>
+              <div style="font-size:.6rem;color:var(--text-3);">${escapeHtml(st.avgRating > 0 ? st.avgRating.toFixed(1) : 'New')} · ${escapeHtml(st.completedCount)} done</div>
               <div style="display:flex;flex-wrap:wrap;justify-content:center;gap:3px;min-height:14px;">
-                ${skills.map(s => `<span style="background:var(--accent2-soft);color:var(--accent2);border-radius:99px;font-size:.55rem;font-weight:600;padding:2px 6px;border:1px solid rgba(124,58,237,.15);">${s}</span>`).join('')}
+                ${skills.map(s => `<span style="background:var(--accent2-soft);color:var(--accent2);border-radius:99px;font-size:.55rem;font-weight:600;padding:2px 6px;border:1px solid rgba(124,58,237,.15);">${escapeHtml(s)}</span>`).join('')}
               </div>
               <div style="display:flex;flex-direction:column;gap:5px;width:100%;margin-top:4px;">
-                <button class="btn btn-outline-f btn-xs full-btn" style="font-size:.65rem;padding:5px 6px;" onclick="event.stopPropagation();viewFreelancerPortfolio('${f.id}')">Portfolio</button>
-                <button class="btn btn-primary btn-xs full-btn" style="font-size:.65rem;padding:5px 6px;" onclick="event.stopPropagation();openSendRequestModal('${f.id}','${f.name.replace(/'/g, "\\'")}')">Request →</button>
+                <button class="btn btn-outline-f btn-xs full-btn" style="font-size:.65rem;padding:5px 6px;" data-app-click="${appEvent("viewFreelancerPortfolio", [String(f.id ?? '')], { stop: true })}">Portfolio</button>
+                <button class="btn btn-primary btn-xs full-btn" style="font-size:.65rem;padding:5px 6px;" data-app-click="${appEvent("openSendRequestModal", [String(f.id ?? ''), String(f.name ?? '')], { stop: true })}">Request →</button>
               </div>
             </div>`;
           }).join('')}
@@ -408,13 +410,13 @@ function cHome() {
   <div class="page-head"><h2>Dashboard</h2><p>Overview of your creator activity</p></div>
   <div class="cards-grid">
     <div class="mc a" style="cursor:pointer;" title="View ongoing projects" onclick="cPage('projects', document.querySelector('[data-page=projects]')); setTimeout(()=>filterProjects('ongoing'), 150)">
-      <div class="label">Active Projects</div><div class="value">${active}</div><div class="sub">Currently ongoing</div>
+      <div class="label">Active Projects</div><div class="value">${escapeHtml(active)}</div><div class="sub">Currently ongoing</div>
     </div>
     <div class="mc g" style="cursor:pointer;" title="View completed projects" onclick="cPage('projects', document.querySelector('[data-page=projects]')); setTimeout(()=>filterProjects('completed'), 150)">
-      <div class="label">Completed</div><div class="value">${done}</div><div class="sub">All time</div>
+      <div class="label">Completed</div><div class="value">${escapeHtml(done)}</div><div class="sub">All time</div>
     </div>
     <div class="mc b" style="cursor:pointer;" title="View all projects" onclick="cPage('projects', document.querySelector('[data-page=projects]')); setTimeout(()=>filterProjects('all'), 150)">
-      <div class="label">Total Projects</div><div class="value">${projs.length}</div><div class="sub">Ever posted</div>
+      <div class="label">Total Projects</div><div class="value">${escapeHtml(projs.length)}</div><div class="sub">Ever posted</div>
     </div>
     <div class="mc p" style="cursor:pointer;background:linear-gradient(135deg,rgba(124,58,237,.1),rgba(29,78,216,.08));border:1.5px solid rgba(124,58,237,.25);position:relative;overflow:hidden;" onclick="cPage('browse',document.querySelector('[data-page=browse]'))">
       <div style="position:absolute;top:-18px;right:-18px;width:72px;height:72px;border-radius:50%;background:linear-gradient(135deg,rgba(124,58,237,.15),rgba(29,78,216,.1));pointer-events:none;"></div>
@@ -432,7 +434,7 @@ function cHome() {
     <div style="font-size:1.8rem;">🏆</div>
     <div style="flex:1;">
       <div style="font-family:'Outfit',sans-serif;font-weight:800;font-size:.95rem;color:var(--text);">Managed Editing <span style="font-size:.6rem;background:var(--accent);color:#fff;padding:2px 7px;border-radius:99px;vertical-align:middle;">PREMIUM</span></div>
-      <div style="font-size:.78rem;color:var(--text-2);margin-top:2px;">Hand-picked verified pro editors. Unlock with Aalynex Premium — free for ${premiumTrialDays()} days, then ₹${premiumPrice()}/mo.</div>
+      <div style="font-size:.78rem;color:var(--text-2);margin-top:2px;">Hand-picked verified pro editors. Unlock with Aalynex Premium — free for ${escapeHtml(premiumTrialDays())} days, then ₹${escapeHtml(premiumPrice())}/mo.</div>
     </div>
     <div style="font-weight:700;color:var(--accent);font-size:.85rem;white-space:nowrap;">Explore →</div>
   </div>
@@ -440,13 +442,13 @@ function cHome() {
   <div class="project-list">
     ${recent.length
       ? recent.map(p => `
-        <div class="pc" style="cursor:pointer;" onclick="manageProject('${p.id}')">
+        <div class="pc" style="cursor:pointer;" data-app-click="${appEvent("manageProject", [String(p.id ?? '')])}">
   <div class="pico">${contentIconSvg(p.contentType)}</div>
   <div class="pinfo">
-    <div class="ptitle">${p.title}</div>
-    <div class="pmeta">${p.freelancerId ? 'Editor assigned' : 'Waiting for acceptance'} · ₹${fmt(p.budget)}</div>
+    <div class="ptitle">${escapeHtml(p.title)}</div>
+    <div class="pmeta">${escapeHtml(p.freelancerId ? 'Editor assigned' : 'Waiting for acceptance')} · ₹${escapeHtml(fmt(p.budget))}</div>
   </div>
-            <div class="pstatus ${statusClass(p.status)}">${statusLabel(p.status)}</div>
+            <div class="pstatus ${escapeHtml(statusClass(p.status))}">${escapeHtml(statusLabel(p.status))}</div>
           </div>`).join('')
       : '<div style="color:var(--text-3);font-size:.85rem;padding:16px 0;">No projects yet — post your first one!</div>'}
   </div>
@@ -473,8 +475,8 @@ async function viewFreelancerPortfolio(freelancerId) {
     if (error || !profile) throw error;
 
     const photoHtml = profile.photo_url
-      ? `<img src="${profile.photo_url}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`
-      : (profile.avatar || profile.name.charAt(0).toUpperCase());
+      ? `<img src="${safeMediaUrl(profile.photo_url)}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`
+      : escapeHtml(profile.avatar || (profile.name || 'F').charAt(0).toUpperCase());
 
     const bio = profile.bio || 'Available for freelance video editing projects.';
     const skills = profile.skills || [];
@@ -494,42 +496,42 @@ async function viewFreelancerPortfolio(freelancerId) {
     let html = `
       <div style="display:flex;flex-direction:column;gap:18px;">
         <div style="display:flex;flex-direction:column;align-items:center;text-align:center;gap:8px;">
-          <div class="f-avatar" style="width:80px;height:80px;font-size:2rem;margin:0;${profile.photo_url ? 'background:transparent;' : ''}">
+          <div class="f-avatar" style="width:80px;height:80px;font-size:2rem;margin:0;${escapeHtml(profile.photo_url ? 'background:transparent;' : '')}">
             ${photoHtml}
           </div>
           <div>
-            <div style="font-family:'Outfit',sans-serif;font-size:1.2rem;font-weight:700;color:var(--text);">${profile.name}</div>
-            <div style="font-size:.85rem;color:var(--accent2);font-weight:500;">${profile.profession || 'Editor'}</div>
+            <div style="font-family:'Outfit',sans-serif;font-size:1.2rem;font-weight:700;color:var(--text);">${escapeHtml(profile.name)}</div>
+            <div style="font-size:.85rem;color:var(--accent2);font-weight:500;">${escapeHtml(profile.profession || 'Editor')}</div>
           </div>
           <div style="color:var(--yellow);font-size:.8rem;display:flex;align-items:center;gap:6px;">
             ${avgRating
-              ? Array.from({ length: 5 }, (_, i) => `<span style="color:${i < Math.round(avgRating) ? 'var(--yellow)' : 'rgba(0,0,0,0.15)'}">&#9733;</span>`).join('')
+              ? Array.from({ length: 5 }, (_, i) => `<span style="color:${escapeHtml(i < Math.round(avgRating) ? 'var(--yellow)' : 'rgba(0,0,0,0.15)')}">&#9733;</span>`).join('')
               : `<span style="color:rgba(0,0,0,0.15)">&#9733;&#9733;&#9733;&#9733;&#9733;</span>`}
-            <span style="color:var(--text-3);">${avgRating ? `(${avgRating} &bull; ${completedCount} Projects)` : `(New &bull; ${completedCount} Projects)`}</span>
+            <span style="color:var(--text-3);">${escapeHtml(avgRating ? `(${avgRating} • ${completedCount} Projects)` : `(New • ${completedCount} Projects)`)}</span>
           </div>
         </div>
         <div style="background:var(--bg2);padding:14px;border-radius:var(--radius-sm);border:1px solid var(--glass-border);">
           <div style="font-size:.7rem;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;">About</div>
-          <div style="font-size:.82rem;color:var(--text-2);line-height:1.5;">${bio}</div>
+          <div style="font-size:.82rem;color:var(--text-2);line-height:1.5;">${escapeHtml(bio)}</div>
         </div>
         <div>
           <div style="font-size:.7rem;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;">Tools &amp; Skills</div>
-          <div style="display:flex;flex-wrap:wrap;gap:6px;">${skills.length > 0 ? skills.map(s => `<span class="tag pu" style="font-size:.72rem;padding:5px 12px;">${s}</span>`).join('') : '<span style="font-size:.8rem;color:var(--text-3);">No skills added</span>'}</div>
+          <div style="display:flex;flex-wrap:wrap;gap:6px;">${skills.length > 0 ? skills.map(s => `<span class="tag pu" style="font-size:.72rem;padding:5px 12px;">${escapeHtml(s)}</span>`).join('') : '<span style="font-size:.8rem;color:var(--text-3);">No skills added</span>'}</div>
         </div>
         <div>
           <div style="font-size:.7rem;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;">Experience</div>
           <div style="display:flex;flex-direction:column;gap:10px;">${exp.length > 0 ? exp.map(e => `
             <div style="border-left:2px solid var(--accent-soft);padding-left:12px;">
-              <div style="font-weight:600;font-size:.85rem;color:var(--text);">${e.title}</div>
-              <div style="font-size:.75rem;color:var(--text-3);margin-top:2px;">${e.company} &middot; ${e.duration}</div>
+              <div style="font-weight:600;font-size:.85rem;color:var(--text);">${escapeHtml(e.title)}</div>
+              <div style="font-size:.75rem;color:var(--text-3);margin-top:2px;">${escapeHtml(e.company)} &middot; ${escapeHtml(e.duration)}</div>
             </div>`).join('') : '<span style="font-size:.8rem;color:var(--text-3);">No experience added</span>'}
           </div>
         </div>
         <div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center;border-top:1px solid var(--glass-border);padding-top:16px;">
-          ${links.instagram ? `<a href="${links.instagram}" target="_blank" class="btn btn-ghost btn-xs" style="text-decoration:none;">Instagram</a>` : ''}
-          ${links.youtube ? `<a href="${links.youtube}" target="_blank" class="btn btn-ghost btn-xs" style="text-decoration:none;">YouTube</a>` : ''}
-          ${links.video_link ? `<a href="${links.video_link}" target="_blank" class="btn btn-ghost btn-xs" style="text-decoration:none;">Work Video</a>` : ''}
-          ${profile.resume_url ? `<a href="${profile.resume_url}" target="_blank" class="btn btn-primary btn-xs" style="text-decoration:none;">View Resume</a>` : ''}
+          ${links.instagram ? `<a href="${safeUrl(links.instagram)}" target="_blank" rel="noopener noreferrer" class="btn btn-ghost btn-xs" style="text-decoration:none;">Instagram</a>` : ''}
+          ${links.youtube ? `<a href="${safeUrl(links.youtube)}" target="_blank" rel="noopener noreferrer" class="btn btn-ghost btn-xs" style="text-decoration:none;">YouTube</a>` : ''}
+          ${links.video_link ? `<a href="${safeUrl(links.video_link)}" target="_blank" rel="noopener noreferrer" class="btn btn-ghost btn-xs" style="text-decoration:none;">Work Video</a>` : ''}
+          ${profile.resume_url ? `<a href="${safeUrl(profile.resume_url)}" target="_blank" rel="noopener noreferrer" class="btn btn-primary btn-xs" style="text-decoration:none;">View Resume</a>` : ''}
         </div>
       </div>`;
 
@@ -547,13 +549,13 @@ function cNew() {
 
   const stepper = steps.map((s, i) => `
     <div class="step">
-      <div class="step-dot ${wfStep === i ? 'active' : (wfStep > i ? 'done' : '')}">
-        ${wfStep > i ? '✓' : (i + 1)}
-      </div>${i < steps.length - 1 ? `<div class="step-line ${wfStep > i ? 'done' : ''}"></div>` : ''}
+      <div class="step-dot ${escapeHtml(wfStep === i ? 'active' : (wfStep > i ? 'done' : ''))}">
+        ${escapeHtml(wfStep > i ? '✓' : (i + 1))}
+      </div>${i < steps.length - 1 ? `<div class="step-line ${escapeHtml(wfStep > i ? 'done' : '')}"></div>` : ''}
     </div>`).join('');
 
   const html = `
-    <div class="page-head"><h2>${activeManageProjectId ? 'Manage Project' : 'Post a New Project'}</h2></div>
+    <div class="page-head"><h2>${escapeHtml(activeManageProjectId ? 'Manage Project' : 'Post a New Project')}</h2></div>
     <div class="wf-stepper">${stepper}</div>
     <div class="wf-body" id="wf-body"></div>`;
 
@@ -571,16 +573,16 @@ function cNew() {
 async function wfContent() {
   if (wfStep === 0) return `
     <h3>Project Details</h3>
-    <div class="fg"><label>Project Title </label><input id="wf-title" value="${newProjectDraft.title || ''}" placeholder="e.g. YouTube Vlog Edit – Travel Series EP5"/></div>
-    <div class="fg"><label>Description</label><textarea id="wf-desc" placeholder="Describe what you need edited…">${newProjectDraft.desc || ''}</textarea></div>
-    <div class="fg"><label>Budget (₹) </label><input id="wf-budget" type="number" value="${newProjectDraft.budget || ''}" placeholder="200" min="1"/></div>
+    <div class="fg"><label>Project Title </label><input id="wf-title" value="${escapeHtml(newProjectDraft.title || '')}" placeholder="e.g. YouTube Vlog Edit – Travel Series EP5"/></div>
+    <div class="fg"><label>Description</label><textarea id="wf-desc" placeholder="Describe what you need edited…">${escapeHtml(newProjectDraft.desc || '')}</textarea></div>
+    <div class="fg"><label>Budget (₹) </label><input id="wf-budget" type="number" value="${escapeHtml(newProjectDraft.budget || '')}" placeholder="200" min="1"/></div>
     <button class="btn btn-primary" onclick="wfN()">Next &rarr;</button>`;
 
   if (wfStep === 1) return `
     <h3>Choose Content Type</h3>
     <div class="ct-list" style="margin-bottom:18px;">${['YouTube Long-form', 'Instagram Reel', 'YouTube Shorts', 'LinkedIn Video', 'Brand Video', 'Documentary', 'Podcast Edit']
-      .map(t => `<div class="ct-pill${t === selContent ? ' active' : ''}" onclick="selCT('${t}')">${t}</div>`).join('')}</div>
-    ${selContent ? `<div class="alert alert-s">Selected: <strong>${selContent}</strong></div>` : ''}
+      .map(t => `<div class="ct-pill${escapeHtml(t === selContent ? ' active' : '')}" data-app-click="${appEvent("selCT", [String(t ?? '')])}">${escapeHtml(t)}</div>`).join('')}</div>
+    ${selContent ? `<div class="alert alert-s">Selected: <strong>${escapeHtml(selContent)}</strong></div>` : ''}
     <div style="display:flex;gap:10px;flex-wrap:wrap;">
       <button class="btn btn-ghost" onclick="wfB()">&larr; Back</button>
       <button class="btn btn-primary" onclick="wfN()">Next &rarr;</button>
@@ -588,12 +590,12 @@ async function wfContent() {
 
   if (wfStep === 2) return `
     <h3>Set Deadline &amp; Priority</h3>
-    <div class="fg"><label>Deadline Date *</label><input type="date" id="wf-deadline" value="${newProjectDraft.deadline || ''}" min="${new Date().toISOString().split('T')[0]}"/></div>
+    <div class="fg"><label>Deadline Date *</label><input type="date" id="wf-deadline" value="${escapeHtml(newProjectDraft.deadline || '')}" min="${escapeHtml(new Date().toISOString().split('T')[0])}"/></div>
     <div class="fg"><label>Priority Level</label>
       <select id="wf-priority">
-        <option ${newProjectDraft.priority === 'Normal' ? 'selected' : ''}>Normal</option>
-        <option ${newProjectDraft.priority === 'Urgent (+20% budget)' ? 'selected' : ''}>Urgent (+20% budget)</option>
-        <option ${newProjectDraft.priority === 'Flexible' ? 'selected' : ''}>Flexible</option>
+        <option ${escapeHtml(newProjectDraft.priority === 'Normal' ? 'selected' : '')}>Normal</option>
+        <option ${escapeHtml(newProjectDraft.priority === 'Urgent (+20% budget)' ? 'selected' : '')}>Urgent (+20% budget)</option>
+        <option ${escapeHtml(newProjectDraft.priority === 'Flexible' ? 'selected' : '')}>Flexible</option>
       </select>
     </div>
     <div style="display:flex;gap:10px;flex-wrap:wrap;">
@@ -647,22 +649,22 @@ async function wfContent() {
         const stats = getFreelancerStats(f.id);
         const ratingDisplay = stats.avgRating ? stats.avgRating : 'New';
         const starsHtml = stats.avgRating
-          ? Array.from({ length: 5 }, (_, i) => `<span style="color:${i < Math.round(stats.avgRating) ? 'var(--yellow)' : 'rgba(0,0,0,0.12)'}">&#9733;</span>`).join('')
+          ? Array.from({ length: 5 }, (_, i) => `<span style="color:${escapeHtml(i < Math.round(stats.avgRating) ? 'var(--yellow)' : 'rgba(0,0,0,0.12)')}">&#9733;</span>`).join('')
           : `<span style="color:var(--text-3);font-size:.65rem;">No ratings yet</span>`;
         return `
-        <div class="f-card${selFreelancerIds.includes(f.id) ? ' sel' : ''}" onclick="selFL('${f.id}','${f.name}')">
-          <div class="f-avatar" style="${f.photo_url ? 'background:transparent;' : ''}">${f.photo_url ? `<img src="${f.photo_url}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">` : (f.avatar || 'F')}</div>
+        <div class="f-card${escapeHtml(selFreelancerIds.includes(f.id) ? ' sel' : '')}" data-app-click="${appEvent("selFL", [String(f.id ?? ''), String(f.name ?? '')])}">
+          <div class="f-avatar" style="${escapeHtml(f.photo_url ? 'background:transparent;' : '')}">${f.photo_url ? `<img src="${safeMediaUrl(f.photo_url)}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">` : (escapeHtml(f.avatar || 'F'))}</div>
           <div class="f-name">${escapeHtml(f.name)}</div>
           <div class="stars">${starsHtml}</div>
-          <div class="f-rate">${ratingDisplay} &middot; ${stats.completedCount} Projects</div>
+          <div class="f-rate">${escapeHtml(ratingDisplay)} &middot; ${escapeHtml(stats.completedCount)} Projects</div>
           <div class="f-spec">${escapeHtml(f.profession || 'Editor')}</div>
           <div style="margin-top:10px;">
-            <button class="btn btn-outline-f btn-xs full-btn" onclick="event.stopPropagation(); viewFreelancerPortfolio('${f.id}')">View Portfolio</button>
+            <button class="btn btn-outline-f btn-xs full-btn" data-app-click="${appEvent("viewFreelancerPortfolio", [String(f.id ?? '')], { stop: true })}">View Portfolio</button>
           </div>
         </div>`;
       }).join('') : `<div style="color:var(--text-3);font-size:.82rem;grid-column:1/-1;padding:16px 0;">No editors available.</div>`}
     </div><br/>
-    ${selFreelancerIds.length > 0 ? `<div class="alert alert-s">Selected: <strong>${selFreelancerIds.length} Editors</strong></div>` : ''}
+    ${selFreelancerIds.length > 0 ? `<div class="alert alert-s">Selected: <strong>${escapeHtml(selFreelancerIds.length)} Editors</strong></div>` : ''}
     <div style="display:flex;gap:10px;flex-wrap:wrap;">
       <button class="btn btn-ghost" onclick="wfB()">&larr; Back</button>
       <button class="btn btn-primary" onclick="wfN()">Send Requests &amp; Post &rarr;</button>
@@ -682,7 +684,7 @@ async function wfContent() {
       }
     });
     return `
-    <h3>Chat with ${selFreelancerName || 'Editor'}</h3>
+    <h3>Chat with ${escapeHtml(selFreelancerName || 'Editor')}</h3>
     ${buildChat(CU.id, flId || '')}
     ${!isCompleted ? `
     <div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap;">
@@ -694,14 +696,14 @@ async function wfContent() {
     if (proj && !proj.editedUploaded) {
       return `
         <h3>Receive & Review Edited Video</h3>
-        <div class="alert alert-i">Waiting for <strong>${selFreelancerName || 'Your editor'}</strong> to upload the final edited video. You will be notified in chat once it's ready.</div>
+        <div class="alert alert-i">Waiting for <strong>${escapeHtml(selFreelancerName || 'Your editor')}</strong> to upload the final edited video. You will be notified in chat once it's ready.</div>
         <div style="display:flex;gap:10px;flex-wrap:wrap;">
           <button class="btn btn-ghost" onclick="wfB()">&larr; Back</button>
         </div>`;
     }
     return `
       <h3>Receive &amp; Review Edited Video</h3>
-      <div class="alert alert-s"><strong>${selFreelancerName || 'Your editor'}</strong> has uploaded the edited video!</div>
+      <div class="alert alert-s"><strong>${escapeHtml(selFreelancerName || 'Your editor')}</strong> has uploaded the edited video!</div>
       <div style="background:var(--bg2);border:1px solid var(--glass-border);border-radius:var(--radius);padding:16px;margin-bottom:14px;">
         <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px;">
           <div style="font-size:1.8rem;">
@@ -711,7 +713,7 @@ async function wfContent() {
             <div style="font-weight:500;font-size:.88rem;color:var(--text);">Final_Delivered_Video</div>
             <div style="color:var(--text-3);font-size:.75rem;">Requires Payment to Download</div>
           </div>
-          <button class="btn btn-ghost btn-sm" style="margin-left:auto;" onclick="downloadEditedVideo('${activeManageProjectId}')">Download</button>
+          <button class="btn btn-ghost btn-sm" style="margin-left:auto;" data-app-click="${appEvent("downloadEditedVideo", [String(activeManageProjectId ?? '')])}">Download</button>
         </div>
         <div class="pb"><div class="pf" style="width:100%;"></div></div>
       </div>
@@ -757,24 +759,24 @@ async function wfContent() {
     </button>
   </div>
   <div class="det-card">
-    <div class="info-row"><span class="key">Editor</span><span>${eName}</span></div>
-    <div class="info-row"><span class="key">Your Rating</span><span>${'&#9733;'.repeat(p.rating)}${'☆'.repeat(5 - p.rating)}</span></div>
-    ${p.review ? `<div class="info-row"><span class="key">Your Review</span><span style="font-style:italic;">"${p.review}"</span></div>` : ''}
+    <div class="info-row"><span class="key">Editor</span><span>${escapeHtml(eName)}</span></div>
+    <div class="info-row"><span class="key">Your Rating</span><span>${escapeHtml('★'.repeat(p.rating))}${escapeHtml('☆'.repeat(5 - p.rating))}</span></div>
+    ${p.review ? `<div class="info-row"><span class="key">Your Review</span><span style="font-style:italic;">"${escapeHtml(p.review)}"</span></div>` : ''}
   </div>`;
     }
 
     return `
-    <h3>${showPayment ? 'Complete Payment' : ''}${showPayment && showRating ? ' &amp; ' : ''}${showRating ? 'Rate Editor' : ''}</h3>
+    <h3>${escapeHtml(showPayment ? 'Complete Payment' : '')}${escapeHtml(showPayment && showRating ? ' & ' : '')}${escapeHtml(showRating ? 'Rate Editor' : '')}</h3>
     <div class="two-col">
       ${showPayment ? `
       <div>
         <div class="section-title">Payment Summary</div>
         <div class="det-card" style="margin-bottom:14px;">
-          <div class="info-row"><span class="key">Editor</span><span>${eName}</span></div>
-          <div class="info-row"><span class="key">Content Type</span><span>${cType}</span></div>
-          <div class="info-row"><span class="key">Base Amount</span><span id="pay-base">₹${fmt(budget)}</span></div>
-          <div class="info-row"><span class="key">Transaction Charge (3%)</span><span id="pay-fee">₹${fmt(fee)}</span></div>
-          <div class="info-row" style="font-weight:600;"><span style="color:var(--accent);">Total</span><span id="pay-total" style="color:var(--accent);">₹${fmt(total)}</span></div>
+          <div class="info-row"><span class="key">Editor</span><span>${escapeHtml(eName)}</span></div>
+          <div class="info-row"><span class="key">Content Type</span><span>${escapeHtml(cType)}</span></div>
+          <div class="info-row"><span class="key">Base Amount</span><span id="pay-base">₹${escapeHtml(fmt(budget))}</span></div>
+          <div class="info-row"><span class="key">Transaction Charge (3%)</span><span id="pay-fee">₹${escapeHtml(fmt(fee))}</span></div>
+          <div class="info-row" style="font-weight:600;"><span style="color:var(--accent);">Total</span><span id="pay-total" style="color:var(--accent);">₹${escapeHtml(fmt(total))}</span></div>
         </div>
         <div class="fg"><label>Payment Method</label>
           <select><option>UPI</option><option>Net Banking</option><option>Credit/Debit Card</option><option>Wallet</option></select>
@@ -783,13 +785,13 @@ async function wfContent() {
       </div>` : ''}
       ${showRating ? `
       <div>
-        <div class="section-title">Rate ${eName}</div>
+        <div class="section-title">Rate ${escapeHtml(eName)}</div>
         <div class="det-card">
           <p style="margin-bottom:10px;">How was your experience?</p>
-          <div class="star-rating" id="sr1">${[1, 2, 3, 4, 5].map(n => `<span onclick="rateStar('sr1',${n})">&#9733;</span>`).join('')}</div>
+          <div class="star-rating" id="sr1">${[1, 2, 3, 4, 5].map(n => `<span data-app-click="${appEvent("rateStar", ["sr1", n])}">&#9733;</span>`).join('')}</div>
           <div class="fg" style="margin-top:10px;"><label>Write a Review</label><input id="review-text" placeholder="Amazing work, delivered on time!"/></div>
           <button class="btn btn-primary full-btn" onclick="submitReview()">Submit Review</button>
-          <button class="btn btn-ghost full-btn" style="margin-top:8px;" onclick="downloadEditedVideo('${p.id}')">⬇ Download Final Video</button>
+          <button class="btn btn-ghost full-btn" style="margin-top:8px;" data-app-click="${appEvent("downloadEditedVideo", [String(p.id ?? '')])}">⬇ Download Final Video</button>
         </div>
       </div>` : ''}
       ${!showPayment && !showRating && !showDone ? `
@@ -817,7 +819,9 @@ async function downloadEditedVideo(projectId) {
     if (!url) { showToast('Video link load nahi hua, dobara try karo.', 'err', ''); return; }
     showToast('✅ Download started', 'ok', '');
     const a = document.createElement('a');
-    a.href = url; a.target = '_blank';
+    const target = validatedHttpUrl(url);
+    if (!target) { showToast('Invalid video link.', 'err'); return; }
+    a.href = target; a.target = '_blank'; a.rel = 'noopener noreferrer';
     a.download = String(finalMsg.text || 'final-video').replace(/[^a-zA-Z0-9.-]/g, '_');
     document.body.appendChild(a); a.click(); a.remove();
   }
@@ -1020,22 +1024,22 @@ function selFL(id, name) {
 function cProjects() {
   const projs = DB.projects().filter(p => p.creatorId === CU.id);
   return `
-  <div class="page-head"><h2>My Projects</h2><p>All ${projs.length} projects you've posted</p></div>
+  <div class="page-head"><h2>My Projects</h2><p>All ${escapeHtml(projs.length)} projects you've posted</p></div>
   <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;">
-    ${['All', 'Open', 'Ongoing', 'Completed'].map(f => `<button class="btn btn-ghost btn-sm" onclick="filterProjects('${f.toLowerCase()}')">${f}</button>`).join('')}
+    ${['All', 'Open', 'Ongoing', 'Completed'].map(f => `<button class="btn btn-ghost btn-sm" data-app-click="${appEvent("filterProjects", [String(f.toLowerCase() ?? '')])}">${escapeHtml(f)}</button>`).join('')}
   </div>
   <div class="project-list" id="proj-list">
     ${projs.length
       ? projs.slice().reverse().map(p => `
-        <div class="pc" style="cursor:pointer;" onclick="manageProject('${p.id}')">
+        <div class="pc" style="cursor:pointer;" data-app-click="${appEvent("manageProject", [String(p.id ?? '')])}">
   <div class="pico">${contentIconSvg(p.contentType)}</div>
   <div class="pinfo">
-    <div class="ptitle">${p.title}</div>
-    <div class="pmeta">₹${fmt(p.budget)} · Due ${fmtDate(p.deadline)} · ${p.contentType}</div>
+    <div class="ptitle">${escapeHtml(p.title)}</div>
+    <div class="pmeta">₹${escapeHtml(fmt(p.budget))} · Due ${escapeHtml(fmtDate(p.deadline))} · ${escapeHtml(p.contentType)}</div>
   </div>
             <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;">
-              <div class="pstatus ${statusClass(p.status)}">
-                ${p.status === 'open' ? '🔒 Waiting' : statusLabel(p.status)}
+              <div class="pstatus ${escapeHtml(statusClass(p.status))}">
+                ${escapeHtml(p.status === 'open' ? '🔒 Waiting' : statusLabel(p.status))}
               </div>
               ${p.status !== 'open' ? `<button class="btn btn-primary btn-xs">Manage</button>` : ''}
             </div>
@@ -1049,14 +1053,14 @@ function filterProjects(f) {
   const filtered = f === 'all' ? projs : projs.filter(p => p.status === f);
   document.getElementById('proj-list').innerHTML = filtered.length
     ? filtered.slice().reverse().map(p => `
-      <div class="pc" style="cursor:pointer;" onclick="manageProject('${p.id}')">
+      <div class="pc" style="cursor:pointer;" data-app-click="${appEvent("manageProject", [String(p.id ?? '')])}">
   <div class="pico">${contentIconSvg(p.contentType)}</div>
   <div class="pinfo">
-    <div class="ptitle">${p.title}</div>
-    <div class="pmeta">₹${fmt(p.budget)} · ${p.contentType}</div>
+    <div class="ptitle">${escapeHtml(p.title)}</div>
+    <div class="pmeta">₹${escapeHtml(fmt(p.budget))} · ${escapeHtml(p.contentType)}</div>
   </div>
           <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;">
-            <div class="pstatus ${statusClass(p.status)}">${p.status === 'open' ? '🔒 Waiting' : statusLabel(p.status)}</div>
+            <div class="pstatus ${escapeHtml(statusClass(p.status))}">${escapeHtml(p.status === 'open' ? '🔒 Waiting' : statusLabel(p.status))}</div>
             ${p.status !== 'open' ? `<button class="btn btn-primary btn-xs">Manage</button>` : ''}
           </div>
         </div>`).join('')
@@ -1090,9 +1094,9 @@ function cPayment() {
   return `
   <div class="page-head"><h2>Payments</h2><p>Track every project payment in one place</p></div>
   <div class="cards-grid">
-    <div class="mc a"><div class="label">Pending</div><div class="value">&#8377;${fmt(pending)}</div></div>
-    <div class="mc g"><div class="label">Total Paid</div><div class="value">&#8377;${fmt(paid)}</div></div>
-    <div class="mc"><div class="label">Projects</div><div class="value">${projs.length}</div></div>
+    <div class="mc a"><div class="label">Pending</div><div class="value">&#8377;${escapeHtml(fmt(pending))}</div></div>
+    <div class="mc g"><div class="label">Total Paid</div><div class="value">&#8377;${escapeHtml(fmt(paid))}</div></div>
+    <div class="mc"><div class="label">Projects</div><div class="value">${escapeHtml(projs.length)}</div></div>
   </div>
   <div class="section-title">Transactions</div>
   <div class="project-list">
@@ -1101,12 +1105,12 @@ function cPayment() {
           const f = DB.users().find(u => u.id === p.freelancerId);
           const payable = !p.paid && (p.status === 'completed' || p.editedUploaded);
           return `
-          <div class="pc" style="cursor:pointer;" onclick="cViewPayment('${p.id}')">
+          <div class="pc" style="cursor:pointer;" data-app-click="${appEvent("cViewPayment", [String(p.id ?? '')])}">
             <div class="pico pico-pay"><svg class="pico-icon pico-wallet" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 18v1c0 1.1-.9 2-2 2H5c-1.11 0-2-.9-2-2V5c0-1.1.89-2 2-2h14c1.1 0 2 .9 2 2v1h-9c-1.11 0-2 .9-2 2v8c0 1.1.89 2 2 2h9zm-9-2h10V8H12v8zm4-2.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/></svg></div>
-            <div class="pinfo"><div class="ptitle">${p.title}</div><div class="pmeta">&#8377;${fmt(p.budget)} &#183; ${f ? f.name : 'No editor yet'} &#183; ${fmtDate(p.createdAt)}</div></div>
+            <div class="pinfo"><div class="ptitle">${escapeHtml(p.title)}</div><div class="pmeta">&#8377;${escapeHtml(fmt(p.budget))} &#183; ${escapeHtml(f ? f.name : 'No editor yet')} &#183; ${escapeHtml(fmtDate(p.createdAt))}</div></div>
             <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
-              <div class="pstatus ${p.paid ? 's-co' : 's-pe'}">${p.paid ? 'Paid' : 'Pending'}</div>
-              ${payable ? `<button class="btn btn-green-btn btn-xs" onclick="event.stopPropagation();manageProject('${p.id}')">Pay Now</button>` : ''}
+              <div class="pstatus ${escapeHtml(p.paid ? 's-co' : 's-pe')}">${escapeHtml(p.paid ? 'Paid' : 'Pending')}</div>
+              ${payable ? `<button class="btn btn-green-btn btn-xs" data-app-click="${appEvent("manageProject", [String(p.id ?? '')], { stop: true })}">Pay Now</button>` : ''}
             </div>
           </div>`; }).join('')
       : '<div style="color:var(--text-3);font-size:.85rem;padding:20px 0;">No transactions yet.</div>'}
@@ -1120,18 +1124,18 @@ function cViewPayment(id) {
   const rating = (p.rating && p.rating > 0) ? ('&#9733;'.repeat(p.rating) + '&#9734;'.repeat(5 - p.rating)) : 'Not rated yet';
   const bodyHtml = `
     <div style="display:flex;flex-direction:column;gap:2px;">
-      <div class="info-row"><span class="key">Payment Status</span><span style="color:${p.paid ? 'var(--green)' : 'var(--yellow)'};font-weight:600;">${p.paid ? 'Paid' : 'Pending'}</span></div>
-      <div class="info-row"><span class="key">Amount</span><span style="font-weight:600;">&#8377;${fmt(p.budget)}</span></div>
-      <div class="info-row"><span class="key">Editor / Payee</span><span>${f ? f.name : 'Not assigned'}</span></div>
-      <div class="info-row"><span class="key">Content Type</span><span>${p.contentType || '-'}</span></div>
-      <div class="info-row"><span class="key">Deadline</span><span>${p.deadline ? fmtDate(p.deadline) : '-'}</span></div>
-      <div class="info-row"><span class="key">Priority</span><span>${p.priority || 'Normal'}</span></div>
-      <div class="info-row"><span class="key">Project Status</span><span>${statusLabel(p.status)}</span></div>
-      <div class="info-row"><span class="key">Final Video</span><span>${p.editedUploaded ? 'Uploaded' : 'Not uploaded yet'}</span></div>
+      <div class="info-row"><span class="key">Payment Status</span><span style="color:${escapeHtml(p.paid ? 'var(--green)' : 'var(--yellow)')};font-weight:600;">${escapeHtml(p.paid ? 'Paid' : 'Pending')}</span></div>
+      <div class="info-row"><span class="key">Amount</span><span style="font-weight:600;">&#8377;${escapeHtml(fmt(p.budget))}</span></div>
+      <div class="info-row"><span class="key">Editor / Payee</span><span>${escapeHtml(f ? f.name : 'Not assigned')}</span></div>
+      <div class="info-row"><span class="key">Content Type</span><span>${escapeHtml(p.contentType || '-')}</span></div>
+      <div class="info-row"><span class="key">Deadline</span><span>${escapeHtml(p.deadline ? fmtDate(p.deadline) : '-')}</span></div>
+      <div class="info-row"><span class="key">Priority</span><span>${escapeHtml(p.priority || 'Normal')}</span></div>
+      <div class="info-row"><span class="key">Project Status</span><span>${escapeHtml(statusLabel(p.status))}</span></div>
+      <div class="info-row"><span class="key">Final Video</span><span>${escapeHtml(p.editedUploaded ? 'Uploaded' : 'Not uploaded yet')}</span></div>
       <div class="info-row"><span class="key">Your Rating</span><span>${rating}</span></div>
-      <div class="info-row"><span class="key">Created</span><span>${fmtDate(p.createdAt)}</span></div>
-      ${p.description ? `<div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--glass-border);font-size:.85rem;color:var(--text-2);line-height:1.6;">${p.description}</div>` : ''}
-      ${!p.paid ? `<div class="alert alert-i" style="margin-top:12px;">${payable ? 'This project is ready for payment. Click \'Pay Now\' to pay &#8377;' + fmt(p.budget) + ' to ' + (f ? f.name : 'the editor') + '.' : 'Payment unlocks once the editor uploads the final video.'}</div>` : ''}
+      <div class="info-row"><span class="key">Created</span><span>${escapeHtml(fmtDate(p.createdAt))}</span></div>
+      ${p.description ? `<div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--glass-border);font-size:.85rem;color:var(--text-2);line-height:1.6;">${escapeHtml(p.description)}</div>` : ''}
+      ${!p.paid ? `<div class="alert alert-i" style="margin-top:12px;">${escapeHtml(payable ? 'This project is ready for payment. Click \'Pay Now\' to pay ₹' + fmt(p.budget) + ' to ' + (f ? f.name : 'the editor') + '.' : 'Payment unlocks once the editor uploads the final video.')}</div>` : ''}
     </div>`;
   showModal(p.title, bodyHtml, () => { if (payable) manageProject(p.id); });
   document.getElementById('modal-confirm').textContent = payable ? 'Pay Now' : 'Close';
@@ -1170,47 +1174,47 @@ function cRate() {
   return `
   <div class="page-head"><h2>Rate Freelancers</h2><p>Rate your editors after payment is complete</p></div>
 
-  <div class="section-title">Ready to Rate${toRate.length ? ` (${toRate.length})` : ''}</div>
+  <div class="section-title">Ready to Rate${escapeHtml(toRate.length ? ` (${toRate.length})` : '')}</div>
   ${toRate.length
     ? toRate.map(p => `
         <div class="det-card">
           <div style="display:flex;justify-content:space-between;align-items:flex-start;">
-            <h4>${p.title}</h4><div class="pstatus s-co">Paid</div>
+            <h4>${escapeHtml(p.title)}</h4><div class="pstatus s-co">Paid</div>
           </div>
-          <p>${nameOf(p)} &middot; &#8377;${fmt(p.budget)} &middot; Completed</p>
-          <div class="star-rating" id="sr-${p.id}">${[1,2,3,4,5].map(n => `<span onclick="rateStar('sr-${p.id}',${n})">&#9733;</span>`).join('')}</div>
-          <div class="fg" style="margin-top:10px;"><label>Write a Review</label><input id="rev-${p.id}" placeholder="Great work!"/></div>
-          <button class="btn btn-primary btn-sm" onclick="saveRating('${p.id}')">Submit Rating</button>
+          <p>${escapeHtml(nameOf(p))} &middot; &#8377;${escapeHtml(fmt(p.budget))} &middot; Completed</p>
+          <div class="star-rating" id="sr-${escapeHtml(p.id)}">${[1,2,3,4,5].map(n => `<span data-app-click="${appEvent("rateStar", ["sr-" + String(p.id ?? ''), n])}">&#9733;</span>`).join('')}</div>
+          <div class="fg" style="margin-top:10px;"><label>Write a Review</label><input id="rev-${escapeHtml(p.id)}" placeholder="Great work!"/></div>
+          <button class="btn btn-primary btn-sm" data-app-click="${appEvent("saveRating", [String(p.id ?? '')])}">Submit Rating</button>
         </div>`).join('')
     : '<div class="alert alert-i">No freelancers waiting to be rated right now.</div>'}
 
-  <div class="section-title" style="margin-top:22px;">Awaiting Payment${awaiting.length ? ` (${awaiting.length})` : ''}</div>
+  <div class="section-title" style="margin-top:22px;">Awaiting Payment${escapeHtml(awaiting.length ? ` (${awaiting.length})` : '')}</div>
   ${awaiting.length
     ? awaiting.map(p => `
         <div class="det-card">
           <div style="display:flex;justify-content:space-between;align-items:flex-start;">
-            <h4>${p.title}</h4><div class="pstatus s-pe">${p.editedUploaded ? 'Payment Pending' : 'In Progress'}</div>
+            <h4>${escapeHtml(p.title)}</h4><div class="pstatus s-pe">${escapeHtml(p.editedUploaded ? 'Payment Pending' : 'In Progress')}</div>
           </div>
-          <p>${nameOf(p)} &middot; &#8377;${fmt(p.budget)}</p>
+          <p>${escapeHtml(nameOf(p))} &middot; &#8377;${escapeHtml(fmt(p.budget))}</p>
           <div class="alert alert-i" style="margin-top:8px;">
-            ${p.editedUploaded
+            ${escapeHtml(p.editedUploaded
               ? `Final video delivered. Complete the payment first - you can rate ${nameOf(p)} right after paying.`
-              : `${nameOf(p)} is still working on this project. You can rate after the work is delivered and payment is complete.`}
+              : `${nameOf(p)} is still working on this project. You can rate after the work is delivered and payment is complete.`)}
           </div>
           ${p.editedUploaded && !p.paid
-            ? `<button class="btn btn-primary btn-sm" onclick="manageProject('${p.id}')">Complete Payment</button>`
-            : `<button class="btn btn-ghost btn-sm" onclick="manageProject('${p.id}')">View Project</button>`}
+            ? `<button class="btn btn-primary btn-sm" data-app-click="${appEvent("manageProject", [String(p.id ?? '')])}">Complete Payment</button>`
+            : `<button class="btn btn-ghost btn-sm" data-app-click="${appEvent("manageProject", [String(p.id ?? '')])}">View Project</button>`}
         </div>`).join('')
     : '<div class="alert alert-i">No pending payments.</div>'}
 
-  <div class="section-title" style="margin-top:22px;">Rated${rated.length ? ` (${rated.length})` : ''}</div>
+  <div class="section-title" style="margin-top:22px;">Rated${escapeHtml(rated.length ? ` (${rated.length})` : '')}</div>
   ${rated.length
     ? rated.map(p => `
         <div class="det-card">
           <div style="display:flex;justify-content:space-between;align-items:flex-start;">
-            <h4>${p.title}</h4><div style="color:#f59e0b;font-size:1rem;">${stars(p.rating)}</div>
+            <h4>${escapeHtml(p.title)}</h4><div style="color:#f59e0b;font-size:1rem;">${stars(p.rating)}</div>
           </div>
-          <p>${nameOf(p)} &middot; &#8377;${fmt(p.budget)} &middot; ${p.rating}/5</p>
+          <p>${escapeHtml(nameOf(p))} &middot; &#8377;${escapeHtml(fmt(p.budget))} &middot; ${escapeHtml(p.rating)}/5</p>
           ${p.review ? `<div class="info-row"><span class="key">Your Review</span><span>${escapeHtml(p.review)}</span></div>` : ''}
         </div>`).join('')
     : '<div class="alert alert-i">You haven\'t rated any freelancers yet.</div>'}
@@ -1247,11 +1251,11 @@ function cProfile() {
     <div>
       <div class="det-card">
         <h4>Personal Info</h4>
-        <div class="fg"><label>Full Name</label><input id="prof-name" value="${u.name}"/></div>
-        <div class="fg"><label>Email</label><input value="${u.email}" disabled style="opacity:.5;"/></div>
-        <div class="fg"><label>Phone</label><input id="prof-phone" value="${u.phone || ''}"/></div>
+        <div class="fg"><label>Full Name</label><input id="prof-name" value="${escapeHtml(u.name)}"/></div>
+        <div class="fg"><label>Email</label><input value="${escapeHtml(u.email)}" disabled style="opacity:.5;"/></div>
+        <div class="fg"><label>Phone</label><input id="prof-phone" value="${escapeHtml(u.phone || '')}"/></div>
         <div class="fg"><label>Primary Platform</label>
-          <select id="prof-platform">${['YouTube', 'Instagram', 'LinkedIn', 'Multiple'].map(p => `<option ${u.platform === p ? 'selected' : ''}>${p}</option>`).join('')}</select>
+          <select id="prof-platform">${['YouTube', 'Instagram', 'LinkedIn', 'Multiple'].map(p => `<option ${escapeHtml(u.platform === p ? 'selected' : '')}>${escapeHtml(p)}</option>`).join('')}</select>
         </div>
         <button class="btn btn-primary" onclick="saveProfile()">Save Changes</button>
       </div>
@@ -1260,7 +1264,7 @@ function cProfile() {
           ['Completed', DB.projects().filter(p => p.creatorId === CU.id && p.status === 'completed').length],
           ['Member Since', new Date(u.createdAt).toLocaleDateString('en-IN', { month: 'long', year: 'numeric' })],
           ['Role', u.role.charAt(0).toUpperCase() + u.role.slice(1)]]
-          .map(([k, v]) => `<div class="info-row"><span class="key">${k}</span><span>${v}</span></div>`).join('')}
+          .map(([k, v]) => `<div class="info-row"><span class="key">${escapeHtml(k)}</span><span>${escapeHtml(v)}</span></div>`).join('')}
       </div>
     </div>
     <div>
@@ -1268,7 +1272,7 @@ function cProfile() {
         <h4>Profile Photo</h4>
         <div style="display:flex;flex-direction:column;align-items:center;gap:12px;">
           <div class="sb-avatar sb-av-creator" style="width:80px;height:80px;font-size:2rem;overflow:hidden;" id="prof-photo-preview">
-            ${u.photo_url ? `<img src="${u.photo_url}" style="width:100%;height:100%;object-fit:cover;">` : u.avatar}
+            ${u.photo_url ? `<img src="${safeMediaUrl(u.photo_url)}" style="width:100%;height:100%;object-fit:cover;">` : escapeHtml(u.avatar)}
           </div>
           <label class="btn btn-ghost btn-sm" style="cursor:pointer;margin:0;">
             Upload New Photo
@@ -1278,9 +1282,9 @@ function cProfile() {
       </div>
       <div class="det-card">
         <h4>Portfolio &amp; Links</h4>
-        <div class="fg"><label>Instagram Profile Link</label><input id="bio-ig" placeholder="https://instagram.com/yourhandle" value="${links.instagram || ''}"></div>
-        <div class="fg"><label>YouTube Channel Link</label><input id="bio-yt" placeholder="https://youtube.com/@yourchannel" value="${links.youtube || ''}"></div>
-        <div class="fg"><label>Work Video Link (Best Work)</label><input id="bio-work" placeholder="Paste a link to your best work (YouTube/Drive/Vimeo)" value="${links.video_link || ''}"></div>
+        <div class="fg"><label>Instagram Profile Link</label><input id="bio-ig" placeholder="https://instagram.com/yourhandle" value="${escapeHtml(links.instagram || '')}"></div>
+        <div class="fg"><label>YouTube Channel Link</label><input id="bio-yt" placeholder="https://youtube.com/@yourchannel" value="${escapeHtml(links.youtube || '')}"></div>
+        <div class="fg"><label>Work Video Link (Best Work)</label><input id="bio-work" placeholder="Paste a link to your best work (YouTube/Drive/Vimeo)" value="${escapeHtml(links.video_link || '')}"></div>
         <button class="btn btn-primary btn-sm" onclick="savePortfolioLinks()">Save Links</button>
       </div>
     </div>
@@ -1374,14 +1378,14 @@ function cBrowseFreelancers() {
   const sortLabels = { best: 'Best Match', rating: 'Top Rated', projects: 'Most Projects', newest: 'Newest' };
 
   return `
-  <div class="page-head"><h2>Browse Editors</h2><p>${list.length} editor${list.length !== 1 ? 's' : ''} available</p></div>
+  <div class="page-head"><h2>Browse Editors</h2><p>${escapeHtml(list.length)} editor${escapeHtml(list.length !== 1 ? 's' : '')} available</p></div>
   <div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;align-items:center;">
-    <input id="browse-search" class="browse-search" placeholder="Search by name, skill, or profession…" value="${_browseSearch || ''}" oninput="cBrowseSearch(this.value)" style="flex:1;min-width:200px;padding:10px 14px;border:1px solid var(--glass-border);border-radius:var(--radius-sm);background:var(--surface);color:var(--text);"/>
-    <button class="btn btn-sm ${_browseManagedOnly ? 'btn-primary' : 'btn-ghost'}" onclick="cBrowseToggleManaged()">🏆 Managed only</button>
+    <input id="browse-search" class="browse-search" placeholder="Search by name, skill, or profession…" value="${escapeHtml(_browseSearch || '')}" oninput="cBrowseSearch(this.value)" style="flex:1;min-width:200px;padding:10px 14px;border:1px solid var(--glass-border);border-radius:var(--radius-sm);background:var(--surface);color:var(--text);"/>
+    <button class="btn btn-sm ${escapeHtml(_browseManagedOnly ? 'btn-primary' : 'btn-ghost')}" onclick="cBrowseToggleManaged()">🏆 Managed only</button>
     <div style="position:relative;">
-      <button class="btn btn-ghost btn-sm" onclick="toggleSortDropdown(event)">Sort: ${sortLabels[_browseSort] || 'Best Match'} ▾</button>
+      <button class="btn btn-ghost btn-sm" onclick="toggleSortDropdown(event)">Sort: ${escapeHtml(sortLabels[_browseSort] || 'Best Match')} ▾</button>
       <div id="browse-sort-dropdown" style="display:none;position:absolute;right:0;top:110%;background:var(--surface);border:1px solid var(--glass-border);border-radius:var(--radius-sm);box-shadow:var(--shadow);z-index:50;min-width:160px;overflow:hidden;">
-        ${Object.entries(sortLabels).map(([k, lbl]) => `<div class="sort-opt" style="padding:9px 14px;cursor:pointer;font-size:.82rem;${_browseSort === k ? 'background:var(--accent-soft);color:var(--accent);font-weight:600;' : ''}" onclick="cBrowseSort('${k}')">${lbl}</div>`).join('')}
+        ${Object.entries(sortLabels).map(([k, lbl]) => `<div class="sort-opt" style="padding:9px 14px;cursor:pointer;font-size:.82rem;${escapeHtml(_browseSort === k ? 'background:var(--accent-soft);color:var(--accent);font-weight:600;' : '')}" data-app-click="${appEvent("cBrowseSort", [String(k ?? '')])}">${escapeHtml(lbl)}</div>`).join('')}
       </div>
     </div>
   </div>
@@ -1390,19 +1394,19 @@ function cBrowseFreelancers() {
       const st = statOf(f);
       const ratingDisplay = st.avgRating > 0 ? st.avgRating.toFixed(1) : 'New';
       const stars = st.avgRating > 0
-        ? Array.from({ length: 5 }, (_, i) => `<span style="color:${i < Math.round(st.avgRating) ? 'var(--yellow)' : 'rgba(0,0,0,0.12)'}">&#9733;</span>`).join('')
+        ? Array.from({ length: 5 }, (_, i) => `<span style="color:${escapeHtml(i < Math.round(st.avgRating) ? 'var(--yellow)' : 'rgba(0,0,0,0.12)')}">&#9733;</span>`).join('')
         : `<span style="color:var(--text-3);font-size:.65rem;">No ratings yet</span>`;
       return `
       <div class="f-card">
-        <div class="f-avatar" style="${f.photo_url ? 'background:transparent;' : ''}">${f.photo_url ? `<img src="${f.photo_url}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">` : (f.avatar || 'F')}</div>
+        <div class="f-avatar" style="${escapeHtml(f.photo_url ? 'background:transparent;' : '')}">${f.photo_url ? `<img src="${safeMediaUrl(f.photo_url)}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">` : (escapeHtml(f.avatar || 'F'))}</div>
         <div class="f-name">${escapeHtml(f.name)}${f.is_managed_editor ? ` <span class="tag" style="background:var(--accent);color:#fff;font-size:.58rem;vertical-align:middle;">🏆 Managed</span>` : ''}</div>
         <div class="stars">${stars}</div>
-        <div class="f-rate">${ratingDisplay} &middot; ${st.completedCount} Projects</div>
+        <div class="f-rate">${escapeHtml(ratingDisplay)} &middot; ${escapeHtml(st.completedCount)} Projects</div>
         <div class="f-spec">${escapeHtml(f.is_managed_editor && f.specialization ? f.specialization : (f.profession || 'Editor'))}</div>
-        ${f.is_managed_editor && (f.min_price_longform || f.min_price_reel) ? `<div style="font-size:.68rem;color:var(--accent);font-weight:600;margin-top:2px;">${f.min_price_longform ? 'Long-form from ₹' + f.min_price_longform : ''}${f.min_price_longform && f.min_price_reel ? ' · ' : ''}${f.min_price_reel ? 'Reel from ₹' + f.min_price_reel : ''}</div>` : ''}
+        ${f.is_managed_editor && (f.min_price_longform || f.min_price_reel) ? `<div style="font-size:.68rem;color:var(--accent);font-weight:600;margin-top:2px;">${escapeHtml(f.min_price_longform ? 'Long-form from ₹' + f.min_price_longform : '')}${escapeHtml(f.min_price_longform && f.min_price_reel ? ' · ' : '')}${escapeHtml(f.min_price_reel ? 'Reel from ₹' + f.min_price_reel : '')}</div>` : ''}
         <div style="display:flex;flex-direction:column;gap:6px;width:100%;margin-top:10px;">
-          <button class="btn btn-outline-f btn-xs full-btn" onclick="viewFreelancerPortfolio('${f.id}')">View Portfolio</button>
-          <button class="btn btn-primary btn-xs full-btn" onclick="openSendRequestModal('${f.id}','${f.name.replace(/'/g, "\\'")}')">Send Request →</button>
+          <button class="btn btn-outline-f btn-xs full-btn" data-app-click="${appEvent("viewFreelancerPortfolio", [String(f.id ?? '')])}">View Portfolio</button>
+          <button class="btn btn-primary btn-xs full-btn" data-app-click="${appEvent("openSendRequestModal", [String(f.id ?? ''), String(f.name ?? '')])}">Send Request →</button>
         </div>
       </div>`;
     }).join('') : `<div style="color:var(--text-3);font-size:.85rem;grid-column:1/-1;padding:24px 0;text-align:center;">No editors match your search.</div>`}
@@ -1469,10 +1473,10 @@ function openSendRequestModal(freelancerId, freelancerName) {
     <div class="fg"><label>Project Title</label><input id="dr-title" placeholder="e.g. YouTube Vlog Edit – EP12"/></div>
     <div class="fg"><label>Description</label><textarea id="dr-desc" placeholder="Describe what you need edited…"></textarea></div>
     <div class="fg"><label>Content Type</label>
-      <select id="dr-content">${['YouTube Long-form', 'Instagram Reel', 'YouTube Shorts', 'LinkedIn Video', 'Brand Video', 'Documentary', 'Podcast Edit'].map(t => `<option>${t}</option>`).join('')}</select>
+      <select id="dr-content">${['YouTube Long-form', 'Instagram Reel', 'YouTube Shorts', 'LinkedIn Video', 'Brand Video', 'Documentary', 'Podcast Edit'].map(t => `<option>${escapeHtml(t)}</option>`).join('')}</select>
     </div>
     <div class="fg"><label>Budget (₹)</label><input id="dr-budget" type="number" min="1" placeholder="200"/></div>
-    <div class="fg"><label>Deadline</label><input id="dr-deadline" type="date" min="${new Date().toISOString().split('T')[0]}"/></div>`;
+    <div class="fg"><label>Deadline</label><input id="dr-deadline" type="date" min="${escapeHtml(new Date().toISOString().split('T')[0])}"/></div>`;
 
   showModal(`Send Request to ${freelancerName}`, bodyHtml, submitDirectRequest);
   document.getElementById('modal-confirm').textContent = 'Send Request';
@@ -1527,7 +1531,7 @@ async function submitDirectRequest() {
 /* ═══════════════════════════════════════════════
    MANAGED EDITING — premium-gated dedicated section (creator)
    ═══════════════════════════════════════════════ */
-function isPremiumCreator() { return !!window._premiumActive; }
+function isPremiumCreator() { return !!CU && window._premiumUserId === CU.id && window._premiumActive === true && Date.now() - window._premiumCheckedAt < 60000; }
 function premiumPrice() { return (window._premiumPlan && window._premiumPlan.price != null) ? Number(window._premiumPlan.price) : 99; }
 function premiumTrialDays() { return (window._premiumPlan && window._premiumPlan.trial_days != null) ? Number(window._premiumPlan.trial_days) : 7; }
 
@@ -1535,19 +1539,21 @@ function cManagedEditing() {
   const editors = DB.users().filter(u => u.role === 'freelancer' && u.is_managed_editor);
   const premium = isPremiumCreator();
 
+  const manageButton = '<button class="btn btn-secondary btn-sm" onclick="openPremiumManagement()" style="margin-top:10px;">Manage / Cancel Subscription</button>';
   const banner = premium
     ? `<div style="display:flex;align-items:center;gap:10px;background:linear-gradient(135deg,rgba(22,163,74,.12),rgba(22,163,74,.05));border:1.5px solid rgba(22,163,74,.3);border-radius:var(--radius-lg);padding:14px 16px;margin-bottom:18px;">
          <div style="font-size:1.3rem;">✅</div>
          <div><div style="font-weight:700;color:var(--green);font-size:.9rem;">Premium Active</div>
-         <div style="font-size:.75rem;color:var(--text-3);">You can send unlimited requests to Managed Editors.</div></div>
+         <div style="font-size:.75rem;color:var(--text-3);">You can send unlimited requests to Managed Editors.</div>${manageButton}</div>
        </div>`
     : `<div style="background:linear-gradient(135deg,rgba(224,92,42,.1),rgba(124,58,237,.08));border:1.5px solid rgba(224,92,42,.3);border-radius:var(--radius-lg);padding:18px;margin-bottom:18px;">
          <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
            <span style="font-size:1.3rem;">🏆</span>
-           <span style="font-weight:800;font-size:1rem;color:var(--text);">Aalynex Premium — ₹${premiumPrice()}<span style="font-size:.7rem;color:var(--text-3);font-weight:600;">/month</span></span>
+           <span style="font-weight:800;font-size:1rem;color:var(--text);">Aalynex Premium — ₹${escapeHtml(premiumPrice())}<span style="font-size:.7rem;color:var(--text-3);font-weight:600;">/month</span></span>
          </div>
          <div style="font-size:.8rem;color:var(--text-2);margin-bottom:10px;">Unlock <b>Managed Editors</b> — hand-picked, verified pros. View portfolios for free; go Premium to send requests.</div>
          <button class="btn btn-primary btn-sm" onclick="openPremiumModal()">Unlock Premium →</button>
+         ${manageButton}
        </div>`;
 
   const cards = editors.length ? editors.map(f => {
@@ -1556,22 +1562,22 @@ function cManagedEditing() {
     const avg = rated.length ? (rated.reduce((s, p) => s + p.rating, 0) / rated.length) : 0;
     const ratingDisplay = avg > 0 ? avg.toFixed(1) : 'New';
     const stars = avg > 0
-      ? Array.from({ length: 5 }, (_, i) => `<span style="color:${i < Math.round(avg) ? 'var(--yellow)' : 'rgba(0,0,0,0.12)'}">&#9733;</span>`).join('')
+      ? Array.from({ length: 5 }, (_, i) => `<span style="color:${escapeHtml(i < Math.round(avg) ? 'var(--yellow)' : 'rgba(0,0,0,0.12)')}">&#9733;</span>`).join('')
       : `<span style="color:var(--text-3);font-size:.65rem;">No ratings yet</span>`;
     const priceLine = (f.min_price_longform || f.min_price_reel)
-      ? `<div style="font-size:.68rem;color:var(--accent);font-weight:600;margin-top:2px;">${f.min_price_longform ? 'Long-form from ₹' + f.min_price_longform : ''}${f.min_price_longform && f.min_price_reel ? ' · ' : ''}${f.min_price_reel ? 'Reel from ₹' + f.min_price_reel : ''}</div>`
+      ? `<div style="font-size:.68rem;color:var(--accent);font-weight:600;margin-top:2px;">${escapeHtml(f.min_price_longform ? 'Long-form from ₹' + f.min_price_longform : '')}${escapeHtml(f.min_price_longform && f.min_price_reel ? ' · ' : '')}${escapeHtml(f.min_price_reel ? 'Reel from ₹' + f.min_price_reel : '')}</div>`
       : '';
     return `
     <div class="f-card">
-      <div class="f-avatar" style="${f.photo_url ? 'background:transparent;' : ''}">${f.photo_url ? `<img src="${f.photo_url}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">` : (f.avatar || 'F')}</div>
+      <div class="f-avatar" style="${escapeHtml(f.photo_url ? 'background:transparent;' : '')}">${f.photo_url ? `<img src="${safeMediaUrl(f.photo_url)}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">` : (escapeHtml(f.avatar || 'F'))}</div>
       <div class="f-name">${escapeHtml(f.name)} <span class="tag" style="background:var(--accent);color:#fff;font-size:.58rem;vertical-align:middle;">🏆 Managed</span></div>
       <div class="stars">${stars}</div>
-      <div class="f-rate">${ratingDisplay} &middot; ${completed.length} Projects</div>
+      <div class="f-rate">${escapeHtml(ratingDisplay)} &middot; ${escapeHtml(completed.length)} Projects</div>
       <div class="f-spec">${escapeHtml(f.specialization || f.profession || 'Managed Editor')}</div>
       ${priceLine}
       <div style="display:flex;flex-direction:column;gap:6px;width:100%;margin-top:10px;">
-        <button class="btn btn-outline-f btn-xs full-btn" onclick="viewFreelancerPortfolio('${f.id}')">View Portfolio</button>
-        <button class="btn btn-primary btn-xs full-btn" onclick="requestManagedEditor('${f.id}')">${premium ? 'Send Request →' : '🔒 Send Request'}</button>
+        <button class="btn btn-outline-f btn-xs full-btn" data-app-click="${appEvent("viewFreelancerPortfolio", [String(f.id ?? '')])}">View Portfolio</button>
+        <button class="btn btn-primary btn-xs full-btn" data-app-click="${appEvent("requestManagedEditor", [String(f.id ?? '')])}">${escapeHtml(premium ? 'Send Request →' : '🔒 Send Request')}</button>
       </div>
     </div>`;
   }).join('') : `<div style="color:var(--text-3);font-size:.85rem;grid-column:1/-1;padding:32px 0;text-align:center;">No Managed Editors available yet. Check back soon! 🏆</div>`;
@@ -1600,90 +1606,147 @@ function openPremiumModal(pendingId, pendingName) {
     <div style="text-align:center;margin-bottom:6px;">
       <div style="font-size:2rem;">🏆</div>
       <div style="font-family:'Outfit',sans-serif;font-weight:800;font-size:1.4rem;color:var(--text);">Aalynex Premium</div>
-      <div style="font-size:1.6rem;font-weight:800;color:var(--accent);">₹0 <span style="font-size:.85rem;color:var(--text-3);font-weight:600;">today</span></div>
-      <div style="font-size:.78rem;color:var(--text-3);margin-top:2px;">Free for ${premiumTrialDays()} days, then ₹${premiumPrice()}/month · cancel anytime</div>
+      <div style="font-size:1.6rem;font-weight:800;color:var(--accent);">₹${escapeHtml(premiumPrice())}<span style="font-size:.85rem;color:var(--text-3);font-weight:600;">/month</span></div>
+      <div style="font-size:.78rem;color:var(--text-3);margin-top:2px;">Eligible new subscribers may receive a ${escapeHtml(premiumTrialDays())}-day trial. Final trial eligibility is checked by the server. A payment-method authorization may be required; review the amount in Razorpay before confirming.</div>
     </div>
     <div style="background:var(--bg2);border:1px solid var(--glass-border);border-radius:12px;padding:14px 16px;margin:12px 0;">
-      ${feats.map(x => `<div style="display:flex;align-items:center;gap:8px;font-size:.82rem;color:var(--text-2);margin:6px 0;"><span style="color:var(--green);font-weight:700;">✓</span> ${x}</div>`).join('')}
+      ${feats.map(x => `<div style="display:flex;align-items:center;gap:8px;font-size:.82rem;color:var(--text-2);margin:6px 0;"><span style="color:var(--green);font-weight:700;">✓</span> ${escapeHtml(x)}</div>`).join('')}
     </div>
     ${pendingName ? `<div style="font-size:.78rem;color:var(--text-3);text-align:center;">After unlocking, your request to <b>${escapeHtml(pendingName)}</b> will continue automatically.</div>` : ''}`;
   showModal('Unlock Premium', bodyHtml, startPremiumCheckout);
   const cb = document.getElementById('modal-confirm');
-  if (cb) cb.textContent = 'Start Free Trial →';
+  if (cb) cb.textContent = 'Continue to Secure Checkout →';
+}
+
+async function premiumApi(name, payload, ownerId, epoch) {
+  if (!CU || CU.id !== ownerId || window._premiumEpoch !== epoch) throw new Error('Account changed. Please reopen checkout.');
+  const { data: { session } } = await supaClient.auth.getSession();
+  if (!session?.access_token || session.user?.id !== ownerId) throw new Error('Please log in again.');
+  const response = await fetch(SUPABASE_URL + '/functions/v1/' + name, {
+    method: 'POST', headers: { 'Content-Type': 'application/json', apikey: SUPABASE_KEY, Authorization: 'Bearer ' + session.access_token },
+    body: JSON.stringify(payload),
+  });
+  const result = await response.json();
+  if (!CU || CU.id !== ownerId || window._premiumEpoch !== epoch) throw new Error('Account changed. Checkout result was not applied.');
+  if (!response.ok) throw new Error(result.error || 'Premium service unavailable.');
+  return result;
 }
 
 async function startPremiumCheckout() {
-  if (!supaClient || !CU) { showToast('Please log in again', 'err', ''); return; }
-  if (!window.Razorpay) { showToast('Payment SDK not loaded', 'err', ''); return; }
-
+  if (!supaClient || !CU) { showToast('Please log in again', 'err'); return; }
+  if (!window.Razorpay) { showToast('Payment SDK not loaded', 'err'); return; }
+  if (window._premiumCheckoutBusy) { showToast('Checkout is already open', 'info'); return; }
+  const ownerId = CU.id, epoch = window._premiumEpoch;
   const pendId = _pendingManagedId, pendName = _pendingManagedName;
   const cb = document.getElementById('modal-confirm');
+  let finishing = false;
+  window._premiumCheckoutBusy = true;
   if (cb) { cb.disabled = true; cb.textContent = 'Starting…'; }
-
+  const stillOwner = () => !!CU && CU.id === ownerId && window._premiumEpoch === epoch;
+  const release = () => {
+    if (!stillOwner()) return;
+    window._premiumCheckoutBusy = false;
+    if (cb) { cb.disabled = false; cb.textContent = 'Continue to Secure Checkout →'; }
+  };
+  const afterVerification = async () => {
+    if (!stillOwner()) return;
+    // Query server entitlement again, even after a success callback.
+    const active = await refreshPremiumStatus(CU);
+    if (!stillOwner()) return;
+    if (!active) { showToast('Verification is processing. Do not pay again; refresh shortly.', 'info'); return; }
+    showToast('Premium verified and active.', 'ok');
+    if (pendId) {
+      _pendingManagedId = null; _pendingManagedName = null;
+      openSendRequestModal(pendId, pendName);
+    } else if (CU.role === 'creator') renderC('managed');
+  };
   try {
-    // 1) Ask our edge function to create a Razorpay SUBSCRIPTION (with free trial).
-    const { data: { session } } = await supaClient.auth.getSession();
-    const res = await fetch(
-      'https://sfzbrygqpodjinhpagaz.supabase.co/functions/v1/premium-subscribe',
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
-        body: JSON.stringify({})
-      }
-    );
-    const data = await res.json();
-    if (!res.ok || !data.subscription_id) throw new Error(data.error || 'Could not start subscription');
-
-    const trialDays = (data.trial_days != null) ? data.trial_days : premiumTrialDays();
-    const price = (data.price != null) ? data.price : premiumPrice();
-
-    // 2) Open Razorpay in SUBSCRIPTION mode (₹0/₹1 auth now, ₹price after trial).
-    const options = {
-      key: data.key_id || 'rzp_live_SitBK030b3i8Ol',
-      subscription_id: data.subscription_id,
-      name: 'Aalynex Premium',
-      description: `${trialDays}-day free trial, then ₹${price}/month`,
-      image: 'aalynex-logo.png',
-      prefill: { name: CU.name, email: CU.email || '', contact: CU.phone || '' },
-      theme: { color: '#E05C2A' },
+    const data = await premiumApi('premium-subscribe', {}, ownerId, epoch);
+    if (data.already_active) { await afterVerification(); release(); return; }
+    if (!/^sub_[A-Za-z0-9]+$/.test(data.subscription_id || '') || !data.checkout_intent_id || !data.key_id) throw new Error('Incomplete checkout response. Please contact support.');
+    const price = Number(data.price), trialDays = Number(data.trial_days);
+    if (!Number.isFinite(price) || price <= 0 || !Number.isInteger(trialDays) || trialDays < 0) throw new Error('Invalid checkout terms.');
+    const checkout = new window.Razorpay({
+      key: data.key_id, subscription_id: data.subscription_id,
+      name: 'Aalynex Premium', description: trialDays > 0 ? `${trialDays}-day trial, then ₹${price}/month` : `₹${price}/month`,
+      image: 'aalynex-logo.png', prefill: { name: CU.name, email: CU.email || '', contact: CU.phone || '' }, theme: { color: '#E05C2A' },
       handler: async function (response) {
+        if (!stillOwner() || finishing) return;
+        finishing = true;
         try {
-          const nowIso = new Date().toISOString();
-          const trialEndIso = new Date(Date.now() + trialDays * 24 * 60 * 60 * 1000).toISOString();
-          const { error } = await supaClient.from('subscriptions').insert({
-            user_id: CU.id,
-            plan_id: data.plan_db_id || null,
-            status: trialDays > 0 ? 'trialing' : 'active',
-            autopay: true,
-            trial_ends_at: trialDays > 0 ? trialEndIso : null,
-            current_period_start: nowIso,
-            current_period_end: trialEndIso,
-            razorpay_subscription_id: response.razorpay_subscription_id || data.subscription_id
-          });
-          if (error) { showToast('Trial started but saving failed: ' + error.message + '. Contact support.', 'err', ''); return; }
-          window._premiumActive = true;
-          showToast(`🎉 Premium active! Free for ${trialDays} days, then ₹${price}/mo (auto).`, 'ok', '');
-          if (pendId) {
-            _pendingManagedId = null; _pendingManagedName = null;
-            setTimeout(() => openSendRequestModal(pendId, pendName), 400);
-          } else {
-            renderC('managed');
-          }
-        } catch (e) {
-          showToast('Activation error: ' + e.message, 'err', '');
-        }
+          if (!response?.razorpay_payment_id || !response.razorpay_signature || response.razorpay_subscription_id !== data.subscription_id) throw new Error('Incomplete checkout verification response.');
+          await premiumApi('premium-verify', {
+            checkout_intent_id: data.checkout_intent_id,
+            razorpay_payment_id: response.razorpay_payment_id,
+            razorpay_subscription_id: response.razorpay_subscription_id,
+            razorpay_signature: response.razorpay_signature,
+          }, ownerId, epoch);
+          await afterVerification();
+        } catch (error) {
+          if (stillOwner()) { window._premiumActive = false; showToast('Premium not confirmed: ' + error.message + ' Do not pay again if charged.', 'err'); }
+        } finally { release(); }
       },
-      modal: {
-        ondismiss: function () {
-          showToast('Subscription cancelled.', 'info', '');
-          if (cb) { cb.disabled = false; cb.textContent = 'Start Free Trial →'; }
-        }
-      }
-    };
-    new window.Razorpay(options).open();
-    if (cb) { cb.disabled = false; cb.textContent = 'Start Free Trial →'; }
-  } catch (e) {
-    showToast('Could not start: ' + e.message, 'err', '');
-    if (cb) { cb.disabled = false; cb.textContent = 'Start Free Trial →'; }
+      modal: { ondismiss: function () {
+        if (finishing || !stillOwner()) return;
+        release(); showToast('Checkout closed. This does not cancel an existing subscription.', 'info');
+      } },
+    });
+    checkout.on('payment.failed', function () { if (stillOwner()) showToast('Payment was not confirmed. Close checkout and review status before retrying.', 'warn'); });
+    checkout.open();
+  } catch (error) {
+    if (stillOwner()) showToast('Could not start: ' + error.message, 'err');
+    release();
   }
+}
+
+
+/* Subscription management: owned mappings only; cancellation is immediate, not a refund. */
+async function openPremiumManagement() {
+  if (!CU || !supaClient) { showToast('Please log in again', 'err'); return; }
+  const ownerId = CU.id, epoch = window._premiumEpoch;
+  const owner = () => !!CU && CU.id === ownerId && window._premiumEpoch === epoch;
+  showModal('Manage Premium subscription', '<div id="premium-management-result">Loading your subscriptions…</div>', () => {});
+  const cb = document.getElementById('modal-confirm');
+  if (cb) { cb.disabled = false; cb.textContent = 'Close'; }
+  const panel = document.getElementById('premium-management-result');
+  const visible = () => owner() && panel.isConnected && document.getElementById('modal-bg').classList.contains('show');
+  const message = text => { if (visible()) panel.textContent = text; };
+  try {
+    const data = await premiumApi('premium-manage', {}, ownerId, epoch);
+    if (!visible()) return;
+    if (!Array.isArray(data.subscriptions)) throw new Error('Invalid subscription response');
+    panel.textContent = '';
+    const note = document.createElement('p');
+    note.textContent = 'Cancel now stops this subscription immediately and ends Premium access, including any remaining trial or paid period. It does not issue an automatic refund. A charge already in progress may still complete. Contact support for refunds or any subscription not listed here.';
+    panel.appendChild(note);
+    if (!data.subscriptions.length) { const empty=document.createElement('p'); empty.textContent='No linked subscriptions found for this account.';panel.appendChild(empty); }
+    for (const sub of data.subscriptions) {
+      const row=document.createElement('div');row.style.cssText='border-top:1px solid var(--glass-border);padding:12px 0;overflow-wrap:anywhere;';
+      const label=document.createElement('p');label.textContent=String(sub.subscription_id)+' — '+String(sub.status);row.appendChild(label);
+      if(sub.current_period_end) { const dates=document.createElement('p');dates.textContent='Verified period end: '+String(sub.current_period_end);row.appendChild(dates); }
+      if(sub.can_cancel===true) {
+        const button=document.createElement('button');button.type='button';button.className='btn btn-secondary btn-sm';button.textContent='Cancel subscription now';
+        button.addEventListener('click',async()=>{
+          if(!visible()||button.disabled)return;
+          if(!window.confirm('Cancel this subscription immediately? Premium access ends now, including remaining trial or paid time. No automatic refund is issued. A charge already in progress may still complete.'))return;
+          if(!visible())return;
+          panel.querySelectorAll('button').forEach(b=>b.disabled=true);
+          button.textContent='Confirming cancellation…';
+          try {
+            const result=await premiumApi('premium-cancel',{checkout_intent_id:sub.checkout_intent_id,confirm_immediate:true},ownerId,epoch);
+            if(!visible())return;
+            if(result.ok!==true||!['cancelled','expired'].includes(result.status))throw new Error('Cancellation not confirmed');
+            window._premiumActive=false;window._premiumCheckedAt=0;
+            message('Subscription cancellation confirmed. No automatic refund was issued.');
+            await refreshPremiumStatus(CU);
+            if(owner() && typeof renderC==='function')renderC('managed');
+          } catch(error) {
+            if(!visible())return;
+            message('Cancellation not confirmed: '+error.message+' Close and reopen Manage to check. Do not create another payment; contact support if needed.');
+          }
+        });row.appendChild(button);
+      }
+      panel.appendChild(row);
+    }
+  } catch(error) { message('Could not load subscriptions: '+error.message); }
 }

@@ -53,13 +53,13 @@ function renderFileListPreview() {
 
     return `<div style="display:flex;align-items:center;justify-content:space-between;padding:10px;background:var(--surface);border:1px solid var(--glass-border);border-radius:var(--radius-sm);">
       <div style="display:flex;align-items:center;gap:10px;min-width:0;">
-        <span style="font-size:1.2rem;">${icon}</span>
+        <span style="font-size:1.2rem;">${escapeHtml(icon)}</span>
         <div style="min-width:0;flex:1;">
-          <div style="font-size:.85rem;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:280px;">${f.name}</div>
-          <div style="font-size:.7rem;color:var(--text-3);">${fmtFileSize(f.size)} ${f.duration ? `• ⏱ ${f.duration}` : ''}</div>
+          <div style="font-size:.85rem;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:280px;">${escapeHtml(f.name)}</div>
+          <div style="font-size:.7rem;color:var(--text-3);">${escapeHtml(fmtFileSize(f.size))} ${escapeHtml(f.duration ? `• ⏱ ${f.duration}` : '')}</div>
         </div>
       </div>
-      <button class="btn btn-danger btn-xs" style="border:none;" onclick="removeDraftFile(${i})">X</button>
+      <button class="btn btn-danger btn-xs" style="border:none;" data-app-click="${appEvent("removeDraftFile", [i])}">X</button>
     </div>`;
   }).join('');
 }

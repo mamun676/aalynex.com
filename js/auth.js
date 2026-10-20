@@ -1,4 +1,25 @@
+// Each login/logout invalidates callbacks and in-flight sync from the previous session.
+window._accountSessionEpoch = window._accountSessionEpoch || 0;
+function cleanupAccountRealtime() {
+  clearTimeout(window._rtProjTimer);
+  window._rtProjTimer = null;
+  if (typeof stopChatPolling === 'function') stopChatPolling();
+  const channels = [window._accountMasterChannel,
+    typeof currentChatChannel !== 'undefined' ? currentChatChannel : null];
+  window._accountMasterChannel = null;
+  window.realtimeInitialized = false;
+  if (typeof currentChatChannel !== 'undefined') currentChatChannel = null;
+  if (typeof currentConversationId !== 'undefined') currentConversationId = null;
+  if (typeof currentChatUserId !== 'undefined') currentChatUserId = null;
+  if (typeof isSubscribing !== 'undefined') isSubscribing = false;
+  if (typeof onlineUsers !== 'undefined') onlineUsers.clear();
+  if (typeof renderedMessageIds !== 'undefined') renderedMessageIds.clear();
+  for (const channel of new Set(channels.filter(Boolean))) {
+    try { Promise.resolve(supaClient.removeChannel(channel)).catch(() => {}); } catch (_) {}
+  }
+}
 
+// ═══════════════════════════════════════════════
 //  AUTH — login / signup / OTP, loginSuccess (+ realtime), logout
 // ═══════════════════════════════════════════════
 
@@ -187,7 +208,7 @@ async function doSignup() {
       otpFg.className = 'fg';
       otpFg.id = 'signup-otp-fg';
       otpFg.innerHTML = `
-        <label>Verification code sent to ${email}</label>
+        <label>Verification code sent to ${escapeHtml(email)}</label>
         <input id="signup-otp" type="text" inputmode="numeric"
           maxlength="6" placeholder="Enter 6-digit code"
           autocomplete="one-time-code"/>
@@ -290,6 +311,10 @@ function _resetSignupForm() {
 }
 
 async function loginSuccess(u) {
+  const sessionEpoch = ++window._accountSessionEpoch;
+  cleanupAccountRealtime();
+  const ownsSession = () => window._accountSessionEpoch === sessionEpoch && CU && CU.id === u.id;
+  resetPremiumSession();
   CU = u;
   DB.setCurrentUser(u);
 
@@ -335,35 +360,42 @@ async function loginSuccess(u) {
   // ⚡ FAST DASHBOARD: pehle sirf core data (profiles + projects + attachments)
   // load karo taaki dashboard TURANT dikhe. Messages + S3 signing (heavy) background me.
   await syncFromSupabase(u, { coreOnly: true });
+  if (!ownsSession()) return;
 
   if (u.role === 'freelancer') {
     await loadFreelancerProfile();
+    if (!ownsSession()) return;
     renderF('home');
     checkFProfileCompletion();
   } else {
     await loadFreelancerProfile();
+    if (!ownsSession()) return;
     updateAvatarsEverywhere();
     renderC('home');
   }
 
   // Background: full sync (messages / chat previews) — dashboard ko block nahi karta.
   syncFromSupabase(u).then(() => {
-    if (typeof updateChatSidebarPreviews === 'function') updateChatSidebarPreviews();
+    if (ownsSession() && typeof updateChatSidebarPreviews === 'function') updateChatSidebarPreviews();
   }).catch(() => {});
 
   // 🟢 MASTER REAL-TIME SYSTEM (single channel, no duplicate connections)
   if (supaClient && !window.realtimeInitialized) {
     window.realtimeInitialized = true;
-    const masterChannel = supaClient.channel('aalynex_master');
+    const masterChannel = supaClient.channel('aalynex_master_' + sessionEpoch + '_' + u.id);
+    window._accountMasterChannel = masterChannel;
 
     masterChannel
       // 1. Projects
       .on('postgres_changes', { event: '*', schema: 'public', table: 'projects' }, payload => {
+        if (!ownsSession()) return;
         // Debounce bursts + re-render the ACTUAL current page (globally tracked),
         // taaki Profile/Earnings dekhte waqt dashboard flash na ho.
         clearTimeout(window._rtProjTimer);
         window._rtProjTimer = setTimeout(() => {
-          syncFromSupabase(CU).then(() => {
+          if (!ownsSession()) return;
+          syncFromSupabase(u).then(() => {
+            if (!ownsSession()) return;
             // quiet repaint: a realtime row change on ANY project fires this, so it
 // must not flash the page when the visible data did not actually change
 if (CU.role === 'creator' && currentCreatorPage !== 'chat') renderC(currentCreatorPage || 'home', true);
@@ -373,6 +405,7 @@ else if (CU.role === 'freelancer' && currentFreelancerPage !== 'chat') renderF(c
       })
       // 2. Presence (online/offline)
       .on('presence', { event: 'sync' }, () => {
+        if (!ownsSession()) return;
         const state = masterChannel.presenceState();
         onlineUsers.clear();
         for (const id in state) {
@@ -382,12 +415,13 @@ else if (CU.role === 'freelancer' && currentFreelancerPage !== 'chat') renderF(c
       })
       // 3. Subscribe + track self
       .subscribe(async (status) => {
+        if (!ownsSession()) return;
         const statusText = document.getElementById('chat-status-text');
         const dot = document.getElementById('chat-online-dot');
         if (status === 'SUBSCRIBED') {
           if (statusText) { statusText.textContent = 'Online'; statusText.style.color = 'var(--green)'; }
           if (dot) dot.style.background = 'var(--green)';
-          await masterChannel.track({ user_id: CU.id });
+          try { await masterChannel.track({ user_id: u.id }); } catch (_) {}
         } else if (status === 'CLOSED' || status === 'CHANNEL_ERROR') {
           if (statusText) { statusText.textContent = 'Connecting...'; statusText.style.color = 'var(--yellow)'; }
           if (dot) dot.style.background = 'var(--yellow)';
@@ -398,19 +432,14 @@ else if (CU.role === 'freelancer' && currentFreelancerPage !== 'chat') renderF(c
 
 function logout() {
   showModal('Log Out', 'Are you sure you want to log out?', async () => {
-    if (supaClient) {
-      try { await supaClient.auth.signOut(); } catch (e) {}
-    }
-    renderedMessageIds.clear();
-    window.realtimeInitialized = false;
-    if (currentChatChannel) {
-      try { supaClient.removeChannel(currentChatChannel); } catch (e) {}
-      currentChatChannel = null;
-    }
-    currentConversationId = null;
-    isSubscribing = false;
+    ++window._accountSessionEpoch;
+    cleanupAccountRealtime();
+    resetPremiumSession();
     CU = null; activeManageProjectId = null; currentChatUserId = null;
     DB.logout();
+    if (supaClient) {
+      try { await supaClient.auth.signOut(); } catch (_) {}
+    }
         showScreen('screen-landing');
     showToast('Logged out successfully', 'info', '');
   });
@@ -449,7 +478,7 @@ async function doForgotPassword() {
     _resetEmail = email;
     showToast('OTP sent to your email!', 'ok', '');
     const body = `
-      <p style="font-size:.85rem;color:var(--text-3);margin-bottom:12px;">Enter the OTP sent to <b>${email}</b> and set a new password.</p>
+      <p style="font-size:.85rem;color:var(--text-3);margin-bottom:12px;">Enter the OTP sent to <b>${escapeHtml(email)}</b> and set a new password.</p>
       <div class="fg"><label>OTP Code</label><input id="reset-otp" type="text" inputmode="numeric" placeholder="6-digit code"/></div>
       <div class="fg"><label>New Password</label><input type="password" id="reset-pw" placeholder="At least 6 characters"/></div>
       <div class="fg"><label>Confirm Password</label><input type="password" id="reset-pw2" placeholder="Re-enter new password"/></div>
