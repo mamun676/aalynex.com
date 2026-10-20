@@ -1,4 +1,4 @@
-// ════════════════════════════════════
+
 //  MAIN — app init, logo drag, Tawk.to, auto-scroll observer
 //  Yeh file SABSE LAST load honi chahiye.
 // ════════════════════════════════════
