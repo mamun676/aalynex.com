@@ -32,9 +32,12 @@ async function refreshPremiumStatus(user) {
 async function syncFromSupabase(u, opts = {}) {
   // opts.coreOnly = true  ->  sirf profiles + projects + attachments (FAST).
   // Heavy conversations/messages + per-message S3 URL signing skip ho jaata hai.
-  if (!supaClient) return;
+  if (!supaClient || !u || !CU || CU.id !== u.id) return;
+  const sessionEpoch = window._accountSessionEpoch || 0;
+  const ownsSession = () => CU && CU.id === u.id && (window._accountSessionEpoch || 0) === sessionEpoch;
   try {
     const { data: profiles } = await supaClient.from('profiles').select('*');
+    if (!ownsSession()) return;
     if (profiles && profiles.length) {
       const localUsers = DB.users();
       profiles.forEach(p => {
@@ -66,6 +69,7 @@ DB.saveUsers(localUsers);
       // ── Managed Editors (admin-controlled) — mark which freelancers are managed ──
       try {
         const { data: managed } = await supaClient.from('managed_editors').select('freelancer_id, unique_id');
+        if (!ownsSession()) return;
         const mSet = {};
         (managed || []).forEach(m => { mSet[m.freelancer_id] = m.unique_id; });
         const usersNow = DB.users();
@@ -79,15 +83,18 @@ DB.saveUsers(localUsers);
 
     // Fail closed: read server-verified entitlement, never trust browser-written status.
     await refreshPremiumStatus(u);
+    if (!ownsSession()) return;
 
     // ── Premium plan (admin-controlled price → shown live on main site) ──
     try {
       const { data: _plan } = await supaClient.from('subscription_plans')
         .select('id, name, price, trial_days, features').eq('plan_key', 'aalynex_premium').eq('is_active', true).maybeSingle();
+      if (!ownsSession()) return;
       if (_plan) window._premiumPlan = _plan;
     } catch (e) {}
 
     const { data: projects } = await supaClient.from('projects').select('*');
+    if (!ownsSession()) return;
     if (projects && projects.length) {
       const mapped = projects.map(p => ({
         id: p.id, creatorId: p.creator_id, freelancerId: p.freelancer_id || null,
@@ -103,6 +110,7 @@ DB.saveProjects(mapped);
     }
 
     const { data: attachments } = await supaClient.from('project_attachments').select('*');
+    if (!ownsSession()) return;
     if (attachments && attachments.length) {
       const mappedAtts = attachments.map(a => ({
         id: a.id, projectId: a.project_id, name: a.file_name,
@@ -121,6 +129,7 @@ DB.saveAttachments(mappedAtts);
     const { data: convos } = await supaClient.from('conversations')
       .select('*')
       .or(`user1_id.eq.${u.id},user2_id.eq.${u.id}`);
+    if (!ownsSession()) return;
 
     if (convos && convos.length > 0) {
       const convoIds = convos.map(c => c.id);
@@ -129,6 +138,7 @@ DB.saveAttachments(mappedAtts);
         .select('*')
         .in('conversation_id', convoIds)
         .order('created_at', { ascending: true });
+      if (!ownsSession()) return;
 
       if (messages && messages.length > 0) {
         const msgMap = {};
@@ -141,10 +151,11 @@ DB.saveAttachments(mappedAtts);
 
             let fileurl = m.file_url || null;
             if (isS3Key(fileurl)) {
-              try { fileurl = await s3GetUrl(fileurl); }
+              try { fileurl = await s3GetUrl(fileurl); if (!ownsSession()) return; }
               catch (e) { console.error('[S3] sync sign failed (CORS/network?):', e); fileurl = null; }
             }
 
+            if (!ownsSession()) return;
             msgMap[key].push({
               id:       m.id,
               from:     m.sender_id,
