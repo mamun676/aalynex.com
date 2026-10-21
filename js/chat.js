@@ -1,3 +1,150 @@
+// Text-message outbox only. Attachment path below remains the legacy flow.
+// Session-memory only: reload/logout clears retry state; no hidden localStorage queue.
+const axChatOutbox=new Map();
+const axChatUUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+function axChatOwner(id) {
+ const epoch=window._accountSessionEpoch||0;
+ if(!CU||CU.id!==id)throw Error('Account changed');
+ return {id,epoch,owns:()=>!!CU&&CU.id===id&&(window._accountSessionEpoch||0)===epoch};
+}
+function axChatPrune() {
+ for(const [id,e]of axChatOutbox)if(!e.owner.owns()){
+  e.cancelled=true;e.controller?.abort();axChatOutbox.delete(id);
+ }
+}
+function axChatSameRow(e,r) {
+ return !!r&&r.id===e.id&&r.sender_id===e.myId&&r.receiver_id===e.otherId&&r.conversation_id===e.conversationId&&r.text===e.text&&!r.file_url;
+}
+function axChatObserveRow(row) {
+ axChatPrune();const e=axChatOutbox.get(row?.id);
+ if(!e||!e.owner.owns()||!axChatSameRow(e,row))return false;
+ e.status='sent';e.time=Date.parse(row.created_at)||e.time;e.serverRow=row;
+ return true;
+}
+function axChatMergeMessages(messages,myId) {
+ axChatPrune();const list=Array.isArray(messages)?messages.slice():[];
+ for(const e of axChatOutbox.values()){
+  if(e.myId!==myId||e.otherId!==currentChatUserId||!e.owner.owns())continue;
+  const index=list.findIndex(m=>m.id===e.id);
+  const local={id:e.id,from:e.myId,text:e.text,file_url:null,time:e.time,_deliveryStatus:e.status};
+  if(index<0)list.push(local);else list[index]={...list[index],_deliveryStatus:e.status};
+ }
+ return list.sort((a,b)=>a.time-b.time||String(a.id).localeCompare(String(b.id)));
+}
+function axChatPaint(e) {
+ if(!e.owner.owns()||currentChatUserId!==e.otherId)return;
+ const el=document.getElementById('chat-msgs-el');
+ if(el){el.innerHTML=renderMsgs(DB.messages()[e.key]||[],e.myId);scrollChatToBottom();}
+}
+function axChatPendingHTML(m,isMine) {
+ if(!isMine||!['sending','failed','sent','blocked'].includes(m._deliveryStatus))return '';
+ const label={sending:'Sending…',failed:'Not confirmed — retry checks before resending.',sent:'Sent',blocked:'Message ID conflict — contact support.'}[m._deliveryStatus];
+ const retry=m._deliveryStatus==='failed'?` <button type="button" class="btn btn-ghost btn-xs" data-chat-retry="${escapeHtml(m.id)}">Retry</button>`:'';
+ return `<div class="msg-time" role="status">${escapeHtml(label)}${retry}</div>`;
+}
+async function axChatWait(e,request) {
+ if(!e.owner.owns()||e.cancelled)throw Error('Account changed');
+ const controller=new AbortController();e.controller=controller;
+ let timer;
+ try {
+  const query=typeof request.abortSignal==='function'?request.abortSignal(controller.signal):request;
+  const result=await Promise.race([Promise.resolve(query),new Promise((_,reject)=>{timer=setTimeout(()=>{controller.abort();reject(Error('Request not confirmed'));},20000);})]);
+  if(!e.owner.owns()||e.cancelled)throw Error('Account changed');return result;
+ }finally{clearTimeout(timer);if(e.controller===controller)e.controller=null;}
+}
+async function axChatSession(e) {
+ // Check current browser session before each possible database write.
+ const {data,error}=await axChatWait(e,supaClient.auth.getSession());
+ if(error||data?.session?.user?.id!==e.myId)throw Error('Sign in required');
+}
+async function axChatConversation(e) {
+ const [a,b]=[e.myId,e.otherId].sort();
+ const find=()=>supaClient.from('conversations').select('id').eq('user1_id',a).eq('user2_id',b).maybeSingle();
+ let result=await axChatWait(e,find());
+ if(result.error)throw result.error;
+ if(result.data)return result.data.id;
+ await axChatSession(e);
+ result=await axChatWait(e,supaClient.from('conversations').insert({user1_id:a,user2_id:b}).select('id').single());
+ if(result.error?.code==='23505')result=await axChatWait(e,find());
+ if(result.error||!result.data?.id)throw Error('Conversation not confirmed');return result.data.id;
+}
+async function axChatLookup(e) {
+ const result=await axChatWait(e,supaClient.from('messages').select('*').eq('id',e.id).maybeSingle());
+ if(result.error)throw result.error;
+ if(result.data&&!axChatSameRow(e,result.data)){e.status='blocked';throw Error('Message ID conflict');}
+ return result.data;
+}
+function axChatConfirm(e,row) {
+ if(!e.owner.owns()||!axChatSameRow(e,row))throw Error('Confirmation mismatch');
+ e.status='sent';e.serverRow=row;e.time=Date.parse(row.created_at)||e.time;
+ // Save only server-confirmed rows. Keep recent session receipts in memory so
+ // a sync snapshot taken before this insert cannot erase a just-sent bubble.
+ const all=DB.messages(),arr=all[e.key]||[];
+ const message={id:e.id,from:e.myId,text:e.text,file_url:null,time:e.time};
+ const old=arr.findIndex(m=>m.id===e.id);if(old<0)arr.push(message);else arr[old]=message;
+ all[e.key]=arr;DB.saveMessages(all);renderedMessageIds.add(e.id);axChatPaint(e);
+}
+async function axChatAttempt(e) {
+ if(!e.owner.owns()||e.inFlight||e.status==='sent'||e.status==='blocked')return {ok:e.status==='sent',id:e.id};
+ e.inFlight=true;e.status='sending';axChatPaint(e);
+ try {
+  if(!supaClient)throw Error('No connection');
+  await axChatSession(e);
+  if(!e.conversationId)e.conversationId=await axChatConversation(e);
+  let row=await axChatLookup(e);
+  if(!row){
+   await axChatSession(e);
+   const result=await axChatWait(e,supaClient.from('messages').insert({id:e.id,conversation_id:e.conversationId,sender_id:e.myId,receiver_id:e.otherId,text:e.text,file_url:null}).select('*').single());
+   if(result.error){
+    if(result.error.code!=='23505')throw result.error;
+    row=await axChatLookup(e);
+   }else row=result.data;
+  }
+  if(!row)throw Error('No server confirmation');
+  axChatConfirm(e,row);return {ok:true,id:e.id};
+ }catch(_){
+  if(!e.owner.owns()){e.cancelled=true;axChatOutbox.delete(e.id);return {ok:false,cancelled:true};}
+  // Realtime/polling may have confirmed the insert while its HTTP ACK failed.
+  if(e.status==='sent'&&e.serverRow)return {ok:true,id:e.id};
+  if(e.status!=='blocked')e.status='failed';axChatPaint(e);
+  if(currentChatUserId===e.otherId)showToast(e.status==='blocked'?'Message ID conflict. Contact support.':'Message not confirmed. Use Retry on that message; do not retype it.', 'err');
+  return {ok:false,id:e.id};
+ }finally{e.inFlight=false;}
+}
+async function retryChatMessage(id) {
+ axChatPrune();if(!axChatUUID.test(id))return;
+ const e=axChatOutbox.get(id);
+ if(!e||!e.owner.owns()||e.status!=='failed')return;
+ return axChatAttempt(e);
+}
+async function sendMsg(myId,otherId,overrideFileUrl=null,overrideFileName=null,overrideText=null) {
+ // Preserve old attachment behavior: this focused patch does not claim to fix
+ // delivery/payment/storage authorization or attachment acknowledgement paths.
+ if(overrideFileUrl)return axLegacyAttachmentSendMsg(myId,otherId,overrideFileUrl,overrideFileName,overrideText);
+ axChatPrune();let owner;
+ try{owner=axChatOwner(myId);}catch{return {ok:false,cancelled:true};}
+ if(typeof otherId!=='string'||!axChatUUID.test(otherId)||myId===otherId)return {ok:false};
+ const inp=document.getElementById('chat-inp-el');
+ const programmatic=typeof overrideText==='string'&&overrideText.length>0;
+ if(!programmatic&&currentChatUserId!==otherId)return {ok:false};
+ const text=programmatic?overrideText:String(inp?.value||'').trim();
+ if(!text)return;
+ // Avoid unbounded retry state in long-running sessions; never silently drop
+ // unconfirmed messages. Confirmed receipts can be evicted after 200 entries.
+ if(axChatOutbox.size>=200){for(const [id,e]of axChatOutbox)if(e.status==='sent'){axChatOutbox.delete(id);break;}}
+ if(axChatOutbox.size>=200){showToast('Too many unconfirmed messages. Retry existing messages first.','err');return {ok:false};}
+ const id=crypto.randomUUID();
+ const e={id,myId,otherId,text,owner,key:[myId,otherId].sort().join('_'),time:Date.now(),status:'sending',conversationId:null,inFlight:false};
+ axChatOutbox.set(id,e);if(!programmatic&&inp)inp.value='';
+ return axChatAttempt(e);
+}
+// Dedicated UUID-only action; no dynamic function-name evaluation / onclick text.
+document.addEventListener('click',event=>{
+ const button=event.target?.closest?.('[data-chat-retry]');if(!button)return;
+ const id=button.getAttribute('data-chat-retry');if(!axChatUUID.test(id||''))return;
+ event.preventDefault();void retryChatMessage(id);
+});
+
 // ════════════════════════════════════
 //  CHAT — messaging, realtime, polling
 // ════════════════════════════════════
@@ -106,6 +253,7 @@ function buildChat(myId, otherDefaultId) {
   </div>`;
 }
 function renderMsgs(msgs, myId) {
+  msgs = axChatMergeMessages(msgs, myId);
   if (!msgs || !msgs.length)
     return '<div style="text-align:center;">Start the conversation!</div>';
 
@@ -116,6 +264,9 @@ function renderMsgs(msgs, myId) {
     const timeAlign = isMine ? 'text-align:right' : '';
     const flexAlign = isMine ? 'flex-end' : 'flex-start';
 
+    if(isMine && ['sending','failed','blocked'].includes(m._deliveryStatus)) {
+      return `<div style="display:flex;flex-direction:column;align-items:flex-end;margin-bottom:8px"><div class="msg sent">${escapeHtml(m.text)}</div>${axChatPendingHTML(m,true)}</div>`;
+    }
     if (m.file_url) {
       const fname = m.text.replace('Raw Video: ', '').replace('Video: ', '').replace('Final Delivery: ', '').replace('Final Delivery', '') || 'video';
 
@@ -213,14 +364,14 @@ function renderMsgs(msgs, myId) {
           ${note ? `<div style="margin-top:6px; font-style:italic;">"${escapeHtml(note)}"</div>` : ''}
           ${buttonsHtml}
         </div>
-        <div class="msg-time" style="${escapeHtml(timeAlign)}; width:100%; margin-top:2px;">${escapeHtml(fmtTime(m.time))}</div>
+        <div class="msg-time" style="${escapeHtml(timeAlign)}; width:100%; margin-top:2px;">${escapeHtml(fmtTime(m.time))}</div>${axChatPendingHTML(m,isMine)}
       </div>`;
     }
 
     return `
       <div style="display:flex; flex-direction:column; align-items:${escapeHtml(flexAlign)}; margin-bottom:8px; width:100%;">
         <div class="msg ${escapeHtml(isMine ? 'sent' : 'received')}">${escapeHtml(m.text)}</div>
-        <div class="msg-time" style="${escapeHtml(timeAlign)}; width:100%; margin-top:2px;">${escapeHtml(fmtTime(m.time))}</div>
+        <div class="msg-time" style="${escapeHtml(timeAlign)}; width:100%; margin-top:2px;">${escapeHtml(fmtTime(m.time))}</div>${axChatPendingHTML(m,isMine)}
       </div>`;
   }).join('');
 }
@@ -379,7 +530,10 @@ async function subscribeToConversation(conversationId, otherUserId) {
 async function handleIncomingRealtimeMessage(payload, otherUserId) {
   const newMsg = payload.new;
   if (!newMsg?.id) return;
-  if (newMsg.sender_id === CU.id) return;
+  if (newMsg.sender_id === CU.id) {
+    if(axChatObserveRow(newMsg)){const e=axChatOutbox.get(newMsg.id);axChatConfirm(e,newMsg);}
+    return;
+  }
 
   const key = [CU.id, otherUserId].sort().join('_');
   const allMsgs = DB.messages();
@@ -466,6 +620,7 @@ function startChatPolling() {
 
       let updated = false;
       for (const m of fresh) {
+        axChatObserveRow(m);
         if (msgs.find(x => x.id === m.id)) continue; // skip duplicates
 
         let fileUrl = m.file_url || null;
@@ -507,7 +662,7 @@ function stopChatPolling() {
   }
 }
 
-async function sendMsg(myId, otherId, overrideFileUrl = null, overrideFileName = null, overrideText = null) {
+async function axLegacyAttachmentSendMsg(myId, otherId, overrideFileUrl = null, overrideFileName = null, overrideText = null) {
   // ── Resolve message text ──
   let text = '';
   const inp = document.getElementById('chat-inp-el');

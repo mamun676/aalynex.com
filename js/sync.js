@@ -143,6 +143,7 @@ DB.saveAttachments(mappedAtts);
       if (messages && messages.length > 0) {
         const msgMap = {};
         for (const m of messages) {  // for...of for async/await
+          if (typeof axChatObserveRow === 'function') axChatObserveRow(m);
           const c = convos.find(x => x.id === m.conversation_id);
           if (c) {
             const otherId = c.user1_id === u.id ? c.user2_id : c.user1_id;
