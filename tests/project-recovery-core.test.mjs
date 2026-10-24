@@ -1,0 +1,18 @@
+import assert from 'node:assert/strict';import {createHmac} from 'node:crypto';
+import {eventPolicy,eventIds,digest,bodySignatureValid,limitedBody,chooseOrder} from '../supabase/functions/_shared/project-recovery-core.mjs';
+let n=0;const eq=(a,b)=>{assert.deepEqual(a,b);n++;};const bad=fn=>{assert.throws(fn);n++;};
+const secret='fixture-only-not-a-real-secret',raw=new TextEncoder().encode('{ "event": "payment.captured" }');
+const signature=createHmac('sha256',secret).update(raw).digest('hex');
+eq(await bodySignatureValid(secret,raw,signature),true);
+for(const args of [['wrong',raw,signature],[secret,new TextEncoder().encode('{"event":"payment.captured"}'),signature],[secret,raw,'f'.repeat(64)],[secret,raw,null],[secret,raw,'nothex']])eq(await bodySignatureValid(...args),false);
+eq((await digest(raw)).length,64);
+eq(eventPolicy('payment.captured'),'recover');eq(eventPolicy('order.paid'),'recover');eq(eventPolicy('refund.failed'),'refund_event');eq(eventPolicy('payment.dispute.won'),'dispute_event');eq(eventPolicy('subscription.charged'),'ignore');
+eq(eventIds({payload:{refund:{entity:{payment_id:'pay_A'}}}}),{paymentId:'pay_A',orderId:null});
+eq(eventIds({payload:{dispute:{entity:{payment_id:'pay_B'}},payment:{entity:{id:'pay_B',order_id:'order_B'}}}}),{paymentId:'pay_B',orderId:'order_B'});
+bad(()=>eventIds({payload:{payment:{entity:{id:'../bad'}}}}));bad(()=>eventPolicy(null));
+const i={id:'intent-A',project_id:'project-A',receipt:'receipt-A'},order={id:'order_A',receipt:'receipt-A',notes:{ax_intent_id:i.id,project_id:i.project_id}};
+eq(chooseOrder([order],i),order);eq(chooseOrder([],i),null);eq(chooseOrder([{...order,notes:{ax_intent_id:'intent-B',project_id:i.project_id}}],i),null);
+bad(()=>chooseOrder([order,{...order,id:'order_B'}],i));bad(()=>chooseOrder(Array(100).fill(order),i));
+const req=new Request('https://fixture',{method:'POST',body:raw});eq(Array.from(await limitedBody(req)),Array.from(raw));
+await assert.rejects(()=>limitedBody(new Request('https://fixture',{method:'POST',body:'x'.repeat(20)}),10));n++;
+console.log(`PASS ${n} webhook signature/body/event/order-search checks.`);
