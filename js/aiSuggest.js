@@ -1,247 +1,181 @@
-
-
-const AI_SUGGEST_URL = 'https://sfzbrygqpodjinhpagaz.supabase.co/functions/v1/ai-suggest';
-window._aiSuggestQuota = null;
-window._aiSuggestLast = null;
-window._aiSuggestHistory = null;
-
+/* Aalynex Content AI v3 — staging integration. Account-bound, saved-result-first UI. */
 (function () {
-  const _origRenderC = window.renderC;
-  window.renderC = function (p) {
-    if (p === 'aisuggest') {
-      const m = document.getElementById('c-main');
-      if (m) m.innerHTML = renderAISuggest();
-      loadAISuggestHistory();
-      return;
+  'use strict';
+  let state;
+  const defaults = { category: '', subCategory: '', topic: '', platform: 'YouTube', language: 'Hinglish', country: 'India', audience: '', goal: 'Engagement', experience: 'Beginner', videoLength: 'Auto (platform fit)', creatorStyle: 'Any / flexible', timeBudget: 'Flexible', contentPillars: '', creatorIdentity: '', winningExamples: '', tone: '', resources: '', avoidTopics: '', extraContext: '' };
+  function current() {
+    const account = typeof CU !== 'undefined' ? CU : null;
+    if (!state || state.account !== account) state = { account, draft: { ...defaults }, edited: false, loaded: false, loading: false, busy: false, quota: null, history: [], cursor: null, result: null, pending: null, notice: '', error: '', mounted: null };
+    return state;
+  }
+  const active = s => current() === s && !!s.account;
+  const esc = x => String(x == null ? '' : x).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const options = (values, selected) => values.map(v => `<option${v === selected ? ' selected' : ''} value="${esc(v)}">${esc(v)}</option>`).join('');
+  function pendingKey(s) { return 'aalynex-ai-pending:' + s.account.id; }
+  function remember(s, id) { s.pending = id; try { if (id) sessionStorage.setItem(pendingKey(s), id); else sessionStorage.removeItem(pendingKey(s)); } catch (_) {} }
+  function recovered(s) { try { return sessionStorage.getItem(pendingKey(s)); } catch (_) { return null; } }
+  async function api(s, name, data) {
+    const { data: auth, error } = await supaClient.auth.getSession();
+    if (!active(s)) throw new Error('Account changed.');
+    if (error || !auth.session || auth.session.user.id !== s.account.id) throw new Error('Session expired. Sign in again.');
+    const response = await fetch(SUPABASE_URL + '/functions/v1/' + name, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + auth.session.access_token }, body: JSON.stringify(data), signal: AbortSignal.timeout(65000) });
+    let value; try { value = await response.json(); } catch (_) { throw new Error('Service response could not be confirmed. Check request status before generating again.'); }
+    if (!active(s)) throw new Error('Account changed.');
+    if (!response.ok) { const e = new Error(value.message || 'Operation could not be completed.'); e.payload = value; e.status = response.status; throw e; }
+    return value;
+  }
+  function update(s) { if (active(s) && s.mounted && s.mounted.isConnected) { s.mounted.innerHTML = markup(s); } }
+  function quotaText(s) {
+    const q = s.quota;
+    if (!q) return 'Account allowance has not been loaded.';
+    if (!q.configured) return 'Setup pending: approved model, allowance and feature cost must be enabled by the operator.';
+    const reset = q.reset_at ? new Date(q.reset_at).toLocaleString() : 'not available';
+    return `${esc(q.remaining)} available · ${esc(q.used)} used · ${esc(q.held)} held · ${esc(q.limit)} monthly credits. Each idea set: ${esc(q.cost)} credits. Reset: ${esc(reset)} (${esc(q.reset_timezone)} policy; time shown locally).`;
+  }
+  function canGenerate(s) { return s.loaded && !s.loading && !s.busy && !s.pending && s.quota && s.quota.configured && Number.isFinite(s.quota.remaining) && s.quota.remaining >= s.quota.cost; }
+  function input(s, name, label, max, required, hint) {
+    return `<label class="ax-field">${esc(label)}${required ? ' *' : ''}<input name="${name}" maxlength="${max}" value="${esc(s.draft[name])}"${required ? ' required' : ''}>${hint ? `<small>${esc(hint)}</small>` : ''}</label>`;
+  }
+  function select(s, name, label, values) { return `<label class="ax-field">${esc(label)}<select name="${name}">${options(values, s.draft[name])}</select></label>`; }
+  function textArea(s, name, label, max) { return `<label class="ax-field ax-wide">${esc(label)}<textarea name="${name}" maxlength="${max}" rows="3">${esc(s.draft[name])}</textarea></label>`; }
+  function ideaText(idea) {
+    const lines = [idea.topic, 'HOOK: ' + (idea.hook || ''), 'FIRST SHOT: ' + (idea.openingShot || ''),
+      'ANGLE: ' + (idea.angle || ''), 'VIEWER PAYOFF: ' + (idea.viewerPayoff || ''),
+      'AUDIENCE FIT: ' + (idea.audienceFit || idea.why || ''),
+      'OUTLINE:', ...(Array.isArray(idea.outline) ? idea.outline.map((x,i)=>`${i+1}. ${x}`) : []),
+      'VISUAL PLAN: ' + (idea.visualPlan || idea.thumbnailIdea || ''),
+      'TITLES:', ...(Array.isArray(idea.titles) ? idea.titles : []),
+      'CAPTION: ' + (idea.caption || ''),
+      'HASHTAGS: ' + (Array.isArray(idea.hashtags) ? idea.hashtags.join(' ') : ''),
+      'CTA: ' + (idea.cta || '')];
+    return lines.filter(x => typeof x === 'string' && x.trim() && !/^\w+: $/.test(x)).join('\n');
+  }
+  function exportText(result) {
+    const text = result.suggestions.map((v,i) => `IDEA ${i+1}\n${ideaText(v)}`).join('\n\n---\n\n');
+    const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href = url; a.download = 'aalynex-content-ideas.txt'; a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1500);
+  }
+  function cards(result) {
+    if (!result || !Array.isArray(result.suggestions)) return '';
+    return `<section class="ax-results" aria-label="Saved idea set"><div class="ax-results-head"><h3>Your saved ideas</h3><button type="button" data-ai-action="export">Export all 5 as TXT</button></div><p>AI drafts, not verified research or guaranteed results. Review facts, rights and suitability before publishing.</p>${result.suggestions.map((raw, i) => {
+      const idea = raw && typeof raw === 'object' ? raw : {};
+      const modern = Array.isArray(idea.outline);
+      const row = (label, value) => typeof value === 'string' && value ? `<h4>${label}</h4><p>${esc(value)}</p>` : '';
+      return `<article class="ax-idea"><div class="ax-idea-top"><span>IDEA ${i + 1}${modern ? ' · ' + esc(idea.effort) + ' effort' : ' · Legacy saved idea'}</span><button type="button" data-ai-action="copy" data-index="${i}">Copy idea</button></div><h3>${esc(idea.topic || 'Untitled idea')}</h3>${row('Hook', idea.hook)}${row('Opening shot', idea.openingShot)}${row('Distinct angle', idea.angle)}${row('Viewer payoff', idea.viewerPayoff)}${row('Audience fit', idea.audienceFit || idea.why)}${modern ? `<h4>Execution outline</h4><ol>${idea.outline.map(x => `<li>${esc(x)}</li>`).join('')}</ol>` : ''}${row('Visual plan', idea.visualPlan || idea.thumbnailIdea)}${row('Ready-to-edit caption', idea.caption)}${Array.isArray(idea.hashtags) ? `<h4>Hashtag ideas</h4><p>${idea.hashtags.map(esc).join(' ')}</p>` : ''}${Array.isArray(idea.titles) ? `<h4>Title options</h4><ul>${idea.titles.map(x => `<li>${esc(x)}</li>`).join('')}</ul>` : ''}${row('Call to action', idea.cta)}</article>`;
+    }).join('')}</section>`;
+  }
+  function markup(s) {
+    return `<section class="ax-ai"><header><span class="ax-eyebrow">CREATE WITH INTENT</span><h2>Content idea studio</h2><p>Ideas built around your audience, your style and the videos you can actually produce. Get five distinct, shoot-ready concepts with hooks, opening shots, a production outline, title options, captions and useful hashtags.</p></header><div class="ax-allowance" role="status">${quotaText(s)}</div><p class="ax-message" role="status" aria-live="polite">${esc(s.notice)}</p>${s.error ? `<p class="ax-error" role="alert">${esc(s.error)}</p>` : ''}${s.pending ? `<div class="ax-pending"><b>Generation awaiting confirmation</b><p>Do not submit another idea set. Credits may be held until its outcome is confirmed. No automatic retry or paid fallback.</p><button type="button" data-ai-action="status"${s.busy ? ' disabled' : ''}>Check request status</button></div>` : ''}<div class="ax-layout"><div><div class="ax-starters"><strong>Quick brief starters</strong><span>Use a sample, then customize every field.</span><div class="ax-starter-actions"><button type="button" data-ai-action="preset" data-index="0">🎓 Education</button><button type="button" data-ai-action="preset" data-index="1">🍲 Food</button><button type="button" data-ai-action="preset" data-index="2">💻 Technology</button><button type="button" data-ai-action="preset" data-index="3">🏪 Small business</button></div></div><form data-ai-form><fieldset class="ax-form-grid"${s.busy ? ' disabled' : ''}>${input(s, 'category', 'Your niche / category', 120, true, 'Example: budget cooking for college students')}${input(s, 'topic', 'Topic focus (optional)', 320)}${select(s, 'platform', 'Format / platform', ['YouTube', 'YouTube Shorts', 'Instagram Reels', 'Instagram', 'LinkedIn'])}${select(s, 'language', 'Output language', ['Hinglish', 'Hindi', 'English', 'Tamil', 'Telugu', 'Bengali', 'Marathi'])}${input(s, 'audience', 'Who is this for?', 400, true, 'Age, interests, problems and level of knowledge')}${select(s, 'goal', 'Your goal', ['Views', 'Subscribers', 'Engagement', 'Sales', 'Brand Building'])}${select(s, 'videoLength', 'Target video duration', ['Auto (platform fit)', 'Under 30 seconds', '30–60 seconds', '1–3 minutes', '5–8 minutes', '8–15 minutes', '15+ minutes'])}${select(s, 'creatorStyle', 'How you make videos', ['Any / flexible', 'On-camera', 'Faceless', 'Voiceover + B-roll', 'Screen recording', 'Mixed'])}${select(s, 'timeBudget', 'Production time available', ['Flexible', 'Under 1 hour', '1–3 hours', 'Half a day', 'Multi-day project'])}${input(s, 'country', 'Audience location', 80)}${select(s, 'experience', 'Creator stage', ['Beginner', 'Growing', 'Established'])}${input(s, 'tone', 'Voice / tone', 160)}${input(s, 'resources', 'Available resources', 400, false, 'Example: phone camera, solo, no face, two hours')}${input(s, 'subCategory', 'Sub-niche', 160)}${textArea(s, 'contentPillars', 'Your content pillars (2–4 themes)', 400)}${textArea(s, 'creatorIdentity', 'What makes your channel different?', 400)}${textArea(s, 'winningExamples', 'What worked before? Optional examples (your own experience)', 600)}${textArea(s, 'avoidTopics', 'Topics or styles to avoid', 1200)}${textArea(s, 'extraContext', 'Extra context / what has worked before', 1200)}</fieldset><div class="ax-actions"><button type="submit" class="ax-primary"${canGenerate(s) ? '' : ' disabled'}>${s.busy ? 'Working…' : 'Generate 5 ideas'}</button><button type="button" data-ai-action="save"${s.busy || !s.loaded ? ' disabled' : ''}>Save my brief</button><button type="button" data-ai-action="refresh"${s.busy || s.loading ? ' disabled' : ''}>Refresh allowance / history</button></div><p class="ax-note">Required fields are marked *. Completed results save automatically to your account. Saved history is free to read. No channel URL is fetched or analysed here.</p></form>${cards(s.result)}</div><aside class="ax-history"><h3>Saved history</h3><p>Your account only · newest first</p>${s.loading ? '<p>Loading…</p>' : ''}${!s.history.length && s.loaded ? '<p>No saved idea sets yet.</p>' : ''}${s.history.map((item, index) => `<button type="button" class="ax-history-item" data-ai-action="history" data-index="${index}"><strong>${esc(item.inputs && item.inputs.category || 'Saved idea set')}</strong><span>${esc(new Date(item.created_at).toLocaleString())}</span><span>${esc(item.inputs && item.inputs.platform || 'Previous generation')}</span></button>`).join('')}${s.cursor ? `<button type="button" data-ai-action="more"${s.busy || s.loading ? ' disabled' : ''}>Load older results</button>` : ''}</aside></div></section>`;
+  }
+  const presets = [
+    {category:'Career and study skills',subCategory:'Practical student career choices',audience:'Class 11–12 students in small Indian towns',platform:'YouTube Shorts',videoLength:'30–60 seconds',creatorStyle:'Faceless',resources:'Smartphone, notebook, natural light',contentPillars:'Career myths; practical steps; useful skills'},
+    {category:'Affordable home cooking',subCategory:'Simple vegetarian meals',audience:'Indian students and first-time cooks',platform:'Instagram Reels',videoLength:'30–60 seconds',creatorStyle:'Voiceover + B-roll',resources:'One phone, home kitchen, everyday ingredients',contentPillars:'Easy meals; substitutions; food safety'},
+    {category:'Technology tutorials',subCategory:'Useful phone productivity',audience:'Beginners using Android phones',platform:'YouTube',videoLength:'5–8 minutes',creatorStyle:'Screen recording',resources:'Android phone, free screen recorder',contentPillars:'How-to demos; privacy tips; accessible tools'},
+    {category:'Local small business marketing',subCategory:'Practical social media',audience:'New Indian shop owners with limited budgets',platform:'Instagram Reels',videoLength:'Under 30 seconds',creatorStyle:'On-camera',resources:'One phone, shop counter, no advertising budget',contentPillars:'Product demonstrations; customer questions; trustworthy offers'}
+  ];
+  async function load(s, more) {
+    if (!active(s) || s.loading) return;
+    s.loading = true; s.error = ''; update(s);
+    try {
+      const data = await api(s, 'ai-workspace', { action: more ? 'history' : 'bootstrap', ...(more ? { cursor: s.cursor } : {}) });
+      if (!active(s)) return;
+      s.history = more ? s.history.concat(data.history.filter(x => !s.history.some(y => y.id === x.id))) : data.history;
+      s.cursor = data.cursor;
+      if (!more) {
+        s.quota = data.quota;
+        if (!s.edited && data.brief) s.draft = { ...defaults, ...data.brief };
+        const id = data.quota && data.quota.pending && data.quota.pending.id || recovered(s);
+        if (id) remember(s, id);
+        s.loaded = true;
+      }
+    } catch (e) { if (active(s)) s.error = e.message; }
+    finally { if (active(s)) { s.loading = false; update(s); } }
+  }
+  function accept(s, data) {
+    if (!active(s)) return;
+    if (data.quota) s.quota = data.quota; else if (data.status === 'completed') s.quota = null;
+    if (data.status === 'completed' && data.result) {
+      remember(s, null); s.result = data.result;
+      s.notice = 'Idea set confirmed saved. Your completed-result allowance has been updated.';
+      if (!s.history.some(x => x.id === data.result.id)) s.history.unshift({ ...data.result, inputs: { ...s.draft } });
+    } else if (data.status === 'failed') { remember(s, null); s.notice = 'Previous request did not complete. Its credit hold was released. You may make a new request.'; }
+    else { if (data.requestId) remember(s, data.requestId); s.notice = data.message || 'Request is still pending. Check its status before generating again.'; }
+  }
+  async function run(s, action) {
+    if (!active(s) || s.busy) return;
+    const form = s.mounted && s.mounted.querySelector('form');
+    if (['generate', 'save'].includes(action) && form && !form.reportValidity()) return;
+    if (action === 'generate' && !canGenerate(s)) return;
+    s.busy = true; s.error = ''; s.notice = ''; update(s);
+    try {
+      if (action === 'generate') {
+        const id = crypto.randomUUID(); remember(s, id); update(s);
+        accept(s, await api(s, 'ai-suggest', { requestId: id, brief: { ...s.draft } }));
+      } else if (action === 'status') {
+        accept(s, await api(s, 'ai-workspace', { action: 'status', requestId: s.pending }));
+      } else if (action === 'save') {
+        await api(s, 'ai-workspace', { action: 'save_brief', brief: { ...s.draft } });
+        if (active(s)) s.notice = 'Creator brief confirmed saved to your account.';
+      }
+    } catch (e) {
+      if (active(s)) {
+        if (e.payload && e.payload.quota) s.quota = e.payload.quota;
+        // Only explicit pre-provider rejection / known failed responses permit a new request.
+        if (action === 'generate' && e.payload && ['invalid_input', 'not_configured', 'quota_exceeded', 'daily_capacity', 'rate_limited', 'provider_unavailable', 'invalid_output', 'duplicate_output', 'history_unavailable'].includes(e.payload.error)) {
+          remember(s, e.payload.quota && e.payload.quota.pending ? e.payload.quota.pending.id : null);
+          // Missing post-failure quota must be re-read, never reused for another spend.
+          if (!e.payload.quota) s.quota = null;
+        }
+        s.error = e.message;
+      }
+    } finally { if (active(s)) { s.busy = false; update(s); } }
+  }
+  function mount(host, quiet) {
+    const s = current(); if (!s.account || !host) return;
+    if (quiet && s.mounted && host.contains(s.mounted)) return;
+    host.innerHTML = '<div data-ai-root></div>'; s.mounted = host.firstElementChild; update(s);
+    if (!s.loaded && !s.loading) load(s, false);
+  }
+  const original = window.renderC;
+  window.renderC = function (page, quiet) { if (page === 'aisuggest') return mount(document.getElementById('c-main'), quiet); return original.apply(this, arguments); };
+  window.renderAISuggest = () => markup(current());
+  window.generateAISuggestions = () => run(current(), 'generate');
+  window.viewAISuggestHistory = id => { const s = current(); s.result = s.history.find(x => x.id === id) || null; update(s); };
+  document.addEventListener('input', event => {
+    const s = current(), el = event.target;
+    if (s.mounted && s.mounted.contains(el) && el.name && Object.hasOwn(defaults, el.name)) { s.draft[el.name] = el.value; s.edited = true; }
+  });
+  document.addEventListener('change', event => {
+    const s = current(), el = event.target;
+    if (s.mounted && s.mounted.contains(el) && el.name && Object.hasOwn(defaults, el.name)) { s.draft[el.name] = el.value; s.edited = true; }
+  });
+  document.addEventListener('submit', event => { if (!event.target.matches('[data-ai-form]')) return; event.preventDefault(); run(current(), 'generate'); });
+  document.addEventListener('click', async event => {
+    const el = event.target.closest('[data-ai-action]'); if (!el) return;
+    const s = current(); if (!s.mounted || !s.mounted.contains(el) || el.disabled) return;
+    const action = el.dataset.aiAction;
+    if (['save', 'status'].includes(action)) return run(s, action);
+    if (action === 'export' && s.result && Array.isArray(s.result.suggestions)) return exportText(s.result);
+    if (action === 'preset') {
+      const i=Number(el.dataset.index);
+      if (!Number.isInteger(i) || !presets[i] || s.busy) return;
+      s.draft={ ...defaults, ...presets[i] };s.edited=true;
+      s.notice='Starter loaded. Customize it before generating; your previous saved brief is unchanged until you press Save my brief.';
+      return update(s);
     }
-    return _origRenderC.apply(this, arguments);
-  };
+    if (action === 'refresh') return load(s, false);
+    if (action === 'more' && s.cursor) return load(s, true);
+    const index = Number(el.dataset.index);
+    if (!Number.isInteger(index) || index < 0) return;
+    if (action === 'history' && s.history[index]) { s.result = s.history[index]; s.notice = 'Showing a previously saved idea set. No generation credits used.'; return update(s); }
+    if (action === 'copy' && s.result && s.result.suggestions[index]) {
+      const raw = s.result.suggestions[index];
+      const x = raw && typeof raw === 'object' ? raw : {};
+      const content = ideaText(x);
+      try { await navigator.clipboard.writeText(content); if (active(s)) s.notice = 'Idea copied.'; } catch (_) { if (active(s)) s.error = 'Clipboard unavailable. Select and copy the idea text manually.'; }
+      update(s);
+    }
+  });
 })();
-
-const AIS_PLATFORMS = ['YouTube', 'YouTube Shorts', 'Instagram Reels', 'Instagram', 'LinkedIn'];
-const AIS_LANGS = ['Hinglish', 'Hindi', 'English', 'Tamil', 'Telugu', 'Bengali', 'Marathi'];
-const AIS_AGES = ['13-17', '18-24', '25-34', '35-44', '45+'];
-const AIS_EXP = ['Beginner', 'Growing', 'Established'];
-const AIS_GOALS = ['Views', 'Subscribers', 'Engagement', 'Sales', 'Brand Building'];
-
-function _aisOpts(arr, sel) {
-  return arr.map(o => `<option value="${escapeHtml(o)}"${escapeHtml(o === sel ? ' selected' : '')}>${escapeHtml(o)}</option>`).join('');
-}
-function _aisQuotaInner() {
-  if (window._aiSuggestQuota) return `<b style="color:var(--accent);">${escapeHtml(window._aiSuggestQuota.remaining)}</b> of ${escapeHtml(window._aiSuggestQuota.limit)} left this month`;
-  return `<b style="color:var(--accent);">30</b> generations / month`;
-}
-
-function renderAISuggest() {
-  const premium = (typeof isPremiumCreator === 'function') ? isPremiumCreator() : !!window._premiumActive;
-  const price = (typeof premiumPrice === 'function') ? premiumPrice() : 99;
-
-  const head = `
-    <div style="display:flex;align-items:center;gap:14px;margin-bottom:22px;">
-      <div style="width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 4px 14px rgba(224,92,42,.25);">
-        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.9 4.6L18.5 9l-4.6 1.4L12 15l-1.9-4.6L5.5 9l4.6-1.4L12 3z"/></svg>
-      </div>
-      <div style="flex:1;min-width:0;">
-        <div style="display:flex;align-items:center;gap:9px;flex-wrap:wrap;">
-          <h2 style="margin:0;font-family:'Outfit',sans-serif;font-weight:700;font-size:1.35rem;letter-spacing:-.4px;color:var(--text);">AI Content Suggestions</h2>
-          <span style="font-size:.58rem;font-weight:700;letter-spacing:.5px;color:var(--accent);background:var(--accent-soft);border:1px solid rgba(224,92,42,.22);padding:2px 8px;border-radius:999px;">PREMIUM</span>
-        </div>
-        <p style="margin:3px 0 0;font-size:.83rem;color:var(--text-2);">Research-backed video ideas, hooks, titles and thumbnail concepts — tailored to your channel.</p>
-      </div>
-    </div>`;
-
-  if (!premium) {
-    return head + `
-      <div style="background:var(--surface);border:1px solid var(--glass-border);border-radius:var(--radius-lg);padding:28px;max-width:520px;box-shadow:var(--shadow-sm);">
-        <div style="font-weight:700;font-size:1.05rem;color:var(--text);margin-bottom:8px;">This is a Premium feature</div>
-        <p style="font-size:.86rem;color:var(--text-2);line-height:1.6;margin:0 0 6px;">AI Content Suggestions come with <b>Aalynex Premium (₹${escapeHtml(price)}/month)</b> — the same plan that unlocks Managed Editing.</p>
-        <p style="font-size:.82rem;color:var(--text-3);margin:0 0 18px;">Premium members get <b>30 idea generations</b> every month.</p>
-        <button class="btn btn-primary" onclick="openPremiumModal()">Unlock Premium</button>
-      </div>`;
-  }
-
-  const inputStyle = 'style="padding:10px 12px;border:1px solid var(--glass-border);border-radius:10px;background:var(--surface2);color:var(--text);font-size:.85rem;font-family:inherit;outline:none;width:100%;box-sizing:border-box;"';
-  const field = (label, html) => `<div style="display:flex;flex-direction:column;gap:6px;"><label style="font-size:.72rem;font-weight:600;color:var(--text-2);">${label}</label>${html}</div>`;
-
-  const resultsInner = window._aiSuggestLast ? renderAISuggestionCards(window._aiSuggestLast) : '';
-  const historyInner = renderAISuggestHistory();
-
-  return head + `
-    <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px;flex-wrap:wrap;">
-      <div style="font-size:.92rem;font-weight:600;color:var(--text);">Generate new ideas</div>
-      <span id="ais-quota" style="font-size:.74rem;color:var(--text-3);background:var(--surface);border:1px solid var(--glass-border);padding:5px 12px;border-radius:999px;box-shadow:var(--shadow-xs);">${_aisQuotaInner()}</span>
-    </div>
-    <div style="background:var(--surface);border:1px solid var(--glass-border);border-radius:var(--radius-lg);padding:22px;max-width:880px;box-shadow:var(--shadow-sm);">
-      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:15px;">
-        ${field('Content type *', `<input id="ais-category" ${inputStyle} placeholder="e.g. Personal finance, Fitness, Tech reviews">`)}
-        ${field('Sub-type', `<input id="ais-sub" ${inputStyle} placeholder="e.g. Index funds, Home workouts">`)}
-        ${field('Platform', `<select id="ais-platform" ${inputStyle}>${_aisOpts(AIS_PLATFORMS, 'YouTube')}</select>`)}
-        ${field('Language', `<select id="ais-lang" ${inputStyle}>${_aisOpts(AIS_LANGS, 'Hinglish')}</select>`)}
-        ${field('Target country', `<input id="ais-country" ${inputStyle} value="India">`)}
-        ${field('Audience age', `<select id="ais-age" ${inputStyle}>${_aisOpts(AIS_AGES, '18-24')}</select>`)}
-        ${field('Experience level', `<select id="ais-exp" ${inputStyle}>${_aisOpts(AIS_EXP, 'Growing')}</select>`)}
-        ${field('Primary goal', `<select id="ais-goal" ${inputStyle}>${_aisOpts(AIS_GOALS, 'Views')}</select>`)}
-      </div>
-      <div style="margin-top:15px;display:grid;grid-template-columns:1fr;gap:15px;">
-        ${field('Channel link (optional) — tailors ideas to your channel', `<input id="ais-channel" ${inputStyle} placeholder="Paste your YouTube / Instagram channel URL">`)}
-        ${field('Extra notes (optional)', `<input id="ais-extra" ${inputStyle} placeholder="Any angle, competitor or idea to focus on">`)}
-      </div>
-      <button id="ais-gen-btn" class="btn btn-primary" style="margin-top:20px;" onclick="generateAISuggestions()">Generate ideas</button>
-    </div>
-    <div id="ais-results" style="margin-top:24px;">${resultsInner}</div>
-    <div id="ais-history" style="margin-top:28px;">${historyInner}</div>`;
-}
-
-async function generateAISuggestions() {
-  if (!supaClient || !CU) { showToast('Please log in again.', 'err', ''); return; }
-  const btn = document.getElementById('ais-gen-btn');
-  const results = document.getElementById('ais-results');
-  const category = (document.getElementById('ais-category').value || '').trim();
-  if (!category) { showToast('Please enter a content niche.', 'warn', ''); return; }
-
-  const payload = {
-    category,
-    subCategory: (document.getElementById('ais-sub').value || '').trim(),
-    platform: document.getElementById('ais-platform').value,
-    language: document.getElementById('ais-lang').value,
-    country: (document.getElementById('ais-country').value || 'India').trim(),
-    audienceAge: document.getElementById('ais-age').value,
-    experience: document.getElementById('ais-exp').value,
-    goal: document.getElementById('ais-goal').value,
-    channelUrl: (document.getElementById('ais-channel').value || '').trim(),
-    extraContext: (document.getElementById('ais-extra').value || '').trim(),
-  };
-
-  if (btn) { btn.disabled = true; btn.classList.add('btn-loading'); btn.textContent = 'Generating…'; }
-  if (results) results.innerHTML = `
-    <div style="display:flex;align-items:center;gap:11px;color:var(--text-2);font-size:.85rem;padding:22px;background:var(--surface);border:1px solid var(--glass-border);border-radius:var(--radius-lg);box-shadow:var(--shadow-xs);">
-      <span style="width:16px;height:16px;border:2px solid var(--accent);border-top-color:transparent;border-radius:50%;display:inline-block;animation:spin .6s linear infinite;"></span>
-      Researching viral ideas for you… (5–10 seconds)
-    </div>`;
-
-  try {
-    const { data: { session } } = await supaClient.auth.getSession();
-    if (!session || !session.access_token) { throw new Error('Your session expired. Please log in again.'); }
-    const res = await fetch(AI_SUGGEST_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
-      body: JSON.stringify(payload),
-    });
-    const data = await res.json();
-
-    if (!res.ok) {
-      if (data.error === 'premium_required') { window._aiSuggestLast = null; if (results) results.innerHTML = ''; showToast('Premium is required for this feature.', 'warn', ''); if (typeof openPremiumModal === 'function') openPremiumModal(); return; }
-      if (data.error === 'quota_exceeded') { if (results) results.innerHTML = `<div style="color:var(--red);font-size:.85rem;padding:14px;background:rgba(220,38,38,.06);border:1px solid rgba(220,38,38,.2);border-radius:var(--radius-lg);">${escapeHtml(data.message || 'Monthly limit reached.')}</div>`; return; }
-      throw new Error(data.detail || data.message || data.error || 'AI request failed.');
-    }
-
-    window._aiSuggestQuota = { used: data.used, limit: data.limit, remaining: data.remaining };
-    window._aiSuggestLast = data.suggestions || [];
-    if (results) results.innerHTML = renderAISuggestionCards(window._aiSuggestLast);
-
-    const qEl = document.getElementById('ais-quota');
-    if (qEl) qEl.innerHTML = _aisQuotaInner();
-
-    showToast(`${window._aiSuggestLast.length} ideas ready — ${data.remaining} left this month`, 'ok', '');
-    loadAISuggestHistory();
-  } catch (e) {
-    console.error(e);
-    if (results) results.innerHTML = `<div style="color:var(--red);font-size:.85rem;padding:14px;background:rgba(220,38,38,.06);border:1px solid rgba(220,38,38,.2);border-radius:var(--radius-lg);">${escapeHtml(e.message || 'Something went wrong. Please try again.')}</div>`;
-  } finally {
-    if (btn) { btn.disabled = false; btn.classList.remove('btn-loading'); btn.textContent = 'Generate ideas'; }
-  }
-}
-
-function _aisScoreColor(n) { n = Number(n) || 0; return n >= 80 ? 'var(--green)' : n >= 60 ? 'var(--yellow)' : 'var(--text-3)'; }
-function _aisScoreBg(n) { n = Number(n) || 0; return n >= 80 ? 'var(--green-soft)' : n >= 60 ? 'rgba(217,119,6,.1)' : 'rgba(0,0,0,.05)'; }
-function _aisChips(arr, bg, col) {
-  return (arr || []).map(x => `<span style="display:inline-block;background:${escapeHtml(bg)};color:${escapeHtml(col || 'var(--text-2)')};font-size:.66rem;padding:3px 9px;border-radius:999px;margin:0 5px 5px 0;">${escapeHtml(x)}</span>`).join('');
-}
-
-function renderAISuggestionCards(list) {
-  if (!list || !list.length) return `<div style="color:var(--text-3);font-size:.85rem;padding:14px;">No ideas returned. Try changing your inputs.</div>`;
-  const header = `<div style="font-weight:700;font-size:1rem;color:var(--text);margin-bottom:14px;">${escapeHtml(list.length)} ideas generated</div>`;
-  const grid = `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:16px;">` + list.map(s => {
-    const score = Number(s.viralScore) || 0;
-    const meta = [s.difficulty, s.estViews].filter(Boolean).map(escapeHtml).join(' · ');
-    return `
-    <div style="background:var(--surface);border:1px solid var(--glass-border);border-radius:var(--radius-lg);padding:18px;display:flex;flex-direction:column;gap:10px;box-shadow:var(--shadow-sm);transition:box-shadow .25s,transform .25s;" onmouseover="this.style.boxShadow='var(--shadow-md)';this.style.transform='translateY(-2px)';" onmouseout="this.style.boxShadow='var(--shadow-sm)';this.style.transform='none';">
-      <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
-        <span style="font-size:.68rem;font-weight:700;color:${_aisScoreColor(score)};background:${_aisScoreBg(score)};padding:4px 10px;border-radius:999px;">Viral score ${escapeHtml(score)}</span>
-        ${meta ? `<span style="font-size:.66rem;color:var(--text-3);">${meta}</span>` : ''}
-      </div>
-      <div style="font-family:'Outfit',sans-serif;font-weight:700;font-size:1.02rem;color:var(--text);line-height:1.35;">${escapeHtml(s.topic || '')}</div>
-      ${s.trend ? `<div style="font-size:.68rem;color:var(--accent);font-weight:600;">Trend: ${escapeHtml(s.trend)}</div>` : ''}
-      <div style="font-size:.78rem;color:var(--text-2);line-height:1.55;"><b style="color:var(--text);font-weight:600;">Why it works.</b> ${escapeHtml(s.why || '')}</div>
-      <div style="font-size:.78rem;color:var(--text-2);line-height:1.55;"><b style="color:var(--text);font-weight:600;">Hook.</b> ${escapeHtml(s.hook || '')}</div>
-      <div style="font-size:.78rem;color:var(--text-2);line-height:1.55;"><b style="color:var(--text);font-weight:600;">Thumbnail.</b> ${escapeHtml(s.thumbnailIdea || '')}</div>
-      ${s.audience ? `<div style="font-size:.71rem;color:var(--text-3);">${escapeHtml(s.audience)}${escapeHtml(s.contentType ? ' · ' + s.contentType : '')}</div>` : ''}
-      <details style="margin-top:2px;">
-        <summary style="cursor:pointer;font-size:.75rem;color:var(--accent);font-weight:600;">Titles, hashtags &amp; keywords</summary>
-        <div style="margin-top:10px;">
-          ${(s.titles || []).length ? `<div style="font-size:.73rem;color:var(--text-2);margin-bottom:10px;line-height:1.7;">${(s.titles || []).map(t => `• ${escapeHtml(t)}`).join('<br>')}</div>` : ''}
-          <div>${_aisChips(s.hashtags, 'var(--accent2-soft)', 'var(--accent2)')}</div>
-          <div style="margin-top:4px;">${_aisChips(s.keywords, 'rgba(0,0,0,.05)')}</div>
-        </div>
-      </details>
-      ${s.cta ? `<div style="font-size:.71rem;color:var(--text-3);border-top:1px solid var(--glass-border);padding-top:10px;margin-top:2px;">CTA: ${escapeHtml(s.cta)}</div>` : ''}
-    </div>`;
-  }).join('') + `</div>`;
-  return header + grid;
-}
-
-async function loadAISuggestHistory() {
-  if (!supaClient) return;
-  try {
-    const { data, error } = await supaClient
-      .from('ai_suggestions')
-      .select('id, created_at, inputs, suggestions')
-      .order('created_at', { ascending: false })
-      .limit(20);
-    window._aiSuggestHistory = error ? [] : (data || []);
-    if (error) console.warn('AI history load failed:', error.message);
-  } catch (e) {
-    console.warn(e);
-    window._aiSuggestHistory = [];
-  }
-  const el = document.getElementById('ais-history');
-  if (el) el.innerHTML = renderAISuggestHistory();
-}
-
-function renderAISuggestHistory() {
-  const h = window._aiSuggestHistory;
-  if (h === null) return `<div style="font-size:.78rem;color:var(--text-3);padding:4px 2px;">Loading history…</div>`;
-  if (!h.length) return `<div style="font-size:.78rem;color:var(--text-3);padding:4px 2px;">No history yet — your past generations will appear here.</div>`;
-  const rows = h.map(r => {
-    const d = new Date(r.created_at);
-    const when = d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short' }) + ', ' + d.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
-    const inp = r.inputs || {};
-    const n = Array.isArray(r.suggestions) ? r.suggestions.length : 0;
-    const label = [inp.category, inp.platform].filter(Boolean).map(escapeHtml).join(' · ') || 'Ideas';
-    return `
-      <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 15px;border:1px solid var(--glass-border);border-radius:12px;background:var(--surface);box-shadow:var(--shadow-xs);">
-        <div style="min-width:0;">
-          <div style="font-size:.84rem;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${label}</div>
-          <div style="font-size:.7rem;color:var(--text-3);margin-top:2px;">${escapeHtml(when)} · ${escapeHtml(n)} ideas</div>
-        </div>
-        <button class="btn btn-ghost btn-xs" style="flex-shrink:0;" data-app-click="${appEvent("viewAISuggestHistory", [String(r.id ?? '')])}">View</button>
-      </div>`;
-  }).join('');
-  return `
-    <div style="display:flex;align-items:baseline;gap:9px;margin-bottom:13px;">
-      <h3 style="margin:0;font-family:'Outfit',sans-serif;font-weight:700;font-size:1rem;color:var(--text);">History</h3>
-      <span style="font-size:.72rem;color:var(--text-3);">Your last ${escapeHtml(h.length)} generations</span>
-    </div>
-    <div style="display:grid;gap:10px;max-width:660px;">${rows}</div>`;
-}
-
-function viewAISuggestHistory(id) {
-  const h = (window._aiSuggestHistory || []).find(r => String(r.id) === String(id));
-  if (!h) return;
-  window._aiSuggestLast = Array.isArray(h.suggestions) ? h.suggestions : [];
-  const results = document.getElementById('ais-results');
-  if (results) {
-    results.innerHTML = renderAISuggestionCards(window._aiSuggestLast);
-    results.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  }
-}
