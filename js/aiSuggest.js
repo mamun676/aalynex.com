@@ -1,4 +1,4 @@
-/* Aalynex Content AI v3 — staging integration. Account-bound, saved-result-first UI. */
+/* Aalynex Content AI v4 — consolidated staging integration. Account-bound, saved-result-first UI. */
 (function () {
   'use strict';
   let state;
@@ -28,7 +28,19 @@
   function quotaText(s) {
     const q = s.quota;
     if (!q) return 'Account allowance has not been loaded.';
-    if (!q.configured) return 'Setup pending: approved model, allowance and feature cost must be enabled by the operator.';
+    if (!q.configured) {
+      const setup = q.setup || {};
+      const base = setup.code === 'allowance_not_ready'
+        ? 'Allowance setup pending: check the staging AI policy and feature switches.'
+        : setup.code === 'provider_not_ready'
+          ? 'Provider setup pending: check staging Groq environment configuration.'
+          : 'Setup pending: refresh allowance or ask the operator to check staging configuration.';
+      const checks = setup.checks;
+      return base + (checks ? ' Staging diagnostics — database: ' + (checks.database_ready ? 'OK' : 'check')
+        + ', Groq model: ' + (checks.model_supported ? 'OK' : 'check')
+        + ', free-tier mode: ' + (checks.execution_mode_approved ? 'OK' : 'check')
+        + ', key present: ' + (checks.groq_key_present ? 'OK' : 'check') + '.' : '');
+    }
     const reset = q.reset_at ? new Date(q.reset_at).toLocaleString() : 'not available';
     return `${esc(q.remaining)} available · ${esc(q.used)} used · ${esc(q.held)} held · ${esc(q.limit)} monthly credits. Each idea set: ${esc(q.cost)} credits. Reset: ${esc(reset)} (${esc(q.reset_timezone)} policy; time shown locally).`;
   }
@@ -86,8 +98,14 @@
       if (!more) {
         s.quota = data.quota;
         if (!s.edited && data.brief) s.draft = { ...defaults, ...data.brief };
-        const id = data.quota && data.quota.pending && data.quota.pending.id || recovered(s);
-        if (id) remember(s, id);
+        // Authoritative server pending state. Clear a stale sessionStorage ID when
+        // the server confirms there is no open request for this account.
+        if (data.quota && Object.hasOwn(data.quota, 'pending')) {
+          remember(s, data.quota.pending && data.quota.pending.id || null);
+        } else {
+          const id = recovered(s);
+          if (id) remember(s, id);
+        }
         s.loaded = true;
       }
     } catch (e) { if (active(s)) s.error = e.message; }
