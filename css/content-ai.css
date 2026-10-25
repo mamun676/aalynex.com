@@ -110,3 +110,11 @@
 @media(max-width:850px){.ax-ai .ax-layout {grid-template-columns:minmax(0,1fr)}.ax-ai .ax-history {position:static;max-height:none}.ax-ai .ax-hero-visual {display:none}.ax-ai .ax-hero {min-height:205px}}
 @media(max-width:570px){.ax-ai .ax-hero {padding:25px 20px;border-radius:16px}.ax-ai .ax-hero h2 {font-size:34px}.ax-ai .ax-hero p {font-size:12px}.ax-ai .ax-proof {gap:9px}.ax-ai .ax-proof span {font-size:10px}.ax-ai .ax-status-strip {grid-template-columns:1fr auto;gap:14px}.ax-ai .ax-status-message {grid-column:1/-1;grid-row:2}.ax-ai .ax-pane,.ax-ai .ax-results {padding:20px 16px}.ax-ai .ax-form-grid,.ax-ai .ax-detail-grid {grid-template-columns:minmax(0,1fr)}.ax-ai .ax-starter-actions {grid-template-columns:repeat(2,minmax(0,1fr))}.ax-ai .ax-generate {min-width:0;width:100%;flex:1 1 100%}.ax-ai .ax-actions>button {min-height:46px}.ax-ai .ax-card-actions {justify-content:stretch}.ax-ai .ax-card-actions button {flex:1 1 130px;min-height:43px}.ax-ai .ax-idea {padding:18px 15px}.ax-ai .ax-idea h3 {font-size:18px}}
 @media(prefers-reduced-motion:reduce){.ax-ai button {transition:none}}
+
+/* V6 native Aalynex Supabase saved-library controls */
+.ax-ai .ax-library-filters { display:flex; gap:6px; flex-wrap:wrap; margin-top:14px; }
+.ax-ai .ax-library-filters button { flex:1; min-width:58px; padding:8px 10px; border:1px solid var(--glass-border, #435068); border-radius:10px; color:var(--text, #e7edf6); background:transparent; font-size:.76rem; font-weight:650; cursor:pointer; }
+.ax-ai .ax-library-filters button.active { background:var(--accent, #d64d22); color:#fff; border-color:var(--accent, #d64d22); }
+.ax-ai .ax-library-filters button:focus-visible { outline:2px solid var(--accent,#d64d22); outline-offset:3px; }
+.ax-ai .ax-status-strip { flex-wrap:wrap; }
+@media(max-width:520px) { .ax-ai .ax-library-filters button { flex:1 1 27%; } }
