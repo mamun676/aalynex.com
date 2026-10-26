@@ -118,3 +118,29 @@
 .ax-ai .ax-library-filters button:focus-visible { outline:2px solid var(--accent,#d64d22); outline-offset:3px; }
 .ax-ai .ax-status-strip { flex-wrap:wrap; }
 @media(max-width:520px) { .ax-ai .ax-library-filters button { flex:1 1 27%; } }
+
+/* FINAL UNIFIED AI STUDIO — scoped, responsive, uses existing Aalynex light/dark variables. */
+.ax-ai .ax-product-tabs {display:flex;align-items:center;gap:10px;padding:7px;background:var(--ax-surface);border:1px solid var(--ax-border);border-radius:16px;margin:0 0 20px;box-shadow:0 7px 24px rgba(22,27,43,.055)}
+.ax-ai .ax-product-tabs button {flex:1;display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;border:1px solid transparent;background:transparent;border-radius:11px;padding:13px 14px;font-size:14px;letter-spacing:-.02em}
+.ax-ai .ax-product-tabs button.selected {background:linear-gradient(115deg,#ed7647,#c84a35);color:white;box-shadow:0 6px 18px rgba(200,74,53,.2)}
+.ax-ai .ax-product-tabs button span {font-size:11px;font-weight:550;opacity:.8;letter-spacing:0}
+.ax-ai .ax-membership-lock {display:grid;grid-template-columns:auto 1fr auto;gap:17px;align-items:center;margin:18px 0 0;background:linear-gradient(125deg,rgba(235,125,74,.1),rgba(222,168,109,.04));border:1px solid rgba(214,105,53,.32);border-radius:17px;padding:19px 21px}
+.ax-ai .ax-membership-lock .ax-lock-icon {font-size:26px;color:var(--ax-brand)}
+.ax-ai .ax-membership-lock strong {font-size:16px;color:var(--ax-txt)}
+.ax-ai .ax-membership-lock p {font-size:12px;color:var(--ax-muted);margin:5px 0 0;line-height:1.6}
+.ax-ai .ax-membership-lock button {white-space:nowrap}
+.ax-ai .ax-classic-intro {background:linear-gradient(120deg,rgba(241,128,83,.15),rgba(125,92,214,.08));border:1px solid var(--ax-border);border-radius:15px;padding:20px 24px;margin:0 0 18px}
+.ax-ai .ax-classic-intro strong {font-size:16px}
+.ax-ai .ax-classic-intro p {font-size:12px;color:var(--ax-muted);margin:6px 0 0}
+.ax-ai .ax-classic-body {background:var(--ax-surface);border:1px solid var(--ax-border);border-radius:15px;padding:24px;min-height:260px}
+.ax-ai .ax-advanced {border:1px solid var(--ax-border);border-radius:13px;padding:14px;margin:14px 0;background:var(--ax-surface)}
+.ax-ai .ax-advanced > summary {cursor:pointer;font-weight:750;list-style:none}
+.ax-ai .ax-advanced > summary::-webkit-details-marker {display:none}
+.ax-ai .ax-advanced > summary::after {content:'+';float:right;font-size:18px}
+.ax-ai .ax-advanced[open] > summary::after {content:'−'}
+.ax-ai .ax-advanced .ax-form-grid {margin-top:16px}
+@media(max-width:850px){.ax-ai .ax-product-tabs {gap:5px}.ax-ai .ax-product-tabs button{padding:11px 9px;font-size:12px}.ax-ai .ax-product-tabs button span{font-size:10px}.ax-ai .ax-membership-lock{grid-template-columns:1fr}.ax-ai .ax-membership-lock .ax-lock-icon{display:none}.ax-ai .ax-membership-lock button{justify-self:start}.ax-ai .ax-classic-body{padding:14px}}
+@media(max-width:460px){.ax-ai .ax-product-tabs button{display:block;line-height:1.45}.ax-ai .ax-product-tabs button span{display:block}.ax-ai .ax-status-strip{gap:10px}}
+
+.ax-ai .ax-advanced > summary small {color:var(--ax-muted);font-weight:500;font-size:11px;margin-left:5px}
+.ax-checkout-note {padding:11px 13px;border-left:3px solid #d66a36;background:rgba(214,106,54,.09);border-radius:7px;font-size:12px;line-height:1.6;color:var(--text-2)}
