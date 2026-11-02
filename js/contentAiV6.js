@@ -125,7 +125,7 @@
     if (!active(s) || s.loading) return;
     s.loading = true; s.error = ''; update(s);
     try {
-      const data = await api(s, 'content-ai-workspace', { action: more ? 'history' : 'bootstrap', ...(more ? { cursor: s.cursor } : {}) });
+      const data = await api(s, 'content-ai-v6-premium-workspace', { action: more ? 'history' : 'bootstrap', ...(more ? { cursor: s.cursor } : {}) });
       if (!active(s)) return;
       s.history = more ? s.history.concat(data.history.filter(x => !s.history.some(y => y.id === x.id))) : data.history;
       s.cursor = data.cursor;
@@ -164,18 +164,18 @@
     try {
       if (action === 'generate') {
         const id = crypto.randomUUID(); remember(s, id); update(s);
-        accept(s, await api(s, 'content-ai-generate', { mode:'ideas', requestId: id, brief: { ...s.draft } }));
+        accept(s, await api(s, 'content-ai-v6-premium-generate', { mode:'ideas', requestId: id, brief: { ...s.draft } }));
       } else if (action === 'script') {
         if (!s.result || isScript(s.result) || !Number.isInteger(index) || index < 0 || index > 4) return;
         const sourceResultId = s.result.id;
         if (!sourceResultId) throw new Error('Save or reload the idea set before expanding a script.');
         s.lastIdeas = s.result;
         const id = crypto.randomUUID(); remember(s, id); update(s);
-        accept(s, await api(s, 'content-ai-generate', { mode:'script', requestId:id, sourceResultId, ideaIndex:index }));
+        accept(s, await api(s, 'content-ai-v6-premium-generate', { mode:'script', requestId:id, sourceResultId, ideaIndex:index }));
       } else if (action === 'status') {
-        accept(s, await api(s, 'content-ai-workspace', { action: 'status', requestId: s.pending }));
+        accept(s, await api(s, 'content-ai-v6-premium-workspace', { action: 'status', requestId: s.pending }));
       } else if (action === 'save') {
-        await api(s, 'content-ai-workspace', { action: 'save_brief', brief: { ...s.draft } });
+        await api(s, 'content-ai-v6-premium-workspace', { action: 'save_brief', brief: { ...s.draft } });
         if (active(s)) s.notice = 'Creator brief confirmed saved to your account.';
       }
     } catch (e) {
