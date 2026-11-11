@@ -1,0 +1,94 @@
+/* Aalynex AI UX v7 — isolated from billing, auth and app logic. */
+/* Clean compact segmented navigation, no floating/overlapping oversized bars. */
+.ax-ai .ax-product-tabs {
+  position:relative!important;
+  top:auto!important;
+  inset:auto!important;
+  z-index:auto!important;
+  display:grid!important;
+  grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;
+  gap:6px!important;
+  max-width:780px!important;
+  width:100%!important;
+  margin:6px auto 24px!important;
+  padding:6px!important;
+  border-radius:16px!important;
+  border:1px solid var(--ax-border)!important;
+  background:var(--ax-surface)!important;
+  box-shadow:0 5px 20px rgba(12,20,31,.06)!important;
+  overflow:visible!important;
+}
+.ax-ai .ax-product-tabs button {
+  position:relative!important;
+  float:none!important;
+  min-width:0!important;
+  width:100%!important;
+  min-height:60px!important;
+  padding:12px 14px!important;
+  border-radius:11px!important;
+  border:1px solid transparent!important;
+  display:block!important;
+  text-align:center!important;
+  white-space:normal!important;
+  word-break:normal!important;
+  overflow-wrap:anywhere!important;
+  line-height:1.35!important;
+  font-size:14px!important;
+  font-weight:750!important;
+  letter-spacing:-.01em!important;
+  background:transparent!important;
+  box-shadow:none!important;
+  color:var(--ax-txt)!important;
+  transform:none!important;
+}
+.ax-ai .ax-product-tabs button span {
+  display:block!important;
+  width:100%!important;
+  margin-top:4px!important;
+  font-size:11px!important;
+  font-weight:550!important;
+  letter-spacing:0!important;
+  color:var(--ax-muted)!important;
+  opacity:1!important;
+}
+.ax-ai .ax-product-tabs button.selected {
+  border-color:rgba(230,119,74,.45)!important;
+  color:#fff!important;
+  background:linear-gradient(115deg,#ee8051,#c84f36)!important;
+  box-shadow:0 5px 14px rgba(188,77,48,.14)!important;
+}
+.ax-ai .ax-product-tabs button.selected span {color:rgba(255,255,255,.94)!important}
+.ax-ai .ax-product-tabs button:hover:not(.selected) {background:color-mix(in srgb,var(--ax-brand) 8%,var(--ax-surface))!important}
+.ax-ai .ax-product-tabs button:focus-visible {outline:3px solid var(--ax-brand)!important;outline-offset:2px!important}
+.ax-ai .ax-hero {margin-top:0}
+.ax-ai .ax-generate {min-height:51px!important;border-radius:12px!important;font-weight:750!important;box-shadow:0 8px 18px rgba(193,82,49,.12)!important}
+.ax-ai .ax-card-actions button.ax-primary {min-height:44px;border-radius:11px;font-weight:750}
+.ax-ai .ax-classic-body #ais-gen-btn {min-height:47px;border-radius:11px;font-weight:750;padding:12px 21px;box-shadow:0 7px 18px rgba(192,79,49,.13)}
+/* Indeterminate progress: no fake percentages or provider timing claims. */
+.ax-ai .ax-ux-progress {position:fixed;inset:0;z-index:9998;display:grid;place-items:center;padding:22px;background:rgba(7,13,25,.63);backdrop-filter:blur(7px);-webkit-backdrop-filter:blur(7px);animation:ax-ux-fade .25s ease-out}
+.ax-ai .ax-ux-progress-card {width:min(100%,440px);position:relative;overflow:hidden;text-align:center;background:var(--ax-surface);color:var(--ax-txt);border:1px solid var(--ax-border);border-radius:22px;padding:33px 30px 29px;box-shadow:0 32px 75px rgba(0,0,0,.25)}
+.ax-ai .ax-ux-progress-card::before {content:'';position:absolute;inset:0 0 auto;height:5px;background:linear-gradient(90deg,#ed8b57,#c44d32,#8a5db8)}
+.ax-ai .ax-ux-progress-mark {margin:0 auto 19px;width:76px;height:76px;position:relative;display:grid;place-items:center;border-radius:22px;background:color-mix(in srgb,var(--ax-brand) 11%,var(--ax-surface));color:var(--ax-brand);font-size:32px}
+.ax-ai .ax-ux-progress-mark span {position:absolute;inset:-8px;border-radius:26px;border:2px solid transparent;border-top-color:var(--ax-brand);border-right-color:rgba(204,106,69,.38);animation:ax-ux-spin 1.35s linear infinite}
+.ax-ai .ax-ux-progress-mark i {font-style:normal;animation:ax-ux-pulse 1.4s ease-in-out infinite}
+.ax-ai .ax-ux-progress-kicker {font-size:10px;font-weight:800;letter-spacing:.15em;color:var(--ax-brand);margin-bottom:9px}
+.ax-ai .ax-ux-progress-card h3 {font-size:23px;line-height:1.2;letter-spacing:-.035em;color:var(--ax-txt);margin:0 0 11px;font-weight:800}
+.ax-ai .ax-ux-progress-card p {font-size:13px;line-height:1.65;color:var(--ax-muted);margin:0 0 23px}
+.ax-ai .ax-ux-progress-bar {height:7px;overflow:hidden;border-radius:99px;background:color-mix(in srgb,var(--ax-brand) 14%,var(--ax-surface));margin-bottom:16px}
+.ax-ai .ax-ux-progress-bar span {display:block;width:32%;height:100%;border-radius:99px;background:linear-gradient(90deg,#ffa46c,#d65437);animation:ax-ux-track 1.7s ease-in-out infinite}
+.ax-ai .ax-ux-progress-card small {display:block;font-size:11px;line-height:1.6;color:var(--ax-muted)}
+@keyframes ax-ux-spin {to{transform:rotate(360deg)}}
+@keyframes ax-ux-pulse {50%{transform:scale(.88);opacity:.75}}
+@keyframes ax-ux-track {0%{transform:translateX(-120%)}100%{transform:translateX(340%)}}
+@keyframes ax-ux-fade {from{opacity:0}to{opacity:1}}
+@media(max-width:650px) {
+  .ax-ai .ax-product-tabs {max-width:100%!important;margin:0 auto 16px!important}
+  .ax-ai .ax-product-tabs button {font-size:12px!important;min-height:67px!important;padding:12px 6px!important}
+  .ax-ai .ax-product-tabs button span {font-size:10px!important}
+  .ax-ai .ax-ux-progress-card {padding:26px 21px}
+  .ax-ai .ax-ux-progress-card h3 {font-size:20px}
+}
+@media(prefers-reduced-motion:reduce) {
+  .ax-ai .ax-ux-progress,.ax-ai .ax-ux-progress-mark span,.ax-ai .ax-ux-progress-mark i,.ax-ai .ax-ux-progress-bar span {animation:none!important}
+  .ax-ai .ax-ux-progress-bar span {width:60%}
+}
