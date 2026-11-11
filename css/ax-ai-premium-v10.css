@@ -1,0 +1,302 @@
+/* Aalynex AI V10 · premium visual treatment only.
+   Restores the V8 layout, preserves all generation and account behavior.
+   Requires css/ax-ai-workspace-v8.css to be loaded first. */
+.ax-ai.ax8-workspace {
+  --ax8-orange: #d55232;
+  --ax8-ink: #1c2431;
+  --ax8-muted: #687383;
+  --ax8-line: #e4e7ed;
+  --ax8-paper: #ffffff;
+  --ax8-soft: #f6f7f9;
+  --ax10-shadow: 0 4px 12px rgba(28, 36, 49, .035), 0 18px 42px rgba(28, 36, 49, .045);
+  --ax10-accent-soft: #fff1eb;
+  --ax10-accent-ink: #ba4426;
+  font-family: 'Outfit', 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-size: 14px;
+  line-height: 1.55;
+  letter-spacing: 0;
+  color: var(--ax8-ink);
+  -webkit-font-smoothing: antialiased;
+}
+[data-theme="dark"] .ax-ai.ax8-workspace {
+  --ax8-orange: #fc946c;
+  --ax8-ink: #f4f5f9;
+  --ax8-muted: #a9b3c2;
+  --ax8-line: #313b4b;
+  --ax8-paper: #19212e;
+  --ax8-soft: #222c3a;
+  --ax10-shadow: 0 14px 36px rgba(0, 0, 0, .18);
+  --ax10-accent-soft: rgba(252, 148, 108, .12);
+  --ax10-accent-ink: #ffae8e;
+}
+.ax-ai.ax8-workspace .ax8-toolbar {margin-bottom: 20px;gap: 16px;}
+.ax-ai.ax8-workspace .ax8-eyebrow {
+  color: var(--ax10-accent-ink);font-size: 11px;font-weight: 720;
+  letter-spacing: .095em;line-height: 1.4;
+}
+.ax-ai.ax8-workspace .ax8-heading h1 {
+  font-family: 'Outfit', 'DM Sans', sans-serif;
+  color: var(--ax8-ink);font-size: clamp(25px, 2.5vw, 29px);
+  font-weight: 730;line-height: 1.16;letter-spacing: -.042em;
+  margin: 5px 0 7px;
+}
+.ax-ai.ax8-workspace .ax8-heading p {font-size: 13px;line-height: 1.55;color: var(--ax8-muted);}
+.ax-ai.ax8-workspace .ax8-mode {
+  border: 1px solid var(--ax8-line);
+  background: var(--ax8-soft);border-radius: 16px;padding: 5px;gap: 4px;
+  box-shadow: inset 0 1px 2px rgba(26,36,50,.035);
+}
+.ax-ai.ax8-workspace .ax8-mode button {
+  min-height: 54px;border-radius: 12px;padding: 8px 11px;
+  font-size: 13px;color: var(--ax8-muted);font-weight: 650;
+  transition: background .2s ease, color .2s ease, box-shadow .2s ease, transform .2s ease;
+}
+.ax-ai.ax8-workspace .ax8-mode button span {font-size: 13px;font-weight: 710;}
+.ax-ai.ax8-workspace .ax8-mode button small {font-size: 11px;line-height: 1.3;opacity: .88;font-weight: 500;}
+.ax-ai.ax8-workspace .ax8-mode button.is-active {
+  color: var(--ax10-accent-ink);background: var(--ax8-paper);
+  border: 1px solid var(--ax8-line);box-shadow: 0 3px 9px rgba(24,34,46,.07);
+}
+.ax-ai.ax8-workspace .ax8-mode button:not(.is-active):hover:not(:disabled) {background: color-mix(in srgb,var(--ax8-paper) 58%,var(--ax8-soft));color:var(--ax8-ink);}
+.ax-ai.ax8-workspace .ax8-controls,
+.ax-ai.ax8-workspace .ax8-output,
+.ax-ai.ax8-workspace .ax8-classic-shell {
+  background: var(--ax8-paper);border: 1px solid var(--ax8-line);
+  border-radius: 20px;box-shadow: var(--ax10-shadow);
+}
+.ax-ai.ax8-workspace .ax8-controls,
+.ax-ai.ax8-workspace .ax8-output {padding: 23px 24px 22px;}
+.ax-ai.ax8-workspace .ax8-controls-head,
+.ax-ai.ax8-workspace .ax8-output-head {align-items: flex-start;margin-bottom: 18px;}
+.ax-ai.ax8-workspace .ax8-controls-head h2,
+.ax-ai.ax8-workspace .ax8-output-head h2,
+.ax-ai.ax8-workspace .ax8-classic-lead h2 {
+  color:var(--ax8-ink);font-size: 20px;font-weight: 710;
+  letter-spacing: -.035em;line-height: 1.28;margin-top: 5px;
+}
+.ax-ai.ax8-workspace .ax8-setup-label {
+  padding: 6px 11px;border-radius: 999px;background:var(--ax10-accent-soft);
+  border-color:color-mix(in srgb,var(--ax8-orange) 16%,var(--ax8-line));
+  color:var(--ax10-accent-ink);font-size: 11px;font-weight:650;
+}
+.ax-ai.ax8-workspace .ax8-starters {gap: 10px;margin-bottom: 17px;}
+.ax-ai.ax8-workspace .ax8-starters > span {font-size: 12px;padding-top: 9px;color:var(--ax8-muted);}
+.ax-ai.ax8-workspace .ax8-preset-list {gap: 7px;}
+.ax-ai.ax8-workspace button,
+.ax-ai.ax8-workspace .ax8-preset-list button {
+  border-radius: 11px;font-family: inherit;letter-spacing: -.005em;
+  transition: background-color .18s ease,border-color .18s ease,color .18s ease,
+              box-shadow .18s ease,transform .18s ease;
+}
+.ax-ai.ax8-workspace .ax8-preset-list button {
+  min-height: 34px;background: var(--ax8-paper);color: var(--ax8-ink);
+  border: 1px solid var(--ax8-line);font-size: 12px;font-weight: 590;
+  padding: 6px 11px;
+}
+.ax-ai.ax8-workspace .ax8-preset-list button:hover:not(:disabled) {
+  background: var(--ax10-accent-soft);color:var(--ax10-accent-ink);
+  border-color: color-mix(in srgb,var(--ax8-orange) 32%,var(--ax8-line));
+  transform: translateY(-1px);box-shadow: 0 3px 8px rgba(30,40,55,.055);
+}
+.ax-ai.ax8-workspace .ax8-form-grid {gap: 14px 12px;}
+.ax-ai.ax8-workspace .ax8-form-grid .ax-field {
+  font-size: 12.5px;font-weight: 670;letter-spacing: .005em;
+  gap: 7px;line-height: 1.35;color:var(--ax8-ink);
+}
+.ax-ai.ax8-workspace .ax8-form-grid input,
+.ax-ai.ax8-workspace .ax8-form-grid select,
+.ax-ai.ax8-workspace .ax8-form-grid textarea {
+  min-height: 45px;height: 45px;padding: 10px 13px;
+  border:1px solid var(--ax8-line);border-radius: 11px;
+  background: var(--ax8-soft);color: var(--ax8-ink);
+  font-family: inherit;font-size: 13.5px;font-weight: 480;
+  line-height: 1.45;box-shadow: inset 0 1px 1px rgba(26,36,50,.015);
+  transition: background .16s,border-color .16s,box-shadow .16s;
+}
+.ax-ai.ax8-workspace .ax8-form-grid textarea {min-height: 82px;height:auto;}
+.ax-ai.ax8-workspace .ax8-form-grid input::placeholder,
+.ax-ai.ax8-workspace .ax8-form-grid textarea::placeholder {color:var(--ax8-muted);opacity:.77;}
+.ax-ai.ax8-workspace .ax8-form-grid input:focus,
+.ax-ai.ax8-workspace .ax8-form-grid select:focus,
+.ax-ai.ax8-workspace .ax8-form-grid textarea:focus {
+  background:var(--ax8-paper);border-color:var(--ax8-orange);
+  box-shadow:0 0 0 3px color-mix(in srgb,var(--ax8-orange) 14%,transparent);
+}
+.ax-ai.ax8-workspace .ax8-advanced {
+  border: 1px solid var(--ax8-line);border-radius: 13px;background:var(--ax8-soft);
+  margin: 19px 0 17px;overflow:hidden;
+}
+.ax-ai.ax8-workspace .ax8-advanced > summary {
+  min-height: 46px;padding: 12px 14px;font-size: 13px;font-weight:660;
+  color:var(--ax8-ink);
+}
+.ax-ai.ax8-workspace .ax8-advanced > summary small {font-size: 11px;color:var(--ax8-muted);}
+.ax-ai.ax8-workspace .ax8-advanced .ax8-form-grid {padding: 15px;background:var(--ax8-paper);}
+.ax-ai.ax8-workspace .ax8-advanced > summary:hover {background:color-mix(in srgb,var(--ax8-paper) 60%,transparent);}
+.ax-ai.ax8-workspace .ax8-form-actions {gap: 9px;}
+.ax-ai.ax8-workspace .ax8-generate,
+.ax-ai.ax8-workspace button.ax-primary {
+  min-height: 49px;border: 1px solid #d55232;border-radius: 12px;
+  background: linear-gradient(120deg,#dd6741,#c94b2e);background-image:linear-gradient(120deg,#dd6741,#c94b2e);
+  box-shadow: 0 5px 13px rgba(202,75,46,.16);
+  color: #fff;font-size: 13.5px;font-weight: 720;padding: 11px 15px;
+}
+.ax-ai.ax8-workspace .ax8-generate:hover:not(:disabled),
+.ax-ai.ax8-workspace button.ax-primary:hover:not(:disabled) {
+  background:linear-gradient(120deg,#d65b37,#b83e25);background-image:linear-gradient(120deg,#d65b37,#b83e25);
+  border-color:#bb4629;transform:translateY(-1px);
+  box-shadow:0 9px 19px rgba(202,75,46,.22);
+}
+.ax-ai.ax8-workspace .ax8-generate:active:not(:disabled),
+.ax-ai.ax8-workspace button.ax-primary:active:not(:disabled) {transform:translateY(0);box-shadow:0 2px 7px rgba(202,75,46,.14);}
+.ax-ai.ax8-workspace .ax8-generate:disabled {background:#dfac9e;background-image:none;border-color:#dfac9e;box-shadow:none;opacity:.76;}
+.ax-ai.ax8-workspace .ax8-action-cost {font-size: 11px;font-weight: 600;opacity:.91;}
+.ax-ai.ax8-workspace .ax8-save {
+  min-height: 49px;font-size: 13px;font-weight: 660;
+  border-radius: 12px;border:1px solid var(--ax8-line);
+  background:var(--ax8-paper);color:var(--ax8-ink);padding:10px 14px;
+}
+.ax-ai.ax8-workspace .ax8-save:hover:not(:disabled) {
+  background:var(--ax8-soft);border-color:color-mix(in srgb,var(--ax8-ink) 16%,var(--ax8-line));
+  transform:translateY(-1px);box-shadow:0 4px 10px rgba(28,36,49,.06);
+}
+.ax-ai.ax8-workspace .ax8-footnote {font-size: 11px;color:var(--ax8-muted);line-height:1.55;margin-top:14px;}
+.ax-ai.ax8-workspace .ax8-output-head {padding-bottom: 17px;}
+.ax-ai.ax8-workspace .ax8-credit-chip {
+  background:var(--ax10-accent-soft);border:1px solid color-mix(in srgb,var(--ax8-orange) 17%,var(--ax8-line));
+  border-radius: 13px;padding: 8px 13px;text-align:right;
+}
+.ax-ai.ax8-workspace .ax8-credit-chip strong {font-size: 19px;color:var(--ax10-accent-ink);font-weight:750;}
+.ax-ai.ax8-workspace .ax8-credit-chip strong span {font-size: 12px;color:var(--ax8-muted);}
+.ax-ai.ax8-workspace .ax8-credit-chip small {font-size:11px;color:var(--ax8-muted);}
+.ax-ai.ax8-workspace .ax8-result-content {min-height: 175px;}
+.ax-ai.ax8-workspace .ax8-result-content .ax-results-head h3 {font-size: 17px;font-weight: 700;color:var(--ax8-ink);}
+.ax-ai.ax8-workspace .ax8-result-content .ax-results-head p {font-size: 13px;color:var(--ax8-muted);}
+.ax-ai.ax8-workspace .ax8-result-content .ax-results-list {gap: 11px;}
+.ax-ai.ax8-workspace .ax8-result-content .ax-idea {
+  background:var(--ax8-paper);border:1px solid var(--ax8-line);
+  border-radius: 16px;padding: 17px 19px;box-shadow:0 1px 3px rgba(21,31,45,.025);
+  transition: border-color .2s,box-shadow .2s,transform .2s;
+}
+.ax-ai.ax8-workspace .ax8-result-content .ax-idea:hover {
+  border-color:color-mix(in srgb,var(--ax8-orange) 25%,var(--ax8-line));
+  box-shadow:0 10px 22px rgba(26,35,48,.065);transform:translateY(-2px);
+}
+.ax-ai.ax8-workspace .ax8-result-content .ax-idea h3 {
+  font-size: 17px;font-weight:710;line-height:1.38;letter-spacing:-.025em;
+  margin:8px 0;color:var(--ax8-ink);
+}
+.ax-ai.ax8-workspace .ax8-result-content .ax-idea-hook {font-size: 13.5px;line-height:1.6;color:var(--ax8-ink);}
+.ax-ai.ax8-workspace .ax8-result-content .ax-tag {
+  font-size: 11px;border-radius: 7px;padding:4px 8px;
+}
+.ax-ai.ax8-workspace .ax8-result-content .ax-idea-details summary {font-size: 12px;font-weight: 630;min-height:40px;}
+.ax-ai.ax8-workspace .ax8-result-content .ax-card-actions button {
+  min-height: 40px;border-radius: 10px;padding:8px 13px;font-size: 12px;font-weight: 640;
+}
+.ax-ai.ax8-workspace .ax8-result-content .ax-card-actions button:hover:not(:disabled) {
+  transform:translateY(-1px);box-shadow:0 3px 9px rgba(18,30,45,.09);
+}
+.ax-ai.ax8-workspace .ax8-result-content .ax-empty {
+  background:var(--ax8-soft);border:1px dashed color-mix(in srgb,var(--ax8-muted) 25%,var(--ax8-line));
+  border-radius: 16px;padding: 46px 18px;
+}
+.ax-ai.ax8-workspace .ax8-result-content .ax-empty h3 {font-size:18px;font-weight:710;color:var(--ax8-ink);}
+.ax-ai.ax8-workspace .ax8-result-content .ax-empty p {font-size:13px;line-height:1.6;color:var(--ax8-muted);}
+.ax-ai.ax8-workspace .ax8-credit-details,
+.ax-ai.ax8-workspace .ax8-credit-details p {font-size:12px;color:var(--ax8-muted);}
+.ax-ai.ax8-workspace .ax8-library-trigger {
+  min-height: 65px;padding: 12px 10px;border-radius: 12px;
+}
+.ax-ai.ax8-workspace .ax8-library-trigger:hover:not(:disabled) {background:var(--ax8-soft);transform:none;}
+.ax-ai.ax8-workspace .ax8-library-trigger strong {font-size:14px;color:var(--ax8-ink);}
+.ax-ai.ax8-workspace .ax8-library-trigger small {font-size:12px;color:var(--ax8-muted);}
+.ax-ai.ax8-workspace .ax8-library-filters button {font-size:12px;min-height:36px;border-radius:9px;}
+.ax-ai.ax8-workspace .ax8-history-item {
+  border-radius: 12px;padding:12px;border:1px solid var(--ax8-line);
+  background:var(--ax8-paper);
+}
+.ax-ai.ax8-workspace .ax8-history-item:hover:not(:disabled) {
+  border-color:color-mix(in srgb,var(--ax8-orange) 25%,var(--ax8-line));
+  background:var(--ax8-soft);transform:none;box-shadow:0 3px 9px rgba(26,35,48,.035);
+}
+.ax-ai.ax8-workspace .ax8-history-item strong {font-size:13px;}
+.ax-ai.ax8-workspace .ax8-history-item small {font-size:11.5px;}
+.ax-ai.ax8-workspace .ax8-notice {
+  border-radius: 13px;padding:15px 17px;font-size:13px;
+}
+.ax-ai.ax8-workspace .ax8-notice strong {font-size:13.5px;}
+.ax-ai.ax8-workspace .ax8-notice p {font-size:12px;}
+.ax-ai.ax8-workspace .ax8-notice button {font-size:12px;}
+.ax-ai.ax8-workspace .ax8-generating-title strong {font-size:16px;}
+.ax-ai.ax8-workspace .ax8-generating-title p {font-size:13px;}
+.ax-ai.ax8-workspace .ax8-skeleton {border-radius:14px;padding:18px;}
+.ax-ai.ax8-workspace .ax8-generating {animation:ax10-soft-in .24s ease both;}
+.ax-ai.ax8-workspace .ax8-result-content > .ax-results {animation:ax10-soft-in .28s ease both;}
+.ax-ai.ax8-workspace .ax8-classic-shell {padding:23px;}
+.ax-ai.ax8-workspace .ax8-classic-lead p {font-size:13px;color:var(--ax8-muted);}
+.ax-ai.ax8-workspace .ax8-classic-pill {font-size:12px;border-radius:999px;}
+.ax-ai.ax8-workspace .ax8-classic-body #ais-gen-btn {
+  min-height:47px;border-radius:12px;font-size:13px;font-weight:700;
+  background:linear-gradient(120deg,#dd6741,#c94b2e);
+  border-color:#d55232;box-shadow:0 5px 14px rgba(202,75,46,.14);
+}
+.ax-ai.ax8-workspace .ax8-classic-body #ais-gen-btn:hover:not(:disabled) {background:linear-gradient(120deg,#d65b37,#b83e25);transform:translateY(-1px);}
+.ax-ai.ax8-workspace button:focus-visible,
+.ax-ai.ax8-workspace summary:focus-visible,
+.ax-ai.ax8-workspace input:focus-visible,
+.ax-ai.ax8-workspace select:focus-visible,
+.ax-ai.ax8-workspace textarea:focus-visible {
+  outline:2px solid var(--ax8-orange);outline-offset:3px;
+}
+@keyframes ax10-soft-in {from{opacity:.52;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+@media (max-width: 1160px) {
+  .ax-ai.ax8-workspace .ax8-controls,
+  .ax-ai.ax8-workspace .ax8-output {padding:19px;}
+}
+@media (max-width: 600px) {
+  .ax-ai.ax8-workspace {padding:12px 8px 40px;}
+  .ax-ai.ax8-workspace .ax8-heading h1 {font-size:24px;}
+  .ax-ai.ax8-workspace .ax8-heading p {font-size:12.5px;}
+  .ax-ai.ax8-workspace .ax8-mode {min-width:0;width:100%;}
+  .ax-ai.ax8-workspace .ax8-mode button {min-height:51px;padding:7px 5px;}
+  .ax-ai.ax8-workspace .ax8-mode button span {font-size:12px;}
+  .ax-ai.ax8-workspace .ax8-mode button small {font-size:10px;}
+  .ax-ai.ax8-workspace .ax8-controls,
+  .ax-ai.ax8-workspace .ax8-output {padding:16px 14px;border-radius:17px;}
+  .ax-ai.ax8-workspace .ax8-form-grid .ax-field {font-size:12.5px;}
+  .ax-ai.ax8-workspace .ax8-form-grid input,
+  .ax-ai.ax8-workspace .ax8-form-grid select {font-size:14px;min-height:46px;height:46px;}
+  .ax-ai.ax8-workspace .ax8-generate {font-size:12.5px;min-height:48px;padding-inline:10px;}
+  .ax-ai.ax8-workspace .ax8-save {font-size:12px;min-height:48px;padding-inline:12px;}
+  .ax-ai.ax8-workspace .ax8-action-cost {font-size:10px;padding-left:6px;margin-left:0;}
+  .ax-ai.ax8-workspace .ax8-result-content .ax-idea {padding:15px 14px;}
+  .ax-ai.ax8-workspace .ax8-result-content .ax-idea h3 {font-size:16px;}
+  .ax-ai.ax8-workspace .ax8-output-head h2,
+  .ax-ai.ax8-workspace .ax8-controls-head h2 {font-size:18px;}
+  .ax-ai.ax8-workspace .ax8-credit-chip {padding:7px 10px;}
+}
+@media (max-width: 360px) {
+  .ax-ai.ax8-workspace .ax8-form-actions {grid-template-columns:minmax(0,1fr);}
+  .ax-ai.ax8-workspace .ax8-generate,
+  .ax-ai.ax8-workspace .ax8-save {width:100%;}
+}
+@media (prefers-reduced-motion: reduce) {
+  .ax-ai.ax8-workspace *,
+  .ax-ai.ax8-workspace *::before,
+  .ax-ai.ax8-workspace *::after {
+    animation-duration:.01ms !important;
+    transition-duration:.01ms !important;
+    scroll-behavior:auto !important;
+  }
+}
+/* Global site heading entrance animations can restart whenever the AI view re-renders.
+   Keep workspace headings visible and stable. */
+.ax-ai.ax8-workspace .ax8-heading h1,
+.ax-ai.ax8-workspace .ax8-controls-head h2,
+.ax-ai.ax8-workspace .ax8-output-head h2,
+.ax-ai.ax8-workspace .ax8-classic-lead h2 {
+  opacity:1 !important;
+  transform:none !important;
+  animation:none !important;
+}
