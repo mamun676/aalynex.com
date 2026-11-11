@@ -31,7 +31,18 @@
     if (!response.ok) { const e = new Error(value.message || 'Operation could not be completed.'); e.payload = value; e.status = response.status; throw e; }
     return value;
   }
-  function update(s) { if (active(s) && s.mounted && s.mounted.isConnected) { s.mounted.innerHTML = markup(s); } }
+  function update(s) {
+    if (!active(s) || !s.mounted || !s.mounted.isConnected) return;
+    const focused = s.mounted.contains(document.activeElement) ? document.activeElement : null;
+    const action = focused && focused.dataset ? focused.dataset.aiAction : null;
+    const filter = focused && focused.dataset ? focused.dataset.filter : null;
+    s.mounted.innerHTML = markup(s);
+    if (action) {
+      const candidate = Array.from(s.mounted.querySelectorAll('[data-ai-action]')).find(el =>
+        el.dataset.aiAction === action && (filter == null || el.dataset.filter === filter));
+      if (candidate && !candidate.disabled) candidate.focus({preventScroll: true});
+    }
+  }
   function quotaText(s) {
     const q = s.quota;
     if (!q) return 'Account allowance has not been loaded.';
@@ -102,29 +113,94 @@
     return `<section class="ax-results" aria-label="Saved idea set"><div class="ax-results-head"><div><span class="ax-eyebrow">FRESH FROM YOUR BRIEF</span><h3>Five ideas, five creative directions</h3><p>Choose an idea to build a script. Never treat generated claims as verified research.</p></div><button type="button" data-ai-action="export">↓ Export all</button></div><div class="ax-results-list">${result.suggestions.map((raw,i)=>{
       const idea=raw && typeof raw==='object' ? raw : {};
       const modern=Array.isArray(idea.outline);
-      return `<article class="ax-idea"><div class="ax-idea-top"><span class="ax-tag">IDEA ${String(i+1).padStart(2,'0')}</span><span class="ax-tag ax-tag-muted">${esc(idea.effort || 'Legacy')} effort</span></div><h3>${esc(idea.topic || 'Untitled idea')}</h3><p class="ax-idea-hook">“${esc(idea.hook || '')}”</p><details class="ax-idea-details" ${i===0 ? 'open' : ''}><summary>View creative brief <span>⌄</span></summary><div class="ax-detail-grid">${row('First 3 seconds',idea.openingShot)}${row('Distinct angle',idea.angle)}${row('Viewer payoff',idea.viewerPayoff)}${row('Why your audience cares',idea.audienceFit||idea.why)}</div>${modern?`<section class="ax-data"><h4>Execution outline</h4><ol>${idea.outline.map(x=>`<li>${esc(x)}</li>`).join('')}</ol></section>`:''}${row('Visual / edit plan',idea.visualPlan||idea.thumbnailIdea)}${row('Caption',idea.caption)}${Array.isArray(idea.hashtags)?`<section class="ax-data"><h4>Hashtags</h4><p>${idea.hashtags.map(esc).join(' ')}</p></section>`:''}${Array.isArray(idea.titles)?`<section class="ax-data"><h4>Title options</h4><ul>${idea.titles.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></section>`:''}${row('Call to action',idea.cta)}</details><div class="ax-card-actions"><button type="button" data-ai-action="copy" data-index="${i}">Copy idea</button><button type="button" class="ax-primary" data-ai-action="script" data-index="${i}" ${canGenerate(s) ? '' : 'disabled'}>✦ Generate script · 1 credit</button></div></article>`;
+      return `<article class="ax-idea"><div class="ax-idea-top"><span class="ax-tag">IDEA ${String(i+1).padStart(2,'0')}</span><span class="ax-tag ax-tag-muted">${esc(idea.effort || 'Legacy')} effort</span></div><h3>${esc(idea.topic || 'Untitled idea')}</h3><p class="ax-idea-hook">“${esc(idea.hook || '')}”</p><details class="ax-idea-details" ${''}><summary>View creative brief <span>⌄</span></summary><div class="ax-detail-grid">${row('First 3 seconds',idea.openingShot)}${row('Distinct angle',idea.angle)}${row('Viewer payoff',idea.viewerPayoff)}${row('Why your audience cares',idea.audienceFit||idea.why)}</div>${modern?`<section class="ax-data"><h4>Execution outline</h4><ol>${idea.outline.map(x=>`<li>${esc(x)}</li>`).join('')}</ol></section>`:''}${row('Visual / edit plan',idea.visualPlan||idea.thumbnailIdea)}${row('Caption',idea.caption)}${Array.isArray(idea.hashtags)?`<section class="ax-data"><h4>Hashtags</h4><p>${idea.hashtags.map(esc).join(' ')}</p></section>`:''}${Array.isArray(idea.titles)?`<section class="ax-data"><h4>Title options</h4><ul>${idea.titles.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></section>`:''}${row('Call to action',idea.cta)}</details><div class="ax-card-actions"><button type="button" data-ai-action="copy" data-index="${i}">Copy idea</button><button type="button" class="ax-primary" data-ai-action="script" data-index="${i}" ${canGenerate(s) ? '' : 'disabled'}>✦ Generate script · 1 credit</button></div></article>`;
     }).join('')}</div></section>`;
   }
+  // V8 compact workspace presentation. Deliberately retains the V6 data and action contracts.
   function markup(s) {
-    const q=s.quota;
-    const available=q && Number.isFinite(q.remaining) ? q.remaining : '—';
-    const max=q && Number.isFinite(q.limit) ? q.limit : 15;
-    const percent=q && q.limit ? Math.max(0,Math.min(100,100*q.remaining/q.limit)) : 0;
-    const tabs = `<nav class="ax-product-tabs" aria-label="Content AI features"><button type="button" data-ai-action="studio" class="${s.mode==='studio'?'selected':''}" aria-current="${s.mode==='studio'?'page':'false'}">✦ Ideas + Video Scripts <span>15 creative credits</span></button><button type="button" data-ai-action="classic" class="${s.mode==='classic'?'selected':''}" aria-current="${s.mode==='classic'?'page':'false'}">Classic AI Ideas <span>30 Premium generations</span></button></nav>`;
-    if (s.mode === 'classic') return `<section class="ax-ai ax-classic-mode">${tabs}<div class="ax-classic-intro"><strong>Your original Premium Ideas, preserved.</strong><p>Uses your existing 30/month Premium allowance and history. Switch back for full production scripts.</p></div><div class="ax-classic-body">${typeof renderAISuggest === 'function' ? renderAISuggest() : '<p>Original AI Suggestions is temporarily unavailable.</p>'}</div></section>`;
-    const progressMarkup = s.busy && (s.busyAction === 'generate' || s.busyAction === 'script') ? `
-      <div class="ax-ux-progress" data-ax-progress role="status" aria-live="polite" aria-atomic="true">
-        <div class="ax-ux-progress-card">
-          <div class="ax-ux-progress-mark" aria-hidden="true"><span></span><i>✦</i></div>
-          <div class="ax-ux-progress-kicker">AALYNEX CREATOR INTELLIGENCE</div>
-          <h3>${s.busyAction === 'script' ? 'Crafting your video script' : 'Creating your next five ideas'}</h3>
-          <p>${s.busyAction === 'script' ? 'Organizing the hook, scene-by-scene plan, voiceover and edits.' : 'Building distinct angles, hooks and production-ready directions from your brief.'}</p>
-          <div class="ax-ux-progress-bar" aria-hidden="true"><span></span></div>
-          <small>Generation is in progress. The result will appear in your workspace when confirmed. Keep this tab open.</small>
-        </div>
-      </div>` : '';
-    const premiumCTA = s.loaded && s.quota && s.quota.premium_active !== true ? `<section class="ax-membership-lock" role="status"><div class="ax-lock-icon">✦</div><div><strong>Aalynex Premium unlocks your AI studio</strong><p>Generate 5 personalized ideas and expand one into a shoot-ready script. Your existing Razorpay subscription also unlocks Classic AI Ideas and Thumbnail Maker. No separate AI payment is taken.</p></div><button type="button" class="ax-primary" data-ai-action="subscribe">View Premium plan</button></section>` : '';
-    return `<section class="ax-ai">${tabs}${progressMarkup}<div class="ax-hero"><div class="ax-hero-copy"><span class="ax-eyebrow">AALYNEX / CREATOR INTELLIGENCE</span><h2>Better ideas.<br><em>Made to be made.</em></h2><p>Turn your audience and creator style into five distinct ideas, then expand any one into a practical production script.</p><div class="ax-proof"><span>✦ Creator-first</span><span>◉ India-ready</span><span>↗ Saved to your account</span></div></div><div class="ax-hero-visual" aria-hidden="true"><div class="ax-art-card"><span>01 / DISCOVER</span><strong>Find the angle.</strong><span>02 / CREATE</span><strong>Write the story.</strong><span>03 / PRODUCE</span><strong>Make it real.</strong></div><div class="ax-art-orb">✦</div></div></div>${premiumCTA}<div class="ax-status-strip"><div class="ax-credit"><span class="ax-status-label">MONTHLY CREATIVE CREDITS</span><strong>${esc(available)}<small> / ${esc(max)}</small></strong><div class="ax-credit-track"><span style="width:${percent}%"></span></div></div><div class="ax-status-message" role="status">${esc(quotaText(s))}</div><button type="button" data-ai-action="refresh" ${s.loading?'disabled':''} aria-label="Refresh credits and history">↻ Refresh</button></div><p class="ax-message" role="status" aria-live="polite">${esc(s.notice)}</p>${s.error?`<p class="ax-error" role="alert">${esc(s.error)}</p>`:''}${s.pending?`<div class="ax-pending" role="status"><strong>One request still needs confirmation</strong><p>Do not start a new generation or script. Your previous credit may be held until its status is resolved.</p><button type="button" data-ai-action="status" ${s.busy?'disabled':''}>Check request status</button></div>`:''}<div class="ax-layout"><main class="ax-editor"><section class="ax-pane"><div class="ax-pane-head"><div><span class="ax-eyebrow">STEP 01 / TELL US YOUR STORY</span><h3>Shape your creator brief</h3></div><span class="ax-step-indicator">01—03</span></div><p class="ax-pane-intro">The more you share about your audience, the more specific the ideas can be. Start with a template or your own brief.</p><div class="ax-starters"><strong>Start from a creator profile</strong><div class="ax-starter-actions"><button type="button" data-ai-action="preset" data-index="0">🎓 Education</button><button type="button" data-ai-action="preset" data-index="1">🍲 Food</button><button type="button" data-ai-action="preset" data-index="2">💻 Tech</button><button type="button" data-ai-action="preset" data-index="3">🏪 Business</button></div></div><form data-ai-form><fieldset class="ax-form-grid" ${s.busy?'disabled':''}>${input(s,'category','Your content niche',120,true,'Example: budget cooking for college students')}${input(s,'topic','Topic focus (optional)',320)}${select(s,'platform','Your platform',['YouTube','YouTube Shorts','Instagram Reels','Instagram','LinkedIn'])}${select(s,'language','Content language',['Hinglish','Hindi','English','Tamil','Telugu','Bengali','Marathi'])}${input(s,'audience','Who is watching?',400,true,'Who are they and what problem do they have?')}${select(s,'goal','Main goal',['Views','Subscribers','Engagement','Sales','Brand Building'])}${select(s,'videoLength','Video length',['Auto (platform fit)','Under 30 seconds','30–60 seconds','1–3 minutes','5–8 minutes','8–15 minutes','15+ minutes'])}${select(s,'creatorStyle','How you film',['Any / flexible','On-camera','Faceless','Voiceover + B-roll','Screen recording','Mixed'])}${select(s,'timeBudget','Production time',['Flexible','Under 1 hour','1–3 hours','Half a day','Multi-day project'])}${input(s,'country','Audience country',80)}${select(s,'experience','Experience',['Beginner','Growing','Established'])}</fieldset><details class="ax-advanced"><summary>Advanced creator settings <small>Optional • better personalization</small></summary><div class="ax-form-grid">${input(s,'tone','Your voice and tone',160)}${input(s,'resources','Your equipment',400,false,'Phone, tripod, notebook, edit app…')}${input(s,'subCategory','Sub-niche',160)}${textArea(s,'contentPillars','Your recurring content pillars',400)}${textArea(s,'creatorIdentity','What makes you different?',400)}${textArea(s,'winningExamples','What has worked for you?',600)}${textArea(s,'avoidTopics','Things to avoid',1200)}${textArea(s,'extraContext','More context',1200)}</div></details><div class="ax-actions"><button type="submit" class="ax-primary ax-generate" ${canGenerate(s)?'':'disabled'}>${s.busy?'Preparing…':'✦ Generate 5 ideas · 1 credit'}</button><button type="button" data-ai-action="save" ${s.busy||!s.loaded?'disabled':''}>Save brief</button></div><p class="ax-note">Results save automatically. Each successful idea set or script uses one credit; re-opening saved work is free. No real-time trend or channel data is fetched.</p></form></section>${cards(s.result,s)}</main><aside class="ax-history"><div class="ax-history-head"><span class="ax-eyebrow">YOUR LIBRARY</span><h3>Saved creations</h3><p>Private to your Aalynex account</p><div class="ax-library-filters" role="group" aria-label="Filter saved creations">${['all','ideas','scripts'].map(f=>`<button type="button" data-ai-action="filter" data-filter="${f}" class="${s.libraryFilter===f?'active':''}" aria-pressed="${s.libraryFilter===f}">${f==='all'?'All':f==='ideas'?'Ideas':'Scripts'}</button>`).join('')}</div></div>${s.loading?'<p>Loading…</p>':''}${!s.history.length&&s.loaded?'<p class="ax-history-empty">Your first generated ideas will appear here.</p>':''}${s.history.map((item,index)=>(s.libraryFilter==='all'||(s.libraryFilter==='scripts'&&isScript(item))||(s.libraryFilter==='ideas'&&!isScript(item)))?`<button type="button" class="ax-history-item" data-ai-action="history" data-index="${index}"><span class="ax-history-icon">${isScript(item)?'✎':'✦'}</span><span><strong>${esc(isScript(item)?(item.suggestions?.[0]?.title||'Saved video script'):(item.inputs?.category||'Idea set'))}</strong><small>${esc(new Date(item.created_at).toLocaleDateString())} · ${isScript(item)?'Script':esc(item.inputs?.platform||'Ideas')}</small></span><span class="ax-history-arrow">↗</span></button>`:'').join('')}${s.cursor?`<button class="ax-history-more" type="button" data-ai-action="more" ${s.busy||s.loading?'disabled':''}>Load older work</button>`:''}<div class="ax-history-foot"><strong>Pro tip</strong><p>Try distinct content pillars and real audience problems. Review every claim before publishing.</p></div></aside></div></section>`;
+    const q = s.quota;
+    const ready = canGenerate(s);
+    const available = q && Number.isFinite(q.remaining) ? q.remaining : '—';
+    const max = q && Number.isFinite(q.limit) ? q.limit : 15;
+    const used = q && Number.isFinite(q.used) ? q.used : 0;
+    const isClassic = s.mode === 'classic';
+    const tabs = `<div class="ax8-mode" role="tablist" aria-label="Idea generation mode">
+      <button type="button" role="tab" aria-selected="${!isClassic}" data-ai-action="studio" class="${!isClassic ? 'is-active' : ''}"><span>Ideas + Scripts</span><small>Creative workspace</small></button>
+      <button type="button" role="tab" aria-selected="${isClassic}" data-ai-action="classic" class="${isClassic ? 'is-active' : ''}"><span>Classic Ideas</span><small>30 generations / month</small></button>
+    </div>`;
+    const toolbar = `<header class="ax8-toolbar">
+      <div class="ax8-heading"><span class="ax8-eyebrow">AALYNEX / CREATOR TOOLS</span><h1>Idea studio</h1><p>Plan smarter content. Create ready-to-use ideas and scripts.</p></div>
+      ${tabs}
+    </header>`;
+    if (isClassic) return `<section class="ax-ai ax8-workspace ax8-classic-mode">${toolbar}
+      <div class="ax8-classic-shell" role="tabpanel" aria-label="Classic Ideas">
+        <div class="ax8-classic-lead"><div><h2>Classic idea generator</h2><p>Original Premium ideas, saved history and monthly allowance.</p></div><span class="ax8-classic-pill">Classic</span></div>
+        <div class="ax8-classic-body">${typeof renderAISuggest === 'function' ? renderAISuggest() : '<div class="ax8-fallback">Classic Ideas is unavailable. Please refresh the page.</div>'}</div>
+      </div></section>`;
+    const premiumCTA = s.loaded && q && q.premium_active !== true ? `<div class="ax8-notice ax8-locked" role="status"><div><strong>Premium needed for generation</strong><p>Your saved work is available. Upgrade to generate new ideas or scripts.</p></div><button type="button" data-ai-action="subscribe">View plan</button></div>` : '';
+    const note = s.notice ? `<p class="ax8-notice ax8-good" role="status" aria-live="polite">${esc(s.notice)}</p>` : '';
+    const error = s.error ? `<div class="ax8-notice ax8-bad" role="alert"><div><strong>We couldn't complete that action</strong><p>Your brief is safe. If a generation started, check its status before retrying.</p><details><summary>Details</summary><p>${esc(s.error)}</p></details></div><button type="button" data-ai-action="refresh" ${s.loading ? 'disabled' : ''}>Refresh</button></div>` : '';
+    const pending = s.pending ? `<div class="ax8-notice ax8-pending" role="status"><div><strong>Previous request pending</strong><p>Check its status first to avoid duplicate credit use.</p></div><button type="button" data-ai-action="status" ${s.busy ? 'disabled' : ''}>Check status</button></div>` : '';
+    const skeleton = `<div class="ax8-generating" role="status" aria-live="polite" aria-busy="true">
+      <div class="ax8-generating-title"><span class="ax8-spinner" aria-hidden="true"></span><div><strong>${s.busyAction === 'script' ? 'Writing your script…' : 'Generating your ideas…'}</strong><p>Creating your content. You can review it here once complete.</p></div></div>
+      <div class="ax8-skeletons" aria-hidden="true">${[0,1,2].map(() => '<div class="ax8-skeleton"><i></i><b></b><em></em><em></em></div>').join('')}</div>
+    </div>`;
+    const resultContent = s.busy && (s.busyAction === 'generate' || s.busyAction === 'script') ? skeleton : cards(s.result, s);
+    const filters = ['all','ideas','scripts'].map(f=>`<button type="button" data-ai-action="filter" data-filter="${f}" aria-pressed="${s.libraryFilter===f}" class="${s.libraryFilter===f?'active':''}">${f==='all'?'All':f==='ideas'?'Ideas':'Scripts'}</button>`).join('');
+    const history = s.history.map((item,index) => (s.libraryFilter==='all' || (s.libraryFilter==='scripts'&&isScript(item)) || (s.libraryFilter==='ideas'&&!isScript(item))) ?
+      `<button type="button" class="ax8-history-item" data-ai-action="history" data-index="${index}"><span class="ax8-history-icon">${isScript(item)?'✎':'✦'}</span><span><strong>${esc(isScript(item)?(item.suggestions?.[0]?.title||'Saved video script'):(item.inputs?.category||'Idea set'))}</strong><small>${esc(new Date(item.created_at).toLocaleDateString())} · ${isScript(item)?'Script':esc(item.inputs?.platform||'Ideas')}</small></span><span aria-hidden="true">↗</span></button>` : '').join('');
+    return `<section class="ax-ai ax8-workspace" role="tabpanel" aria-label="Ideas and scripts">
+      ${toolbar}${premiumCTA}${note}${error}${pending}
+      <div class="ax8-grid">
+        <section class="ax8-controls" aria-label="Creator brief">
+          <div class="ax8-controls-head"><div><span class="ax8-eyebrow">NEW GENERATION</span><h2>Your content brief</h2></div><span class="ax8-setup-label">${ready?'Ready':s.loading?'Loading…':s.busy?'Working…':'Brief'}</span></div>
+          <div class="ax8-starters"><span>Quick start</span><div class="ax8-preset-list">
+            <button type="button" data-ai-action="preset" data-index="0">Education</button><button type="button" data-ai-action="preset" data-index="1">Food</button><button type="button" data-ai-action="preset" data-index="2">Technology</button><button type="button" data-ai-action="preset" data-index="3">Business</button>
+          </div></div>
+          <form data-ai-form>
+            <fieldset class="ax8-form-grid" ${s.busy?'disabled':''}>
+              ${input(s,'category','Content niche',120,true)}
+              ${input(s,'topic','Topic focus',320)}
+              ${select(s,'platform','Platform',['YouTube','YouTube Shorts','Instagram Reels','Instagram','LinkedIn'])}
+              ${select(s,'language','Language',['Hinglish','Hindi','English','Tamil','Telugu','Bengali','Marathi'])}
+              ${input(s,'audience','Target audience',400,true)}
+              ${select(s,'goal','Your goal',['Views','Subscribers','Engagement','Sales','Brand Building'])}
+            </fieldset>
+            <details class="ax8-advanced"><summary>Advanced settings <small>Optional personalization</small></summary><fieldset class="ax8-form-grid" ${s.busy?'disabled':''}>
+              ${select(s,'videoLength','Video length',['Auto (platform fit)','Under 30 seconds','30–60 seconds','1–3 minutes','5–8 minutes','8–15 minutes','15+ minutes'])}
+              ${select(s,'creatorStyle','How you film',['Any / flexible','On-camera','Faceless','Voiceover + B-roll','Screen recording','Mixed'])}
+              ${select(s,'timeBudget','Production time',['Flexible','Under 1 hour','1–3 hours','Half a day','Multi-day project'])}
+              ${input(s,'country','Audience country',80)}
+              ${select(s,'experience','Experience',['Beginner','Growing','Established'])}
+              ${input(s,'tone','Voice and tone',160)}
+              ${input(s,'resources','Your equipment',400)}
+              ${input(s,'subCategory','Sub-niche',160)}
+              ${textArea(s,'contentPillars','Content pillars',400)}
+              ${textArea(s,'creatorIdentity','Your unique perspective',400)}
+              ${textArea(s,'winningExamples','What worked before?',600)}
+              ${textArea(s,'avoidTopics','Topics to avoid',1200)}
+              ${textArea(s,'extraContext','Additional notes',1200)}
+            </fieldset></details>
+            <div class="ax8-form-actions"><button class="ax-primary ax8-generate" type="submit" ${ready?'':'disabled'}>${s.busy?'<span class="ax8-spinner" aria-hidden="true"></span> Generating…':'✦ Generate 5 ideas'}<span class="ax8-action-cost">1 credit</span></button><button type="button" data-ai-action="save" class="ax8-save" ${s.busy||!s.loaded?'disabled':''}>Save brief</button></div>
+          </form>
+          <p class="ax8-footnote">Saved automatically after generation. No live trends or channel data are fetched.</p>
+        </section>
+        <main class="ax8-output" id="ax8-output" aria-label="Generated content">
+          <div class="ax8-output-head"><div><span class="ax8-eyebrow">YOUR RESULTS</span><h2>${s.busy?'Generating…':s.result?(isScript(s.result)?'Video script':'Generated ideas'):'Ideas will appear here'}</h2></div>
+            <div class="ax8-credit-chip" aria-label="Monthly creative credit balance"><strong>${esc(available)}<span> / ${esc(max)}</span></strong><small>credits left</small></div></div>
+          <div class="ax8-result-content">${resultContent}</div>
+          <details class="ax8-credit-details"><summary>Monthly usage and reset</summary><p>${esc(quotaText(s))} · ${esc(used)} used</p></details>
+          <section class="ax8-library" aria-label="Saved creations">
+            <button type="button" class="ax8-library-trigger" data-ai-action="library" aria-expanded="${!!s.libraryOpen}"><span><strong>Saved creations</strong><small>${s.history.length} items in your library</small></span><span aria-hidden="true">${s.libraryOpen?'−':'+'}</span></button>
+            <div class="ax8-library-body" ${s.libraryOpen?'':'hidden'}><div class="ax8-library-filters" role="group" aria-label="Filter saved creations">${filters}</div>
+            ${s.loading?'<p class="ax8-library-empty">Loading…</p>':''}
+            ${!s.history.length&&s.loaded?'<p class="ax8-library-empty">Your generated ideas and scripts will appear here.</p>':''}
+            <div class="ax8-history-list">${history}</div>
+            ${s.cursor?`<button type="button" class="ax8-load-more" data-ai-action="more" ${s.busy||s.loading?'disabled':''}>Load older work</button>`:''}</div>
+          </section>
+        </main>
+      </div>
+    </section>`;
   }
   const presets = [
     {category:'Career and study skills',subCategory:'Practical student career choices',audience:'Class 11–12 students in small Indian towns',platform:'YouTube Shorts',videoLength:'30–60 seconds',creatorStyle:'Faceless',resources:'Smartphone, notebook, natural light',contentPillars:'Career myths; practical steps; useful skills'},
@@ -234,6 +310,7 @@
     if (action === 'studio') { if (s.mode !== 'studio') { s.mode='studio'; update(s); } return; }
     if (action === 'classic') { if (s.mode !== 'classic') { s.mode='classic'; update(s); if (typeof loadAISuggestHistory==='function') loadAISuggestHistory(); } return; }
     if (action === 'subscribe') { if (typeof openPremiumModal==='function') { openPremiumModal(); const modal=document.getElementById('modal-body'); if (modal && !modal.querySelector('[data-ai-premium-copy]')) { const line=document.createElement('p'); line.dataset.aiPremiumCopy='yes'; line.className='ax-checkout-note'; line.textContent='Premium also includes Content AI Studio: 15 creative credits/month for ideas and full video scripts, plus your existing Classic Ideas and Thumbnail Maker benefits.'; modal.appendChild(line); } } else { s.error='Premium checkout is unavailable. Please try again later.'; update(s); } return; }
+    if (action === 'library') { s.libraryOpen = !s.libraryOpen; return update(s); }
     if (['save', 'status'].includes(action)) return run(s, action);
     if (action === 'filter' && ['all','ideas','scripts'].includes(el.dataset.filter)) { s.libraryFilter = el.dataset.filter; return update(s); }
     if (action === 'back' && s.lastIdeas) { s.result = s.lastIdeas; s.lastIdeas=null;return update(s); }
