@@ -426,6 +426,88 @@ function onFinalFileSelect(input, pid) {
   }
 }
 
+// V8.2: Project-bound S3 object keys let web and mobile verify the exact job.
+// Use a single signed PUT for supported files. Never downgrade to an ambiguous
+// legacy file path for final delivery if signing fails.
+async function axUploadScopedFinal(file, projectId) {
+  if(!supaClient)throw Error('Sign in required.');
+  if(file.size>5*1024*1024*1024)throw Error('Files above 5 GB need the verified multipart uploader. Please contact support.');
+  const mime=file.type||'video/mp4';
+  const {data,error}=await supaClient.functions.invoke('get-s3-url',{
+    body:{action:'upload',projectId,kind:'final',fileName:file.name,fileType:mime}
+  });
+  if(error||!data?.uploadUrl||!data?.key)throw Error('Could not create protected S3 upload URL.');
+  const put=await fetch(data.uploadUrl,{method:'PUT',body:file,headers:{'Content-Type':mime}});
+  if(!put.ok)throw Error('Secure S3 upload failed ('+put.status+').');
+  return data.key;
+}
+
+// V8.3: short, silent, visibly watermarked PREVIEW is generated in the
+// editor's browser and stored as a separate S3 object. This is NOT the final
+// original and never contains the complete video. A browser without supported
+// codecs fails closed, so creators are never asked to pay without a preview.
+async function axMakeSafePreview(file, projectTitle) {
+  if (!window.MediaRecorder || !HTMLCanvasElement.prototype.captureStream ||
+      !(MediaRecorder.isTypeSupported('video/webm;codecs=vp8') || MediaRecorder.isTypeSupported('video/webm')))
+    throw Error('This browser cannot create a watermarked preview. Use updated desktop Chrome.');
+  const player=document.createElement('video');
+  player.muted=true;player.playsInline=true;player.preload='metadata';
+  const objectURL=URL.createObjectURL(file);
+  player.src=objectURL;
+  let stream=null,recorder=null,handle=0;
+  try {
+    await new Promise((ok,fail)=>{const t=setTimeout(()=>fail(Error('Video preview timed out')),16000);
+      player.onloadedmetadata=()=>{clearTimeout(t);ok();};
+      player.onerror=()=>{clearTimeout(t);fail(Error('Browser cannot decode this video for preview.'));};
+    });
+    if (!Number.isFinite(player.duration) || player.duration < 1) throw Error('Invalid video duration');
+    const canvas=document.createElement('canvas');canvas.width=480;
+    canvas.height=Math.max(240,Math.round(480*(player.videoHeight||270)/(player.videoWidth||480)));
+    const ctx=canvas.getContext('2d');if(!ctx)throw Error('Canvas unavailable');
+    stream=canvas.captureStream(15);
+    const mime=MediaRecorder.isTypeSupported('video/webm;codecs=vp8')?'video/webm;codecs=vp8':'video/webm';
+    recorder=new MediaRecorder(stream,{mimeType:mime,videoBitsPerSecond:370000});
+    const chunks=[];
+    const done=new Promise((resolve,reject)=>{
+      recorder.ondataavailable=e=>{if(e.data?.size)chunks.push(e.data)};
+      recorder.onerror=()=>reject(Error('Preview recording failed'));
+      recorder.onstop=()=>resolve(chunks);
+    });
+    let active=true;
+    const paint=()=>{
+      if(!active)return;
+      ctx.fillStyle='#080b13';ctx.fillRect(0,0,canvas.width,canvas.height);
+      if(player.readyState>=2)ctx.drawImage(player,0,0,canvas.width,canvas.height);
+      ctx.textAlign='center';ctx.fillStyle='rgba(0,0,0,.42)';ctx.fillRect(0,canvas.height*.42,canvas.width,54);
+      ctx.font='bold 25px Arial';ctx.fillStyle='rgba(255,255,255,.85)';
+      ctx.fillText('AALYNEX • PREVIEW ONLY',canvas.width/2,canvas.height*.42+34);
+      ctx.font='bold 12px Arial';ctx.fillStyle='rgba(255,255,255,.78)';
+      ctx.fillText('ORIGINAL UNLOCKS AFTER VERIFIED PAYMENT',canvas.width/2,canvas.height-18);
+      handle=requestAnimationFrame(paint);
+    };
+    paint();recorder.start(500);
+    try {
+      await player.play();
+      await new Promise(resolve=>setTimeout(resolve,Math.min(11000,(player.duration-.25)*1000)));
+    } finally {
+      active=false;cancelAnimationFrame(handle);player.pause();
+      if(recorder.state==='recording')recorder.stop();
+    }
+    const pieces=await done;
+    const output=new Blob(pieces,{type:'video/webm'});
+    if(output.size<4096)throw Error('Preview recording was empty. Final delivery not sent.');
+    return new File([output],'Aalynex_Watermarked_Preview.webm',{type:'video/webm'});
+  } finally {if(handle)cancelAnimationFrame(handle);player.pause();stream?.getTracks().forEach(t=>t.stop());URL.revokeObjectURL(objectURL);}
+}
+async function axUploadScopedPreview(file, projectId) {
+  if (!supaClient)throw Error('Sign in required');
+  const {data,error}=await supaClient.functions.invoke('get-s3-url',{body:{action:'upload',projectId,kind:'preview',fileName:file.name,fileType:file.type}});
+  if(error||!data?.uploadUrl||!data?.key)throw Error('Secure preview upload authorization failed');
+  const put=await fetch(data.uploadUrl,{method:'PUT',body:file,headers:{'Content-Type':file.type}});
+  if(!put.ok)throw Error('Secure preview upload failed');
+  return data.key;
+}
+
 async function uploadFinalVideo(pid) {
   const fileInput = document.getElementById('final-video-input-' + pid);
   const btn       = document.getElementById('final-video-btn-' + pid);
@@ -435,8 +517,8 @@ async function uploadFinalVideo(pid) {
 
   if (!fileInput || !fileInput.files || !fileInput.files.length) { showToast('Please select a final video file first', 'err', ''); return; }
   const file = fileInput.files[0];
-  const MAX_SIZE = 10 * 1024 * 1024 * 1024;
-  if (file.size > MAX_SIZE) { showToast('File too large. Maximum size is 10 GB.', 'err', ''); return; }
+  const MAX_SIZE = 5 * 1024 * 1024 * 1024;
+  if (file.size > MAX_SIZE) { showToast('File too large. Maximum size is 5 GB for secure project-linked upload.', 'err', ''); return; }
 
   const proj = DB.projects().find(x => x.id === pid);
   if (!proj) return;
@@ -446,20 +528,26 @@ async function uploadFinalVideo(pid) {
 
   let fileUrl = null;
   try {
-    if (supaClient) {
-      if (progFill) progFill.style.width = '20%';
-      const s3Key = await s3Upload(file, 'final');   // S3 pe upload
-      if (progFill) progFill.style.width = '60%';
-      fileUrl = s3Key;   // ← sendMsg ko key do (signed URL woh khud banayega)
-      if (progFill) progFill.style.width = '80%';
-    }
-
-    if (supaClient) await supaClient.from('projects').update({ edited_uploaded: true }).eq('id', proj.id);
-    proj.editedUploaded = true;
-    DB.saveProjects(DB.projects());
+    if (!supaClient) throw Error('Authenticated cloud connection required for final delivery.');
+    if (progFill) progFill.style.width = '10%';
+    const previewFile = await axMakeSafePreview(file,proj.title);
+    const previewKey = await axUploadScopedPreview(previewFile,pid);
+    if (progFill) progFill.style.width = '35%';
+    const previewSent=await sendMsg(CU.id,proj.creatorId,previewKey,previewFile.name,`Project Preview: ${proj.title}`);
+    if(!previewSent?.ok)throw Error('Watermarked preview was uploaded but its message was not confirmed. Do not retry blindly.');
+    const s3Key = await axUploadScopedFinal(file,pid);
+    if (progFill) progFill.style.width = '75%';
+    fileUrl=s3Key;
 
     const msgText = note ? `Final Delivery: ${note}` : `Final Delivery`;
-    await sendMsg(CU.id, proj.creatorId, fileUrl, file.name, msgText);
+    const sent = await sendMsg(CU.id, proj.creatorId, fileUrl, file.name, msgText);
+    if (!sent?.ok) throw Error('File uploaded securely, but chat delivery was not confirmed. Contact support before retrying.');
+    if (supaClient) {
+      const {error:deliveredError}=await supaClient.from('projects').update({ edited_uploaded: true }).eq('id', proj.id);
+      if (deliveredError) throw deliveredError;
+    }
+    proj.editedUploaded = true;
+    DB.saveProjects(DB.projects());
 
     if (progFill) progFill.style.width = '100%';
     sendFinalUploadNotificationEmail(proj.creatorId, proj.title);
@@ -467,7 +555,7 @@ async function uploadFinalVideo(pid) {
     showToast('Final video uploaded and sent to creator!', 'ok', '');
     fPage('upload', document.querySelector('[data-page="upload"]'));
   } catch (err) {
-    showToast('Upload failed.', 'err', '');
+    showToast('Upload failed: '+String(err?.message || 'Please retry.'), 'err', '');
     if (btn) { btn.disabled = false; btn.textContent = 'Upload Final Video →'; btn.classList.remove('btn-loading'); }
     if (progWrap) progWrap.classList.remove('show');
   }
@@ -504,7 +592,7 @@ function fViewUpload(id) {
         <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="rgba(0,0,0,0.25)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg>
       </div>
       <div class="upload-label" id="final-file-label-${escapeHtml(p.id)}">Drag & drop your final edited video or click to browse</div>
-      <div class="upload-sub">MP4, MOV &middot; Up to 10 GB</div>
+      <div class="upload-sub">MP4, MOV &middot; Up to 5 GB</div>
       <input type="file" id="final-video-input-${escapeHtml(p.id)}" accept="video/*" style="display:none;" data-app-change="${appEvent("onFinalFileSelect", [{ appRef: "element" }, String(p.id ?? '')])}"/>
     </label>
     <div class="upload-progress-wrap" id="final-progress-wrap-${escapeHtml(p.id)}">

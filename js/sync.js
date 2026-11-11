@@ -150,11 +150,8 @@ DB.saveAttachments(mappedAtts);
             const key = [u.id, otherId].sort().join('_');
             if (!msgMap[key]) msgMap[key] = [];
 
-            let fileurl = m.file_url || null;
-            if (isS3Key(fileurl)) {
-              try { fileurl = await s3GetUrl(fileurl); if (!ownsSession()) return; }
-              catch (e) { console.error('[S3] sync sign failed (CORS/network?):', e); fileurl = null; }
-            }
+            // Never pre-sign full-resolution files while loading the inbox.
+            const fileurl = m.file_url || null;
 
             if (!ownsSession()) return;
             msgMap[key].push({

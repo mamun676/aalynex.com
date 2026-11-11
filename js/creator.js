@@ -703,7 +703,7 @@ async function wfContent() {
     }
     return `
       <h3>Receive &amp; Review Edited Video</h3>
-      <div class="alert alert-s"><strong>${escapeHtml(selFreelancerName || 'Your editor')}</strong> has uploaded the edited video!</div>
+      <div class="alert alert-s"><strong>${escapeHtml(selFreelancerName || 'Your editor')}</strong> has uploaded the edited video! The original remains locked until verified payment and rating. Ask your editor for a separate watermarked preview before approval.</div>
       <div style="background:var(--bg2);border:1px solid var(--glass-border);border-radius:var(--radius);padding:16px;margin-bottom:14px;">
         <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px;">
           <div style="font-size:1.8rem;">
@@ -713,7 +713,7 @@ async function wfContent() {
             <div style="font-weight:500;font-size:.88rem;color:var(--text);">Final_Delivered_Video</div>
             <div style="color:var(--text-3);font-size:.75rem;">Requires Payment to Download</div>
           </div>
-          <button class="btn btn-ghost btn-sm" style="margin-left:auto;" data-app-click="${appEvent("downloadEditedVideo", [String(activeManageProjectId ?? '')])}">Download</button>
+          <span style="margin-left:auto;font-size:.75rem;color:var(--text-3);">Original locked until payment + rating</span>
         </div>
         <div class="pb"><div class="pf" style="width:100%;"></div></div>
       </div>
@@ -807,13 +807,26 @@ async function wfContent() {
 async function downloadEditedVideo(projectId) {
   const p = DB.projects().find(x => x.id === projectId);
   if (!p) return;
-  if (!p.paid) {
-    showToast('❌ You must Approve & Pay before downloading the final video.', 'err', '');
+  if (!p.paid || !(Number(p.rating)>=1 && Number(p.rating)<=5)) {
+    showToast('Complete verified payment and rate your editor before downloading.', 'err', '');
   } else {
+    if (!supaClient) {showToast('Sign in required.', 'err', '');return;}
+    const {data:verified,error:verifyErr}=await supaClient.functions.invoke('mobile-project-media-v1',
+      {body:{action:'payment_status',projectId}});
+    if (verifyErr || !verified?.downloadUnlocked) {
+      showToast('Payment verification pending. Do not pay twice; contact support if already charged.','err','');
+      return;
+    }
     const key = [p.creatorId, p.freelancerId].sort().join('_');
-    const vids = (DB.messages()[key] || []).filter(m => m.file_url && String(m.from) === String(p.freelancerId));
-    const finalMsg = [...vids].reverse().find(m => m.text && m.text.includes('Final Delivery')) || vids[vids.length - 1];
-    if (!finalMsg) { showToast('Final video chat me nahi mila.', 'err', ''); return; }
+    const vids = (DB.messages()[key] || []).filter(m => m.file_url && String(m.from) === String(p.freelancerId) &&
+      /^Final Delivery/.test(String(m.text||'')));
+    const scoped = vids.filter(m => String(m.file_url).includes(`/projects/${projectId}/`));
+    const finalMsg = scoped.length ? scoped[scoped.length-1] : (()=>{
+      const jobs = DB.projects().filter(j => String(j.creatorId)===String(p.creatorId) &&
+        String(j.freelancerId)===String(p.freelancerId) && j.status!=='open');
+      return jobs.length===1 ? vids[vids.length-1] : null;
+    })();
+    if (!finalMsg) { showToast('Final file needs verified project association. Contact support; do not pay again.', 'err', ''); return; }
     let url = finalMsg.file_url;
     if (typeof isS3Key === 'function' && isS3Key(url)) { try { url = await s3GetUrl(url); } catch (e) { url = null; } }
     if (!url) { showToast('Video link load nahi hua, dobara try karo.', 'err', ''); return; }
@@ -1223,22 +1236,22 @@ function cRate() {
 
 async function saveRating(pid) {
   const rating = document.querySelectorAll(`#sr-${pid} span.lit`).length;
-  if (!rating) { showToast('Please select a star rating', 'err', ''); return; }
-  const review = document.getElementById('rev-' + pid)?.value || '';
-  const projs = DB.projects(), p = projs.find(x => x.id === pid);
-  if (p) {
-    p.rating = rating;
-    p.review = review;
-    DB.saveProjects(projs);
-    if (supaClient) {
-      const { error } = await supaClient.from('projects').update({ rating: rating, review: review }).eq('id', pid);
-      if (error) { showToast('Rating saved locally but DB sync failed: ' + error.message, 'warn', ''); }
-      else { showToast(`Rating submitted! ${rating} stars`, 'ok', ''); }
-    } else {
-      showToast(`Rating submitted! ${rating} stars`, 'ok', '');
-    }
-  }
-  renderC('rate');
+  if (!rating) { showToast('Choose 1 to 5 stars first.','err',''); return; }
+  if (!supaClient || !CU || CU.role !== 'creator') { showToast('Sign in as the creator to rate the editor.','err',''); return; }
+  const p=DB.projects().find(x=>x.id===pid);
+  if(!p || String(p.creatorId)!==String(CU.id)) { showToast('Project does not belong to this creator.','err',''); return; }
+  try {
+    const {data:proof,error:proofErr}=await supaClient.functions.invoke('mobile-project-media-v1',{body:{action:'payment_status',projectId:pid}});
+    if(proofErr||!proof?.verified||!proof?.paid)throw Error('Verified payment required before rating. If already paid, contact support; do not pay twice.');
+    const review=document.getElementById('rev-'+pid)?.value||'';
+    const {data:updated,error:writeErr}=await supaClient.from('projects').update({rating,review}).eq('id',pid).eq('creator_id',CU.id).select('id,rating,review').maybeSingle();
+    if(writeErr||!updated)throw Error('Rating was not saved to the server; please retry.');
+    p.rating=Number(updated.rating);p.review=updated.review||'';
+    DB.saveProjects(DB.projects());
+    showToast(`Rating submitted! ${rating} stars`,'ok','');
+    if(typeof currentChatUserId==='string'&&currentChatUserId && typeof axCheckVerifiedChatPayment==='function') await axCheckVerifiedChatPayment(pid);
+    else renderC('rate');
+  } catch(e) { showToast(e.message||'Unable to save rating.','err',''); }
 }
 
 function cProfile() {

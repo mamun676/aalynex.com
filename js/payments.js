@@ -8,7 +8,7 @@ async function completePayment() {
  const userId=CU.id, projectId=p.id, epoch=window._accountSessionEpoch;
  const owns=()=>CU?.id===userId && window._accountSessionEpoch===epoch;
  const btn=document.querySelector('.btn-green-btn');
- const reset=()=>{_axProjectCheckoutBusy=false;if(owns()&&btn?.isConnected){btn.disabled=false;btn.textContent='Pay Now →';}};
+ const reset=()=>{window._axPayStartedInChat=null;_axProjectCheckoutBusy=false;if(owns()&&btn?.isConnected){btn.disabled=false;btn.textContent='Pay Now →';}};
  const base='https://sfzbrygqpodjinhpagaz.supabase.co/functions/v1/';
  async function call(name,body) {
   const {data:{session}}=await supaClient.auth.getSession();
@@ -27,7 +27,10 @@ async function completePayment() {
   if(recovery.project_id!==projectId)throw new Error('Recovery project mismatch');
   if(recovery.status==='verified'){
    await syncFromSupabase(CU);if(!owns()){reset();return;}
-   activeManageProjectId=projectId;wfStep=7;renderC('new');
+   if(window._axPayStartedInChat===projectId){
+     window._axPayStartedInChat=null;
+     if(typeof axCheckVerifiedChatPayment==='function') await axCheckVerifiedChatPayment(projectId);
+   } else {activeManageProjectId=projectId;wfStep=7;renderC('new');}
    showToast('Existing payment verified. No new charge created.','ok','');reset();return;
   }
   if(!['no_managed_checkout','unpaid'].includes(recovery.status))throw new Error('Existing checkout needs review. Do not pay again.');
@@ -47,7 +50,10 @@ async function completePayment() {
      // Never set paid locally or send a fake settlement message from the browser.
      await syncFromSupabase(CU);
      if(!owns()) return;
-     activeManageProjectId=projectId;wfStep=7;renderC('new');
+     if(window._axPayStartedInChat===projectId){
+     window._axPayStartedInChat=null;
+     if(typeof axCheckVerifiedChatPayment==='function') await axCheckVerifiedChatPayment(projectId);
+   } else {activeManageProjectId=projectId;wfStep=7;renderC('new');}
      showToast('Payment verified. You can now rate your editor.','ok','');
     }catch(e){if(owns()) showToast('Payment verify nahi hua: '+e.message+' Paisa cut gaya ho to dobara pay mat karo; support se contact karo.','err','');}
     finally{reset();}
