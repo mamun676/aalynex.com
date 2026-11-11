@@ -372,6 +372,20 @@ async function loginSuccess(u) {
     if (!ownsSession()) return;
     updateAvatarsEverywhere();
     renderC('home');
+    // Mobile-to-web safe project deep link. NAVIGATION ONLY: never auto-start/charge checkout.
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const id = params.get('checkoutProject');
+      if (id && /^[A-Za-z0-9_-]{1,128}$/.test(id)) {
+        const project = DB.projects().find(p => String(p.id)===id &&
+          String(p.creatorId)===String(u.id) && !!p.freelancerId && p.status!=='open');
+        if(project && ownsSession() && typeof switchChat==='function') {
+          cPage('chat',document.querySelector('#screen-creator .nav-item[data-page="chat"]'));
+          setTimeout(()=>{if(ownsSession()&&currentCreatorPage==='chat')void switchChat(u.id,project.freelancerId);},30);
+        } else if (ownsSession()) showToast('Project checkout link needs project verification. Open My Projects.','info','');
+      }
+      if (id) window.history.replaceState(null,'',window.location.pathname+window.location.hash);
+    } catch (_) { /* no automatic payment action */ }
   }
 
   // Background: full sync (messages / chat previews) — dashboard ko block nahi karta.

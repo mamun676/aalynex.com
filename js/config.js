@@ -48,6 +48,9 @@ async function s3Upload(file, folder) {
 
 async function s3GetUrl(fileKey) {
   if (!fileKey) return null;
+  if (/\/projects\/[A-Za-z0-9_-]+\/(preview|final|chat|source)\//.test(String(fileKey))) {
+    throw Error('Project media must use the project-scoped verified signer.');
+  }
   // Cache check (13 min)
   if (s3UrlCache[fileKey] && s3UrlCache[fileKey].expiry > Date.now()) {
     return s3UrlCache[fileKey].url;

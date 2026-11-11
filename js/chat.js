@@ -252,19 +252,91 @@ function buildChat(myId, otherDefaultId) {
     </div>
   </div>`;
 }
+// A server-confirmed, per-MESSAGE linkage. No filename, date, or pair-based guesses.
+const axLegacyLinks = new Map();
+const axLegacyPending = new Set();
+async function axGetConfirmedLegacyLink(messageId) {
+  const id=String(messageId||'');
+  if(axLegacyLinks.has(id))return axLegacyLinks.get(id);
+  if(!supaClient||!CU)return null;
+  const {data,error}=await supaClient.functions.invoke('project-media-v2',
+    {body:{action:'resolve_legacy',messageId:id}});
+  const link=!error&&data?.confirmed===true&&String(data.messageId)===id&&
+    typeof data.projectId==='string'?{projectId:data.projectId,projectTitle:String(data.projectTitle||'')}:null;
+  axLegacyLinks.set(id,link);
+  return link;
+}
+function axQueueLegacyLookup(messageId){
+  const id=String(messageId||'');
+  if(axLegacyLinks.has(id)||axLegacyPending.has(id)||!supaClient||!CU)return;
+  axLegacyPending.add(id);
+  void axGetConfirmedLegacyLink(id).catch(()=>{axLegacyLinks.set(id,null);}).finally(()=>{
+    axLegacyPending.delete(id);
+    const box=document.getElementById('chat-msgs-el');
+    if(!box||!currentChatUserId||!CU)return;
+    const key=[CU.id,currentChatUserId].sort().join('_');
+    box.innerHTML=renderMsgs(DB.messages()[key]||[],CU.id);
+  });
+}
+// Editor uploads ONLY a low-resolution watermarked sample from a locally selected
+// video. The existing original remains untouched and is never served for preview.
+function axUploadLegacyPreview(messageId){
+  // File picker must open synchronously from the user's click (browser user activation).
+  if(!CU||CU.role!=='freelancer'||!currentChatUserId||!supaClient){
+    showToast('Editor sign-in required.','err','');return;
+  }
+  const input=document.createElement('input');input.type='file';input.accept='video/*';
+  input.onchange=async()=>{
+    const file=input.files?.[0];if(!file)return;
+    try{
+      if(!file.type.startsWith('video/'))throw Error('Select the original video file for this delivery.');
+      const link=await axGetConfirmedLegacyLink(messageId);
+      const project=link&&DB.projects().find(p=>String(p.id)===String(link.projectId));
+      if(!project||String(project.freelancerId)!==String(CU.id)||String(project.creatorId)!==String(currentChatUserId))
+        throw Error('This delivery is not confirmed for your project.');
+      if(typeof axMakeSafePreview!=='function'||typeof axUploadScopedPreview!=='function')
+        throw Error('Preview generator is unavailable. Open Aalynex in updated desktop Chrome.');
+      showToast('Creating a short watermarked preview…','info','');
+      const sample=await axMakeSafePreview(file,project.title||project.id);
+      const key=await axUploadScopedPreview(sample,project.id);
+      const sent=await sendMsg(CU.id,project.creatorId,key,sample.name,'Project Preview: '+String(project.title||project.id));
+      if(!sent?.ok)throw Error('Preview uploaded, but chat message was not confirmed. Check before retrying.');
+      showToast('Watermarked preview sent. Original stays locked.','ok','');
+    }catch(e){showToast('Preview was not sent: '+String(e?.message||e),'err','');}
+    finally{input.value='';}
+  };
+  input.click();
+}
+
 async function axMessageSignedUrl(messageId) {
-  if (!CU || !currentChatUserId) throw new Error('Open a conversation first.');
+  if (!CU || !currentChatUserId || !supaClient) throw new Error('Sign in and open a conversation.');
   const key = [CU.id, currentChatUserId].sort().join('_');
   const msg = (DB.messages()[key] || []).find(m => String(m.id) === String(messageId));
-  if (!msg || !msg.file_url) throw new Error('Attachment not found.');
-  const final = /^Final Delivery/.test(String(msg.text||'')) || /\/final\//.test(String(msg.file_url));
-  if (CU.role === 'creator' && String(msg.from) !== String(CU.id) && final)
-    throw new Error('Final delivery requires verified payment and rating. Use the project payment screen.');
-  const url = isS3Key(msg.file_url) ? await s3GetUrl(msg.file_url) : msg.file_url;
-  const safe = validatedHttpUrl(url);
-  if (!safe) throw new Error('Attachment link unavailable.');
-  return safe;
+  if (!msg || !msg.file_url || !isS3Key(msg.file_url)) throw new Error('Secure project attachment unavailable.');
+  const scoped = String(msg.file_url).match(/\/projects\/([A-Za-z0-9_-]+)\/(source|chat|preview|final)\//);
+  const possible = DB.projects().filter(p => p.status !== 'open' &&
+    ((String(p.creatorId) === String(CU.id) && String(p.freelancerId) === String(currentChatUserId)) ||
+     (String(p.creatorId) === String(currentChatUserId) && String(p.freelancerId) === String(CU.id))));
+  const link = scoped ? null : await axGetConfirmedLegacyLink(messageId);
+  const project = scoped ? possible.find(p => String(p.id) === scoped[1]) : link ? possible.find(p => String(p.id) === String(link.projectId)) : (possible.length === 1 ? possible[0] : null);
+  if (!project) throw new Error('This older attachment needs exact project verification. Contact support; do not pay twice.');
+  const kind = scoped ? scoped[2] :
+    (/^Final Delivery/.test(String(msg.text||'')) ||
+     (String(msg.from) === String(project.freelancerId) && /\.(mp4|mov|webm|m4v|mkv|avi)$/i.test(String(msg.file_url)))) ? 'final' : 'chat';
+  const {data,error} = await supaClient.functions.invoke('project-media-v2',
+    {body:{action:'download',projectId:project.id,kind,fileKey:msg.file_url,messageId:msg.id}});
+  if (error || !data?.downloadUrl) {
+    const reason=String(data?.error||'');
+    throw new Error(reason==='payment_required'?'Original locked until verified payment.':
+      reason==='rating_required'?'Rate your editor before downloading.':
+      reason==='legacy_file_needs_project_link'?'Older file needs exact project verification.':
+      'Secure attachment could not be authorized.');
+  }
+  const valid = validatedHttpUrl(data.downloadUrl);
+  if(!valid)throw new Error('Secure download URL invalid.');
+  return valid;
 }
+
 async function axOpenMessageMedia(messageId, elementId) {
   try {
     const url = await axMessageSignedUrl(messageId);
@@ -305,9 +377,16 @@ function renderMsgs(msgs, myId) {
     if (m.file_url) {
       const fname = String(m.text || '').replace(/^(Raw Video: |Video: |Final Delivery: |Final Delivery)/, '').trim() || 'attachment';
       const scoped = String(m.file_url).match(/\/projects\/([A-Za-z0-9_-]+)\//);
-      const possible = DB.projects().filter(p =>
-        String(p.creatorId) === String(myId) && String(p.freelancerId) === String(m.from) && p.status !== 'open');
-      const proj = scoped ? possible.find(p => String(p.id) === scoped[1]) : (possible.length === 1 ? possible[0] : null);
+      const possible = DB.projects().filter(p => p.status !== 'open' &&
+        ((String(p.creatorId) === String(myId) && String(p.freelancerId) === String(currentChatUserId)) ||
+         (String(p.freelancerId) === String(myId) && String(p.creatorId) === String(currentChatUserId))));
+      const legacyFinal = !scoped && /^Final Delivery/.test(String(m.text||''));
+      if(legacyFinal && !axLegacyLinks.has(String(m.id)) && !axLegacyPending.has(String(m.id)))
+        Promise.resolve().then(()=>axQueueLegacyLookup(m.id));
+      const confirmedLink = legacyFinal ? axLegacyLinks.get(String(m.id)) : null;
+      const proj = scoped ? possible.find(p => String(p.id) === scoped[1]) :
+        confirmedLink ? possible.find(p => String(p.id) === String(confirmedLink.projectId)) :
+        (possible.length === 1 ? possible[0] : null);
       const final = /^Final Delivery/.test(String(m.text||'')) || /\/final\//.test(String(m.file_url)) ||
         (!isMine && isCreator && !String(m.file_url).includes('/preview/') && /\.(mp4|mov|webm|m4v|mkv|avi)$/i.test(String(m.file_url)));
       const secureFinal = final && !isMine && isCreator;
@@ -324,7 +403,7 @@ function renderMsgs(msgs, myId) {
       let controls = '';
       if (secureFinal) {
         if (!proj) {
-          controls = `<span style="font-size:.74rem;color:var(--text-3)">Legacy delivery needs manual project linkage. Do not pay twice or use another project's file.</span>`;
+          controls = `<span style="font-size:.74rem;color:var(--text-3)">Verifying the exact project for this older delivery. Do not pay twice.</span>`;
         } else {
           const previewControl = previewMsg
             ? `<button class="btn btn-ghost btn-xs" data-app-click="${appEvent('axOpenMessageMedia',[String(previewMsg.id),id])}">▶ Watermarked preview</button>`
@@ -346,6 +425,8 @@ function renderMsgs(msgs, myId) {
                     : `<button class="btn btn-ghost btn-xs" data-app-click="${appEvent('axCheckVerifiedChatPayment',[String(proj.id)])}">Verify unlock status</button>`;
           controls = `${previewControl}${payControl}`;
         }
+      } else if(final && isMine && proj && String(proj.freelancerId)===String(myId) && !previewMsg) {
+        controls = `<button class="btn btn-primary btn-xs" data-app-click="${appEvent('axUploadLegacyPreview',[String(m.id)])}">🎬 Upload watermarked preview</button>`;
       } else {
         controls = `<button class="btn btn-ghost btn-xs" data-app-click="${openAction}">▶ Open</button>
                     <button class="btn btn-ghost btn-xs" data-app-click="${saveAction}">⬇ Save</button>`;
@@ -425,8 +506,8 @@ async function handleChatUpload(input, myId, otherId) {
       if (projects.length !== 1) throw Error('Multiple projects in this chat. Please attach using the exact project files screen to avoid linking it to the wrong job.');
       if (file.size > 5*1024*1024*1024) throw Error('Single-file chat upload limit is 5 GB.');
       const mime = file.type || 'application/octet-stream';
-      const response = await supaClient.functions.invoke('get-s3-url', {
-        body: {action:'upload',kind:'chat',projectId:projects[0].id,fileName:file.name,fileType:mime}
+      const response = await supaClient.functions.invoke('project-media-v2', {
+        body: {action:'upload',kind:'chat',projectId:projects[0].id,fileName:file.name,fileType:mime,size:file.size}
       });
       if (response.error || !response.data?.uploadUrl || !response.data?.key) throw Error('Could not authorize project-scoped chat upload.');
       const upload = await fetch(response.data.uploadUrl, {method:'PUT',body:file,headers:{'Content-Type':mime}});
@@ -456,7 +537,7 @@ const axVerifiedChatPayments = new Map();
 async function axCheckVerifiedChatPayment(projectId) {
   if(!supaClient || !CU || CU.role !== 'creator')return;
   try {
-    const response=await supaClient.functions.invoke('mobile-project-media-v1',{body:{action:'payment_status',projectId}});
+    const response=await supaClient.functions.invoke('project-media-v2',{body:{action:'payment_status',projectId}});
     if(response.error || response.data?.projectId!==projectId || typeof response.data?.verified!=='boolean')
       throw Error('Payment proof service unavailable. Do not pay again.');
     axVerifiedChatPayments.set(projectId,{paid:response.data.paid===true,verified:response.data.verified===true,

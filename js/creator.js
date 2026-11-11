@@ -153,7 +153,7 @@ function cProjectDetail(pid) {
     ? atts.map(a => `
         <div class="info-row">
           <span>📎 ${escapeHtml(a.name || 'File')}${a.size ? ` <span style="color:var(--text-3);font-size:.75rem;">(${escapeHtml(fmtFileSize(a.size))})</span>` : ''}</span>
-          ${a.file_url ? `<button class="btn btn-ghost btn-xs" data-app-click="${appEvent("openProjectFile", [String(a.file_url ?? '')])}">Download</button>` : '<span style="color:var(--text-3);font-size:.75rem;">Uploaded</span>'}
+          ${a.file_url ? `<button class="btn btn-ghost btn-xs" data-app-click="${appEvent("openProjectFile", [String(pid), String(a.file_url ?? '')])}">Download</button>` : '<span style="color:var(--text-3);font-size:.75rem;">Uploaded</span>'}
         </div>`).join('')
     : '<div style="color:var(--text-3);font-size:.85rem;">No files uploaded.</div>';
 
@@ -189,14 +189,17 @@ function cProjectDetail(pid) {
 </div>`;
 }
 
-async function openProjectFile(key) {
+async function openProjectFile(projectId, key) {
   try {
-    let url = key;
-    if (typeof isS3Key === 'function' && isS3Key(key)) url = await s3GetUrl(key);
-    const target = validatedHttpUrl(url);
-    if (!target) throw new Error('Invalid file URL');
-    window.open(target, '_blank', 'noopener,noreferrer');
-  } catch (e) { showToast('File open nahi ho paayi', 'err', ''); }
+    if (!supaClient || !isS3Key(key)) throw new Error('Sign in to access secure source files.');
+    const {data,error}=await supaClient.functions.invoke('project-media-v2',{
+      body:{action:'download',projectId,kind:'source',fileKey:key}
+    });
+    if(error||!data?.downloadUrl)throw new Error('Project source access unavailable.');
+    const target=validatedHttpUrl(data.downloadUrl);
+    if(!target)throw new Error('Invalid signed URL.');
+    window.open(target,'_blank','noopener,noreferrer');
+  }catch(e){showToast(e.message||'Cannot open secure project source.','err','');}
 }
 
 function deleteProjectConfirm(pid) {
@@ -811,7 +814,7 @@ async function downloadEditedVideo(projectId) {
     showToast('Complete verified payment and rate your editor before downloading.', 'err', '');
   } else {
     if (!supaClient) {showToast('Sign in required.', 'err', '');return;}
-    const {data:verified,error:verifyErr}=await supaClient.functions.invoke('mobile-project-media-v1',
+    const {data:verified,error:verifyErr}=await supaClient.functions.invoke('project-media-v2',
       {body:{action:'payment_status',projectId}});
     if (verifyErr || !verified?.downloadUnlocked) {
       showToast('Payment verification pending. Do not pay twice; contact support if already charged.','err','');
@@ -821,14 +824,26 @@ async function downloadEditedVideo(projectId) {
     const vids = (DB.messages()[key] || []).filter(m => m.file_url && String(m.from) === String(p.freelancerId) &&
       /^Final Delivery/.test(String(m.text||'')));
     const scoped = vids.filter(m => String(m.file_url).includes(`/projects/${projectId}/`));
-    const finalMsg = scoped.length ? scoped[scoped.length-1] : (()=>{
-      const jobs = DB.projects().filter(j => String(j.creatorId)===String(p.creatorId) &&
-        String(j.freelancerId)===String(p.freelancerId) && j.status!=='open');
-      return jobs.length===1 ? vids[vids.length-1] : null;
-    })();
+    // A legacy final must have an exact server-confirmed per-message project link.
+    // Never infer a paid original from merely sharing the same creator/editor.
+    const resolved=[];
+    for(const m of vids){
+      if(String(m.file_url).includes(`/projects/${projectId}/`)){resolved.push(m);continue;}
+      if(typeof axGetConfirmedLegacyLink==='function'){
+        const link=await axGetConfirmedLegacyLink(m.id);
+        if(link&&String(link.projectId)===String(projectId))resolved.push(m);
+      }
+    }
+    const finalMsg = resolved.length?resolved[resolved.length-1]:null;
     if (!finalMsg) { showToast('Final file needs verified project association. Contact support; do not pay again.', 'err', ''); return; }
-    let url = finalMsg.file_url;
-    if (typeof isS3Key === 'function' && isS3Key(url)) { try { url = await s3GetUrl(url); } catch (e) { url = null; } }
+    let url = null;
+    try {
+      const {data:sign,error:signError}=await supaClient.functions.invoke('project-media-v2',{
+        body:{action:'download',projectId,kind:'final',fileKey:finalMsg.file_url,messageId:finalMsg.id}
+      });
+      if(signError||!sign?.downloadUrl)throw new Error('Original is not authorized.');
+      url=sign.downloadUrl;
+    }catch(e){showToast(e.message||'Secure download refused.','err','');return;}
     if (!url) { showToast('Video link load nahi hua, dobara try karo.', 'err', ''); return; }
     showToast('✅ Download started', 'ok', '');
     const a = document.createElement('a');
@@ -1241,7 +1256,7 @@ async function saveRating(pid) {
   const p=DB.projects().find(x=>x.id===pid);
   if(!p || String(p.creatorId)!==String(CU.id)) { showToast('Project does not belong to this creator.','err',''); return; }
   try {
-    const {data:proof,error:proofErr}=await supaClient.functions.invoke('mobile-project-media-v1',{body:{action:'payment_status',projectId:pid}});
+    const {data:proof,error:proofErr}=await supaClient.functions.invoke('project-media-v2',{body:{action:'payment_status',projectId:pid}});
     if(proofErr||!proof?.verified||!proof?.paid)throw Error('Verified payment required before rating. If already paid, contact support; do not pay twice.');
     const review=document.getElementById('rev-'+pid)?.value||'';
     const {data:updated,error:writeErr}=await supaClient.from('projects').update({rating,review}).eq('id',pid).eq('creator_id',CU.id).select('id,rating,review').maybeSingle();

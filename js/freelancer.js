@@ -433,8 +433,8 @@ async function axUploadScopedFinal(file, projectId) {
   if(!supaClient)throw Error('Sign in required.');
   if(file.size>5*1024*1024*1024)throw Error('Files above 5 GB need the verified multipart uploader. Please contact support.');
   const mime=file.type||'video/mp4';
-  const {data,error}=await supaClient.functions.invoke('get-s3-url',{
-    body:{action:'upload',projectId,kind:'final',fileName:file.name,fileType:mime}
+  const {data,error}=await supaClient.functions.invoke('project-media-v2',{
+    body:{action:'upload',projectId,kind:'final',fileName:file.name,fileType:mime,size:file.size}
   });
   if(error||!data?.uploadUrl||!data?.key)throw Error('Could not create protected S3 upload URL.');
   const put=await fetch(data.uploadUrl,{method:'PUT',body:file,headers:{'Content-Type':mime}});
@@ -501,7 +501,7 @@ async function axMakeSafePreview(file, projectTitle) {
 }
 async function axUploadScopedPreview(file, projectId) {
   if (!supaClient)throw Error('Sign in required');
-  const {data,error}=await supaClient.functions.invoke('get-s3-url',{body:{action:'upload',projectId,kind:'preview',fileName:file.name,fileType:file.type}});
+  const {data,error}=await supaClient.functions.invoke('project-media-v2',{body:{action:'upload',projectId,kind:'preview',fileName:file.name,fileType:file.type,size:file.size}});
   if(error||!data?.uploadUrl||!data?.key)throw Error('Secure preview upload authorization failed');
   const put=await fetch(data.uploadUrl,{method:'PUT',body:file,headers:{'Content-Type':file.type}});
   if(!put.ok)throw Error('Secure preview upload failed');
