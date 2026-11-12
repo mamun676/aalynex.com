@@ -34,7 +34,11 @@ async function completePayment() {
    showToast('Existing payment verified. No new charge created.','ok','');reset();return;
   }
   if(!['no_managed_checkout','unpaid'].includes(recovery.status))throw new Error('Existing checkout needs review. Do not pay again.');
-  const order=await call('project-order-v2',{projectId});
+  // Dedicated, server-restricted TEST checkout for the one audited ₹1 test project.
+  // Live production checkout remains paused and no other project can use this endpoint.
+  const orderEndpoint = projectId==='2ccb248a-ca4b-4349-9ed0-fd07dd55bdba'
+    ? 'project-order-test-v3' : 'project-order-v2';
+  const order=await call(orderEndpoint,{projectId});
   if(!owns()){reset();return;}
   if(order.project_id!==projectId||!/^order_[A-Za-z0-9]+$/.test(order.id||'')||!/^rzp_(test|live)_/.test(order.key_id||'')||!Number.isSafeInteger(order.amount)||order.amount<=0||order.currency!=='INR') throw new Error('Invalid server checkout response');
   const rzp=new window.Razorpay({
