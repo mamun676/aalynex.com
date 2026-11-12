@@ -390,8 +390,10 @@ function renderMsgs(msgs, myId) {
       const final = /^Final Delivery/.test(String(m.text||'')) || /\/final\//.test(String(m.file_url)) ||
         (!isMine && isCreator && !String(m.file_url).includes('/preview/') && /\.(mp4|mov|webm|m4v|mkv|avi)$/i.test(String(m.file_url)));
       const secureFinal = final && !isMine && isCreator;
-      const payProof = proj ? axVerifiedChatPayments.get(proj.id) : null;
+      // Payment is server-owned. Never trust the local project.paid cache as an unlock.
+      const payProof = proj ? axVerifiedChatPayments.get(axChatProofKey(proj.id)) : null;
       const unlocked = !!(payProof && payProof.verified && payProof.unlocked);
+      if(secureFinal && proj) axQueueVerifiedChatPayment(String(proj.id));
       // Only separately uploaded PREVIEW objects (not the original) are eligible
       // for prepayment playback. It must be from the actual assigned editor.
       const previewMsg = proj && msgs.find(x => x.file_url &&
@@ -408,16 +410,19 @@ function renderMsgs(msgs, myId) {
           const previewControl = previewMsg
             ? `<button class="btn btn-ghost btn-xs" data-app-click="${appEvent('axOpenMessageMedia',[String(previewMsg.id),id])}">▶ Watermarked preview</button>`
             : `<span style="font-size:.73rem;color:var(--text-3)">Waiting for editor's watermarked preview.</span>`;
-          const payControl = !proj.paid
-            ? previewMsg
-                ? (axQueueBillingStatus(String(proj.id)),`<div class="ax-billing-slot" data-ax-billing-project-id="${escapeHtml(String(proj.id))}">${axBillingMarkup(String(proj.id))}</div>`)
-                : `<span class="ax-payment-info">Watermarked preview required before checkout.</span>`
+          // Verified proof takes priority over stale local project state. On first render,
+          // check server before offering a second charge on this delivery.
+          const payControl = unlocked
+            ? `<div class="ax-paid-confirmation">✓ Payment verified · Original unlocked</div><button class="btn btn-primary btn-xs ax-download-original" data-app-click="${saveAction}">⬇ Download Original Video</button>`
+            : payProof?.error
+              ? `<button class="btn btn-ghost btn-xs" data-app-click="${appEvent('axCheckVerifiedChatPayment',[String(proj.id)])}">↻ Retry secure payment check</button>`
             : !payProof
-              ? `<button class="btn btn-ghost btn-xs" data-app-click="${appEvent('axCheckVerifiedChatPayment',[String(proj.id)])}">Check verified payment</button>`
-              : !payProof.verified
-                ? `<span style="font-size:.74rem;color:var(--text-3)">Payment record needs verification. Do not pay again.</span>`
-                : unlocked ? `<button class="btn btn-primary btn-xs" data-app-click="${saveAction}">⬇ Download original (verified)</button>`
-                  : `<button class="btn btn-ghost btn-xs" data-app-click="${appEvent('axCheckVerifiedChatPayment',[String(proj.id)])}">Verify unlock status</button>`;
+              ? `<span class="ax-payment-info">Checking payment status securely…</span>`
+            : payProof.paid || proj.paid
+              ? `<button class="btn btn-ghost btn-xs" data-app-click="${appEvent('axCheckVerifiedChatPayment',[String(proj.id)])}">↻ Verify paid video unlock</button>`
+            : previewMsg
+              ? (axQueueBillingStatus(String(proj.id)),`<div class="ax-billing-slot" data-ax-billing-project-id="${escapeHtml(String(proj.id))}">${axBillingMarkup(String(proj.id))}</div>`)
+              : `<span class="ax-payment-info">Watermarked preview required before checkout.</span>`;
           controls = `${previewControl}${payControl}`;
         }
       } else if(final && isMine && proj && String(proj.freelancerId)===String(myId) && !previewMsg) {
@@ -646,17 +651,58 @@ function axRequestBillingReview(projectId){
 }
 
 const axVerifiedChatPayments = new Map();
-async function axCheckVerifiedChatPayment(projectId) {
-  if(!supaClient || !CU || CU.role !== 'creator')return;
-  try {
+const axChatProofPending = new Set();
+function axChatProofKey(projectId){ return String(CU?.id||'')+':'+String(projectId); }
+function axQueueVerifiedChatPayment(projectId){
+  if(!CU||CU.role!=='creator'||!supaClient||!currentChatUserId)return;
+  const key=axChatProofKey(projectId);
+  const known=axVerifiedChatPayments.get(key);
+  if(axChatProofPending.has(key)||(known&&Date.now()-known.checkedAt<30000))return;
+  axChatProofPending.add(key);
+  queueMicrotask(()=>{void axCheckVerifiedChatPayment(projectId,true).finally(()=>axChatProofPending.delete(key));});
+}
+async function axCheckVerifiedChatPayment(projectId,silent=false){
+  if(!supaClient||!CU||CU.role!=='creator'||!currentChatUserId)return null;
+  const me=String(CU.id),peer=String(currentChatUserId),epoch=window._accountSessionEpoch;
+  const key=axChatProofKey(projectId);
+  try{
     const response=await supaClient.functions.invoke('project-media-v2',{body:{action:'payment_status',projectId}});
-    if(response.error || response.data?.projectId!==projectId || typeof response.data?.verified!=='boolean')
+    if(response.error||response.data?.projectId!==projectId||typeof response.data?.verified!=='boolean'||typeof response.data?.downloadUnlocked!=='boolean')
       throw Error('Payment proof service unavailable. Do not pay again.');
-    axVerifiedChatPayments.set(projectId,{paid:response.data.paid===true,verified:response.data.verified===true,
-      unlocked:response.data.downloadUnlocked===true});
-    const key=[CU.id,currentChatUserId].sort().join('_');const container=document.getElementById('chat-msgs-el');
-    if(container && currentChatUserId)container.innerHTML=renderMsgs(DB.messages()[key]||[],CU.id);
-  } catch(e) { showToast(e.message||'Payment status could not be verified.','err',''); }
+    if(!CU||String(CU.id)!==me||String(currentChatUserId)!==peer||epoch!==window._accountSessionEpoch)return null;
+    const result={paid:response.data.paid===true,verified:response.data.verified===true,
+      unlocked:response.data.downloadUnlocked===true,checkedAt:Date.now(),error:false};
+    if(result.unlocked&&!result.verified)throw Error('Payment status inconsistency; contact support.');
+    const previous=axVerifiedChatPayments.get(key);
+    axVerifiedChatPayments.set(key,result);
+    const changed=!previous||previous.paid!==result.paid||previous.verified!==result.verified||previous.unlocked!==result.unlocked||previous.error;
+    if(changed){
+      const container=document.getElementById('chat-msgs-el');
+      if(container){
+        const wasNearBottom=container.scrollHeight-container.scrollTop-container.clientHeight<90;
+        const scrollTop=container.scrollTop;
+        const conversationKey=[me,peer].sort().join('_');
+        container.innerHTML=renderMsgs(DB.messages()[conversationKey]||[],me);
+        container.scrollTop=wasNearBottom?container.scrollHeight:scrollTop;
+      }
+    }
+    return result;
+  }catch(e){
+    if(CU&&String(CU.id)===me&&String(currentChatUserId)===peer){
+      const old=axVerifiedChatPayments.get(key);
+      axVerifiedChatPayments.set(key,{paid:old?.paid===true,verified:false,unlocked:false,checkedAt:Date.now(),error:true});
+      // Replace the spinner with a safe retry action, without refreshing the preview media.
+      const container=document.getElementById('chat-msgs-el');
+      if(container){
+        const scrollTop=container.scrollTop;
+        const conversationKey=[me,peer].sort().join('_');
+        container.innerHTML=renderMsgs(DB.messages()[conversationKey]||[],me);
+        container.scrollTop=scrollTop;
+      }
+    }
+    if(!silent)showToast(e.message||'Payment status could not be verified.','err','');
+    return null;
+  }
 }
 
 // V8.3: use the site's existing authenticated, verified checkout flow
@@ -677,6 +723,11 @@ async function axPayInChat(projectId) {
     String(m.file_url||'').includes(`/projects/${projectId}/preview/`) &&
     String(m.text||'').startsWith('Project Preview:'));
   if(!previewReady){showToast('Watermarked preview required before approval and checkout.','err','');return;}
+  // Fresh server proof must be checked BEFORE any new order, even if the local
+  // project cache still says unpaid. Server recovery is the second guard.
+  const payment=await axCheckVerifiedChatPayment(String(projectId),true);
+  if(!payment){showToast('Could not verify existing payments. No new charge started.','err','');return;}
+  if(payment.paid||payment.verified||payment.unlocked){showToast('Already paid. Use Download Original Video in chat.','ok','');return;}
   const readiness=axBillingReady.get(axBillingKey(projectId));
   if(!readiness||readiness.canStartCheckout!==true){
     await axRefreshBillingStatus(projectId);
