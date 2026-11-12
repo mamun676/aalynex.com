@@ -15,7 +15,13 @@ async function completePayment() {
   if(!owns()||!session||session.user.id!==userId) throw new Error('Account changed. Sign in with the paying account; do not pay again.');
   const res=await fetch(base+name,{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${session.access_token}`},body:JSON.stringify(body)});
   const result=await res.json();
-  if(!res.ok) throw new Error(typeof result.error==='string'?result.error:'Payment request failed');
+  if(!res.ok) {
+   if(res.status===503 && result?.error==='Test checkout unavailable: provider is not in test mode')
+    throw new Error('TEST checkout is paused: MAIN provider is not in Razorpay TEST mode. A separate test-key verification flow is required; no payment was started.');
+   if(res.status===503 && result?.error==='Project checkout is paused')
+    throw new Error('Project checkout is paused on the server. Do not transfer money outside Aalynex.');
+   throw new Error(typeof result.error==='string'?result.error:'Payment request failed');
+  }
   return result;
  }
  _axProjectCheckoutBusy=true;

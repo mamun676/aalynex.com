@@ -410,7 +410,7 @@ function renderMsgs(msgs, myId) {
             : `<span style="font-size:.73rem;color:var(--text-3)">Waiting for editor's watermarked preview.</span>`;
           const payControl = !proj.paid
             ? previewMsg
-                ? `<button class="btn btn-primary btn-xs" data-app-click="${appEvent('axPayInChat',[String(proj.id)])}">${String(proj.id)==='2ccb248a-ca4b-4349-9ed0-fd07dd55bdba'?'Test checkout (no real charge)':'Pay securely'} · ₹${escapeHtml(fmt(proj.budget))}</button>`
+                ? `<button class="btn btn-primary btn-xs" data-app-click="${appEvent('axPayInChat',[String(proj.id)])}">${String(proj.id)==='2ccb248a-ca4b-4349-9ed0-fd07dd55bdba'?'Test checkout (TEST mode required)':'Pay securely'} · ₹${escapeHtml(fmt(proj.budget))}</button>`
                 : `<span style="font-size:.73rem;color:var(--text-3)">Preview required before approving this project. Checkout unavailable.</span>`
             : !payProof
               ? `<button class="btn btn-ghost btn-xs" data-app-click="${appEvent('axCheckVerifiedChatPayment',[String(proj.id)])}">Check verified payment</button>`
