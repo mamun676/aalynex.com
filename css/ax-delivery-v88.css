@@ -72,3 +72,8 @@
 #chat-msgs-el .ax-protected-delivery .ax-review-request-btn:hover{filter:brightness(1.06);}
 #chat-msgs-el .ax-protected-delivery .ax-review-request-btn:focus-visible{outline:3px solid var(--accent);outline-offset:3px;}
 #chat-msgs-el .ax-billing-slot .ax-billing-refresh{align-self:stretch;text-align:center;min-height:41px;}
+
+/* V9.2 — operator review is distinct from charging a customer. */
+#chat-msgs-el .ax-protected-delivery .ax-operator-approve-btn{display:flex;gap:8px;align-items:center;justify-content:center;width:100%;min-height:48px!important;border-radius:13px!important;background:linear-gradient(110deg,#166534,#16a34a)!important;color:#fff!important;box-shadow:0 9px 22px rgba(22,163,74,.16);font-weight:850;}
+#chat-msgs-el .ax-protected-delivery .ax-operator-approve-btn:focus-visible{outline:3px solid #16a34a;outline-offset:2px;}
+#chat-msgs-el .ax-billing-meta.is-review{line-height:1.55;}

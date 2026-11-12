@@ -538,7 +538,7 @@ const axBillingStatuses = Object.freeze({
   ready: 'Ready for secure checkout. Final amount will be shown by Razorpay.',
   test_only: 'This project is marked test-only. Request genuine live-billing review before charging anyone.',
   billing_review_required: 'Live billing needs review before a real payment can be collected.',
-  review_requested: 'Billing review requested. Approval has not been granted; no charge was created.',
+  review_requested: 'Review request is pending. A super-admin can verify the live payment setup and approve this delivered project.',
   final_delivery_pending: 'The editor must submit the final delivery before checkout.',
   checkout_paused: 'New project payments are temporarily paused.',
   live_configuration_required: 'Live payment configuration needs verification.',
@@ -556,7 +556,9 @@ function axBillingMarkup(projectId){
   const budget=Number(v.budgetRupees);
   const money=Number.isSafeInteger(budget)&&budget>0?`<span>Project budget <strong>₹${budget.toLocaleString('en-IN')}</strong></span>`:'';
   const requestAllowed=v.canRequestReview===true && !ready;
+  const canOperatorApprove=v.canOperatorApprove===true && !ready && status==='review_requested';
   const btn=ready?`<button type="button" class="btn btn-primary btn-xs ax-secure-pay-btn" data-app-click="${appEvent('axPayInChat',[String(projectId)])}">Pay securely with Razorpay <span aria-hidden="true">→</span></button>`
+     :canOperatorApprove?`<button type="button" class="btn btn-primary btn-xs ax-operator-approve-btn" data-app-click="${appEvent('axOperatorApproveBilling',[String(projectId)])}">Review & enable LIVE billing <span aria-hidden="true">→</span></button><button type="button" class="btn btn-ghost btn-xs ax-billing-refresh" data-app-click="${appEvent('axRefreshBillingStatus',[String(projectId)])}">↻ Refresh</button>`
      :requestAllowed?`<button type="button" class="btn btn-primary btn-xs ax-review-request-btn" data-app-click="${appEvent('axRequestBillingReview',[String(projectId)])}">Request live-billing review <span aria-hidden="true">→</span></button><button type="button" class="btn btn-ghost btn-xs ax-billing-refresh" data-app-click="${appEvent('axRefreshBillingStatus',[String(projectId)])}">↻ Refresh status</button>`
      :`<button type="button" class="btn btn-ghost btn-xs ax-billing-refresh" data-app-click="${appEvent('axRefreshBillingStatus',[String(projectId)])}">↻ Check status</button>`;
   return `<div class="ax-billing-meta ${ready?'is-ready':'is-review'}" role="status"><span class="ax-status-dot"></span><span>${escapeHtml(axBillingText(status))}</span></div>
@@ -573,7 +575,7 @@ async function axRefreshBillingStatus(projectId){
     const {data,error}=await supaClient.functions.invoke('project-billing-readiness-v1',{body:{projectId:id}});
     if(!CU||CU.id!==userId||epoch!==window._accountSessionEpoch)return;
     if(error||!data||data.projectId!==id||typeof data.status!=='string')throw Error('readiness_unavailable');
-    axBillingReady.set(cacheKey,{status:data.status,canStartCheckout:data.canStartCheckout===true,canRequestReview:data.canRequestReview===true,budgetRupees:data.budgetRupees});
+    axBillingReady.set(cacheKey,{status:data.status,canStartCheckout:data.canStartCheckout===true,canRequestReview:data.canRequestReview===true,canOperatorApprove:data.canOperatorApprove===true,budgetRupees:data.budgetRupees});
   }catch(_){if(CU?.id===userId)axBillingReady.set(cacheKey,{status:'service_unavailable',canStartCheckout:false});}
   finally{
     axBillingPending.delete(cacheKey);
@@ -586,6 +588,39 @@ async function axRefreshBillingStatus(projectId){
 function axQueueBillingStatus(projectId){
   const key=axBillingKey(projectId);
   if(!axBillingReady.has(key)&&!axBillingPending.has(key))queueMicrotask(()=>{void axRefreshBillingStatus(projectId);});
+}
+// Explicit super-admin LIVE approval: server validates owner, secure final, existing payments,
+// active live Razorpay credentials and requires a recorded operator audit. No charge here.
+function axOperatorApproveBilling(projectId){
+  const id=String(projectId||'');
+  if(!CU||!supaClient||!axChatUUID.test(id)){showToast('Sign in to review live billing.','err','');return;}
+  const project=DB.projects().find(p=>String(p.id)===id&&String(p.creatorId)===String(CU.id));
+  const state=axBillingReady.get(axBillingKey(id));
+  const budget=Number(state?.budgetRupees);
+  if(!project||state?.canOperatorApprove!==true||!Number.isSafeInteger(budget)||budget<=0){showToast('Operator billing review is not available for this project.','err','');return;}
+  const title=String(project.title||'Project');
+  showModal('Approve LIVE billing — ₹'+budget.toLocaleString('en-IN'),
+    'Only approve genuine completed editor work at the agreed budget for '+title+'. This authorizes a REAL Razorpay checkout. It does not charge anyone now or unlock the original video. Confirm the amount and the work before proceeding.',
+    async()=>{
+      const account=CU?.id,epoch=window._accountSessionEpoch;
+      try{
+        const {data,error}=await supaClient.functions.invoke('project-billing-operator-approve-v1',{
+          body:{projectId:id,expectedBudgetRupees:budget,genuineWorkConfirmed:true,confirmation:'APPROVE LIVE BILLING'}
+        });
+        if(CU?.id!==account||window._accountSessionEpoch!==epoch)return;
+        if(error||data?.ok!==true||data?.status!=='live_approved'){
+          let detail='The server did not approve live billing. No charge was created.';
+          try{const x=await error?.context?.clone?.().json();if(x?.error)detail=String(x.error).replaceAll('_',' ');}catch(_){}
+          throw Error(detail);
+        }
+        axBillingReady.delete(axBillingKey(id));
+        await axRefreshBillingStatus(id);
+        const approved=axBillingReady.get(axBillingKey(id))?.canStartCheckout===true;
+        showToast(approved?'Live billing approved. Use Pay with Razorpay in this chat.':'Operator approved billing; server readiness still needs review.','ok','');
+      }catch(e){showToast(e?.message||'Live billing review could not be completed.','err','');}
+    });
+  const btn=document.getElementById('modal-confirm');
+  if(btn)btn.textContent='Confirm LIVE billing for ₹'+budget.toLocaleString('en-IN');
 }
 // Genuine project billing review request: NEVER creates a Razorpay order or enables billing.
 function axRequestBillingReview(projectId){
