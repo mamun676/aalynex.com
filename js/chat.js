@@ -1,3 +1,12 @@
+// Aalynex V9.4: load the compact two-button styles even on older site shells.
+// Versioned URL prevents an earlier cached CSS bundle from restoring review controls.
+(function axLoadSimpleCheckoutStyle(){
+  if(typeof document==='undefined'||document.getElementById('ax-v94-checkout-css'))return;
+  const link=document.createElement('link');
+  link.id='ax-v94-checkout-css';link.rel='stylesheet';
+  link.href='/css/ax-delivery-v88.css?v=aalynex-v94';
+  document.head.appendChild(link);
+})();
 // Text-message outbox only. Attachment path below remains the legacy flow.
 // Session-memory only: reload/logout clears retry state; no hidden localStorage queue.
 const axChatOutbox=new Map();
@@ -405,25 +414,17 @@ function renderMsgs(msgs, myId) {
       let controls = '';
       if (secureFinal) {
         if (!proj) {
-          controls = `<span style="font-size:.74rem;color:var(--text-3)">Verifying the exact project for this older delivery. Do not pay twice.</span>`;
+          controls = `<button class="btn btn-ghost btn-xs ax-two-preview" disabled aria-disabled="true">▶ Preview</button><button class="btn btn-primary btn-xs ax-two-action" disabled aria-disabled="true">Pay</button>`;
         } else {
+          // Two actions only. Proof is fetched server-side and never inferred from
+          // an old cached project.paid value. Original stays locked until verified.
           const previewControl = previewMsg
-            ? `<button class="btn btn-ghost btn-xs" data-app-click="${appEvent('axOpenMessageMedia',[String(previewMsg.id),id])}">▶ Watermarked preview</button>`
-            : `<span style="font-size:.73rem;color:var(--text-3)">Waiting for editor's watermarked preview.</span>`;
-          // Verified proof takes priority over stale local project state. On first render,
-          // check server before offering a second charge on this delivery.
-          const payControl = unlocked
-            ? `<div class="ax-paid-confirmation">✓ Payment verified · Original unlocked</div><button class="btn btn-primary btn-xs ax-download-original" data-app-click="${saveAction}">⬇ Download Original Video</button>`
-            : payProof?.error
-              ? `<button class="btn btn-ghost btn-xs" data-app-click="${appEvent('axCheckVerifiedChatPayment',[String(proj.id)])}">↻ Retry secure payment check</button>`
-            : !payProof
-              ? `<span class="ax-payment-info">Checking payment status securely…</span>`
-            : payProof.paid || proj.paid
-              ? `<button class="btn btn-ghost btn-xs" data-app-click="${appEvent('axCheckVerifiedChatPayment',[String(proj.id)])}">↻ Verify paid video unlock</button>`
-            : previewMsg
-              ? (axQueueBillingStatus(String(proj.id)),`<div class="ax-billing-slot" data-ax-billing-project-id="${escapeHtml(String(proj.id))}">${axBillingMarkup(String(proj.id))}</div>`)
-              : `<span class="ax-payment-info">Watermarked preview required before checkout.</span>`;
-          controls = `${previewControl}${payControl}`;
+            ? `<button class="btn btn-ghost btn-xs ax-two-preview" data-app-click="${appEvent('axOpenMessageMedia',[String(previewMsg.id),id])}">▶ Preview</button>`
+            : `<button class="btn btn-ghost btn-xs ax-two-preview" disabled aria-disabled="true" title="Editor preview not uploaded">▶ Preview</button>`;
+          const actionControl = unlocked
+            ? `<button class="btn btn-primary btn-xs ax-two-action ax-download-original" data-app-click="${saveAction}">⬇ Download</button>`
+            : `<button class="btn btn-primary btn-xs ax-two-action ax-secure-pay-btn" ${!previewMsg?'disabled aria-disabled="true" title="Waiting for project preview"':''} data-app-click="${appEvent('axPayInChat',[String(proj.id)])}">Pay</button>`;
+          controls = `${previewControl}${actionControl}`;
         }
       } else if(final && isMine && proj && String(proj.freelancerId)===String(myId) && !previewMsg) {
         controls = `<button class="btn btn-primary btn-xs" data-app-click="${appEvent('axUploadLegacyPreview',[String(m.id)])}">🎬 Upload watermarked preview</button>`;
@@ -432,16 +433,15 @@ function renderMsgs(msgs, myId) {
                     <button class="btn btn-ghost btn-xs" data-app-click="${saveAction}">⬇ Save</button>`;
       }
       const label = secureFinal ? 'Protected final delivery' : 'Project attachment';
-      const note = secureFinal && !unlocked ?
-        '<div style="font-size:.73rem;color:var(--text-3);margin-top:7px">Original remains locked until payment is verified by the server. The watermarked preview is separate; the original is only served after verification.</div>':'';
+      // The final action is always server-verified, not a UI flag.
       return `<div style="display:flex;flex-direction:column;align-items:${escapeHtml(flexAlign)};margin-bottom:9px;width:100%;">
         <div class="msg-video ${escapeHtml(isMine?'sent-video':'')} ${secureFinal?'ax-protected-delivery':''}" ${secureFinal&&proj?`data-ax-project-id="${escapeHtml(String(proj.id))}"`:''} style="padding:12px;max-width:340px;">
-          ${secureFinal ? '<div class="ax-delivery-kicker">AALYNEX • SECURE DELIVERY</div>' : ''}
+
           <div class="msg-video-label"><span style="font-weight:800">${escapeHtml(label)}</span></div>
           ${secureFinal && proj ? `<div class="ax-delivery-project">${escapeHtml(proj.title||proj.id)}</div>` : ''}
           <div class="ax-delivery-filename">${escapeHtml(fname)}</div>
-          ${secureFinal ? `<div class="ax-delivery-progress" aria-label="Preview, payment and original delivery"><span class="is-complete">✓ Preview</span><span class="${unlocked?'is-complete':'is-current'}">${unlocked?'✓':'2'} Payment</span><span class="${unlocked?'is-complete':''}">${unlocked?'✓':'3'} Download</span></div>`:''}
-          <div id="${id}"></div>${note}
+
+          <div id="${id}"></div>
           <div class="ax-delivery-actions">${controls}</div>
           <div class="msg-video-footer"><span>${escapeHtml(isMine?'You':'Sent')}</span><span>${escapeHtml(fmtTime(m.time))}</span></div>
         </div>
@@ -541,9 +541,9 @@ const axBillingReady = new Map();
 const axBillingPending = new Set();
 const axBillingStatuses = Object.freeze({
   ready: 'Ready for secure checkout. Final amount will be shown by Razorpay.',
-  test_only: 'This project is marked test-only. Request genuine live-billing review before charging anyone.',
-  billing_review_required: 'Live billing needs review before a real payment can be collected.',
-  review_requested: 'Review request is pending. A super-admin can verify the live payment setup and approve this delivered project.',
+  test_only: 'This delivery is not eligible for a new charge. Contact support.',
+  billing_review_required: 'Checkout unavailable for this delivery. A project-linked preview and final are required.',
+  review_requested: 'Checkout is not available for this delivery yet.',
   final_delivery_pending: 'The editor must submit the final delivery before checkout.',
   checkout_paused: 'New project payments are temporarily paused.',
   live_configuration_required: 'Live payment configuration needs verification.',
