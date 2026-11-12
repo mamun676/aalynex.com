@@ -33,3 +33,36 @@
   box-shadow: 0 5px 16px rgba(224,92,42,.13);
 }
 #chat-msgs-el .ax-protected-delivery .ax-secure-pay-btn:focus-visible {outline: 3px solid var(--accent);outline-offset: 2px;}
+
+/* V9.0 — payment review surface, accessible contrast and responsive steps. */
+#chat-msgs-el .ax-protected-delivery {
+  width: min(100%, 405px) !important; max-width: min(100%, 405px) !important;
+  padding: 19px !important; border-radius: 20px !important;
+  border: 1px solid rgba(224,92,42,.24) !important;
+  background: linear-gradient(145deg, rgba(224,92,42,.075) 0%, transparent 48%), var(--card,var(--bg2)) !important;
+  box-shadow: 0 14px 36px rgba(35,25,19,.08) !important;
+}
+#chat-msgs-el .ax-delivery-kicker{font-size:10px;letter-spacing:1.7px;font-weight:850;color:var(--accent);margin-bottom:12px;}
+#chat-msgs-el .ax-delivery-project{font-size:15px;font-weight:800;color:var(--text);margin:7px 0 0;overflow-wrap:anywhere;}
+#chat-msgs-el .ax-delivery-filename{font-size:12px;color:var(--text-2);margin-top:5px;overflow-wrap:anywhere;}
+#chat-msgs-el .ax-delivery-progress{display:flex;gap:5px;margin:15px 0 10px;align-items:center;}
+#chat-msgs-el .ax-delivery-progress span{flex:1;min-width:0;text-align:center;font-size:10px;font-weight:800;padding:8px 3px;border-radius:9px;color:var(--text-3);background:rgba(100,116,139,.10);}
+#chat-msgs-el .ax-delivery-progress span.is-complete{color:#18794e;background:rgba(34,197,94,.13);}
+#chat-msgs-el .ax-delivery-progress span.is-current{color:var(--accent);background:rgba(224,92,42,.13);}
+#chat-msgs-el .ax-delivery-actions{display:flex;flex-wrap:wrap;gap:9px;margin-top:13px;align-items:stretch;}
+#chat-msgs-el .ax-delivery-actions > button{min-height:44px;}
+#chat-msgs-el .ax-billing-slot{display:flex;flex-direction:column;gap:10px;width:100%;}
+#chat-msgs-el .ax-billing-meta{display:flex;gap:10px;align-items:flex-start;padding:12px;border-radius:12px;font-size:12px;line-height:1.5;border:1px solid rgba(148,163,184,.2);color:var(--text-2);background:rgba(148,163,184,.08);}
+#chat-msgs-el .ax-billing-meta.is-ready{border-color:rgba(20,158,93,.2);background:rgba(20,158,93,.08);}
+#chat-msgs-el .ax-billing-meta.is-review{border-color:rgba(224,92,42,.24);background:rgba(224,92,42,.07);}
+#chat-msgs-el .ax-status-dot{width:8px;height:8px;border-radius:50%;flex:none;margin-top:5px;background:var(--accent);}
+#chat-msgs-el .ax-billing-meta.is-ready .ax-status-dot{background:#16a34a;}
+#chat-msgs-el .ax-billing-meta.is-checking .ax-status-dot{background:#94a3b8;}
+#chat-msgs-el .ax-billing-amount{display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:12px;color:var(--text-2);}
+#chat-msgs-el .ax-billing-amount strong{font-weight:900;color:var(--text);}
+#chat-msgs-el .ax-protected-delivery .ax-secure-pay-btn{width:100%;min-height:49px !important;font-weight:850;font-size:13px !important;border-radius:13px !important;background:linear-gradient(105deg,#de542c,#f07941) !important;color:#fff;box-shadow:0 9px 22px rgba(224,92,42,.19);gap:8px;}
+#chat-msgs-el .ax-protected-delivery .ax-secure-pay-btn:disabled{opacity:.58;cursor:progress;}
+#chat-msgs-el .ax-billing-refresh{align-self:flex-start;border:1px solid var(--border);font-weight:700;}
+#chat-msgs-el .ax-payment-info{color:var(--text-3);font-size:12px;}
+@media (max-width:600px){#chat-msgs-el .ax-protected-delivery{padding:15px !important;width:min(100%,370px) !important;max-width:min(100%,370px) !important;}#chat-msgs-el .ax-delivery-progress span{font-size:9px;}}
+@media (prefers-reduced-motion:reduce){#chat-msgs-el .ax-protected-delivery *{scroll-behavior:auto;transition-duration:0.01ms !important;animation-duration:0.01ms !important;}}

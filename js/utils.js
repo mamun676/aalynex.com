@@ -253,7 +253,7 @@ function appEvent(action, args, options) {
   // Fixed allowlist. A data attribute cannot call arbitrary window functions.
   const allowed = new Set([
     'viewAISuggestHistory', 'switchChat', 'handleChatUpload', 'sendMsg',
-    'axOpenMessageMedia', 'axDownloadMessageFile', 'axUploadLegacyPreview', 'axPayInChat', 'axCheckVerifiedChatPayment',
+    'axOpenMessageMedia', 'axDownloadMessageFile', 'axUploadLegacyPreview', 'axPayInChat', 'axCheckVerifiedChatPayment', 'axRefreshBillingStatus',
     'triggerApproveAndPay', 'requestRevision', 'acceptNegotiation', 'rejectNegotiation',
     'openProjectFile', 'cProjectEdit', 'deleteProjectConfirm', 'manageProject',
     'saveProjectEdit', 'toggleRemoveAtt', 'viewFreelancerPortfolio', 'openSendRequestModal',

@@ -7,8 +7,9 @@ async function completePayment() {
  if(!p||!CU) {showToast('Project not found or sign-in required','err','');return;}
  const userId=CU.id, projectId=p.id, epoch=window._accountSessionEpoch;
  const owns=()=>CU?.id===userId && window._accountSessionEpoch===epoch;
- const btn=document.querySelector('.btn-green-btn');
- const reset=()=>{window._axPayStartedInChat=null;_axProjectCheckoutBusy=false;if(owns()&&btn?.isConnected){btn.disabled=false;btn.textContent='Pay Now →';}};
+ const btns=[...document.querySelectorAll('.ax-secure-pay-btn')].filter(x=>x.closest('[data-ax-project-id]')?.getAttribute('data-ax-project-id')===projectId);
+ const previous=btns.map(btn=>({btn,label:btn.innerHTML}));
+ const reset=()=>{window._axPayStartedInChat=null;_axProjectCheckoutBusy=false;if(owns())for(const {btn,label} of previous){if(btn.isConnected){btn.disabled=false;btn.removeAttribute('aria-busy');btn.innerHTML=label;}}};
  async function call(name,body) {
   const {data:{session},error:sessionError}=await supaClient.auth.getSession();
   if(sessionError||!owns()||!session||session.user.id!==userId) throw new Error('Account changed. Sign in with the paying account; do not pay again.');
@@ -34,7 +35,7 @@ async function completePayment() {
   return data;
  }
  _axProjectCheckoutBusy=true;
- if(btn){btn.disabled=true;btn.textContent='Processing…';}
+ for(const {btn} of previous){btn.disabled=true;btn.setAttribute('aria-busy','true');btn.textContent='Opening secure checkout…';}
  try {
   // Check signed server evidence before attempting any charge.
   const state=await call('project-media-v2',{action:'payment_status',projectId});
@@ -60,8 +61,11 @@ async function completePayment() {
    showToast('Existing payment verified. No new charge created.','ok','');reset();return;
   }
   if(!['no_managed_checkout','unpaid'].includes(recovery.status))throw new Error('Existing checkout needs review. Do not pay again.');
-  // The production Edge Function is authoritative for project eligibility,
-  // provider mode, existing payment, and operator approval. Never bypass it.
+  // Read-only readiness must agree before creating a provider order.
+  // The project-order-v2 Edge Function still performs the authoritative checks.
+  const readiness=await call('project-billing-readiness-v1',{projectId});
+  if(readiness.projectId!==projectId||readiness.canStartCheckout!==true)
+    throw new Error(typeof axBillingText==='function'?axBillingText(readiness.status):'Live project billing review required.');
   const order=await call('project-order-v2',{projectId});
   if(!owns()){reset();return;}
   if(order.project_id!==projectId||!/^order_[A-Za-z0-9]+$/.test(order.id||'')||!/^rzp_live_/.test(order.key_id||'')||!Number.isSafeInteger(order.amount)||order.amount<=0||order.currency!=='INR') throw new Error('Invalid server checkout response');
@@ -96,3 +100,45 @@ async function completePayment() {
   rzp.open();
  }catch(e){if(owns())showToast(e.message,'err','');reset();}
 }
+
+// Deep link from Aalynex Android: open EXACT project chat after account sync.
+// No automatic order creation, signature reuse, or payment attempt.
+(function axCheckoutDeepLink(){
+  let target=null;
+  try{target=new URL(location.href).searchParams.get('checkoutProject');}catch(_){return;}
+  if(!target||!/^[a-f0-9]{8}-[a-f0-9-]{27,}$/i.test(target))return;
+  let done=false,tries=0,running=false;
+  const resolve=async()=>{
+    if(done||running||!CU||!supaClient)return;
+    if(CU.role!=='creator'){done=true;showToast('Sign in as the project creator to review checkout.','err','');return;}
+    running=true;
+    const me=CU.id,epoch=window._accountSessionEpoch;
+    try{
+      let project=DB.projects().find(p=>p.id===target && p.creatorId===me);
+      if(!project){await syncFromSupabase(CU,{coreOnly:true});project=DB.projects().find(p=>p.id===target && p.creatorId===me);}
+      if(!project){if(++tries>=3){done=true;showToast('This project is not available in your creator account.','err','');}return;}
+      if(!project.freelancerId||project.status==='open'){done=true;showToast('A freelancer must accept before payment.','info','');return;}
+      if(!CU||CU.id!==me||window._accountSessionEpoch!==epoch)return;
+      done=true;
+      currentChatUserId=project.freelancerId;
+      cPage('chat',document.querySelector('#screen-creator .nav-item[data-page="chat"]'));
+      await syncFromSupabase(CU);
+      if(!CU||CU.id!==me||window._accountSessionEpoch!==epoch||currentChatUserId!==project.freelancerId)return;
+      const key=[me,project.freelancerId].sort().join('_');
+      const container=document.getElementById('chat-msgs-el');
+      if(container)container.innerHTML=renderMsgs(DB.messages()[key]||[],me);
+      await axCheckVerifiedChatPayment(target);
+      const card=[...document.querySelectorAll('.ax-protected-delivery')].find(el=>el.getAttribute('data-ax-project-id')===target);
+      if(card)card.scrollIntoView({behavior:'smooth',block:'center'});
+      // Consume only the checkout-project query parameter; retain all others.
+      const url=new URL(location.href);url.searchParams.delete('checkoutProject');
+      history.replaceState(history.state,'',url.pathname+url.search+url.hash);
+    }catch(_){if(tries++>=3){done=true;showToast('Could not open this project. Open Messages and try again.','err','');}}
+    finally{running=false;}
+  };
+  window.addEventListener('load',()=>{
+    // Main app may be restoring a session asynchronously. Bounded retry.
+    let ticks=0;
+    const interval=setInterval(()=>{if(done||++ticks>900){clearInterval(interval);return;}void resolve();},650);
+  });
+})();

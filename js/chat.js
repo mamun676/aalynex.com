@@ -410,8 +410,8 @@ function renderMsgs(msgs, myId) {
             : `<span style="font-size:.73rem;color:var(--text-3)">Waiting for editor's watermarked preview.</span>`;
           const payControl = !proj.paid
             ? previewMsg
-                ? `<button class="btn btn-primary btn-xs ax-secure-pay-btn" data-app-click="${appEvent('axPayInChat',[String(proj.id)])}">Pay with Razorpay · Review amount</button>`
-                : `<span style="font-size:.73rem;color:var(--text-3)">Preview required before approving this project. Checkout unavailable.</span>`
+                ? (axQueueBillingStatus(String(proj.id)),`<div class="ax-billing-slot" data-ax-billing-project-id="${escapeHtml(String(proj.id))}">${axBillingMarkup(String(proj.id))}</div>`)
+                : `<span class="ax-payment-info">Watermarked preview required before checkout.</span>`
             : !payProof
               ? `<button class="btn btn-ghost btn-xs" data-app-click="${appEvent('axCheckVerifiedChatPayment',[String(proj.id)])}">Check verified payment</button>`
               : !payProof.verified
@@ -430,12 +430,14 @@ function renderMsgs(msgs, myId) {
       const note = secureFinal && !unlocked ?
         '<div style="font-size:.73rem;color:var(--text-3);margin-top:7px">Original remains locked until payment is verified by the server. The watermarked preview is separate; the original is only served after verification.</div>':'';
       return `<div style="display:flex;flex-direction:column;align-items:${escapeHtml(flexAlign)};margin-bottom:9px;width:100%;">
-        <div class="msg-video ${escapeHtml(isMine?'sent-video':'')} ${secureFinal?'ax-protected-delivery':''}" style="padding:12px;max-width:340px;">
+        <div class="msg-video ${escapeHtml(isMine?'sent-video':'')} ${secureFinal?'ax-protected-delivery':''}" ${secureFinal&&proj?`data-ax-project-id="${escapeHtml(String(proj.id))}"`:''} style="padding:12px;max-width:340px;">
+          ${secureFinal ? '<div class="ax-delivery-kicker">AALYNEX • SECURE DELIVERY</div>' : ''}
           <div class="msg-video-label"><span style="font-weight:800">${escapeHtml(label)}</span></div>
-          ${secureFinal && proj ? `<div style="font-size:.8rem;color:var(--text-2);margin-top:5px">Project: <strong>${escapeHtml(proj.title||proj.id)}</strong></div>` : ''}
-          <div style="font-size:.82rem;margin:10px 0;overflow-wrap:anywhere">${escapeHtml(fname)}</div>
+          ${secureFinal && proj ? `<div class="ax-delivery-project">${escapeHtml(proj.title||proj.id)}</div>` : ''}
+          <div class="ax-delivery-filename">${escapeHtml(fname)}</div>
+          ${secureFinal ? `<div class="ax-delivery-progress" aria-label="Preview, payment and original delivery"><span class="is-complete">✓ Preview</span><span class="${unlocked?'is-complete':'is-current'}">${unlocked?'✓':'2'} Payment</span><span class="${unlocked?'is-complete':''}">${unlocked?'✓':'3'} Download</span></div>`:''}
           <div id="${id}"></div>${note}
-          <div style="display:flex;flex-wrap:wrap;gap:7px;margin-top:10px">${controls}</div>
+          <div class="ax-delivery-actions">${controls}</div>
           <div class="msg-video-footer"><span>${escapeHtml(isMine?'You':'Sent')}</span><span>${escapeHtml(fmtTime(m.time))}</span></div>
         </div>
       </div>`;
@@ -528,6 +530,60 @@ function requestRevision(freelancerId) {
   showToast('Revision requested!', 'info', '');
 }
 
+// V9.0 — non-billing readiness checks, cached by authenticated account and project.
+// Never infer project payment readiness from its name or from frontend flags.
+const axBillingReady = new Map();
+const axBillingPending = new Set();
+const axBillingStatuses = Object.freeze({
+  ready: 'Ready for secure checkout. Final amount will be shown by Razorpay.',
+  test_only: 'This project was approved for testing only. Live billing review is required.',
+  billing_review_required: 'This project needs operator billing approval before a real payment.',
+  final_delivery_pending: 'The editor must submit the final delivery before checkout.',
+  checkout_paused: 'New project payments are temporarily paused.',
+  live_configuration_required: 'Live payment configuration needs verification.',
+  checkout_needs_review: 'An earlier checkout needs review. Please do not pay again.',
+  existing_payment: 'Payment history exists. Verify the payment before trying again.',
+  service_unavailable: 'Unable to check payment eligibility. Retry when connected.'
+});
+function axBillingKey(id) { return String(CU?.id||'')+':'+String(id); }
+function axBillingText(status) { return axBillingStatuses[status]||'Payment review is required.'; }
+function axBillingMarkup(projectId){
+  const v=axBillingReady.get(axBillingKey(projectId));
+  if(!v){return '<div class="ax-billing-meta is-checking" role="status"><span class="ax-status-dot"></span>Checking checkout eligibility…</div>';}
+  const status=v.status||'service_unavailable';
+  const ready=v.canStartCheckout===true && status==='ready';
+  const budget=Number(v.budgetRupees);
+  const money=Number.isSafeInteger(budget)&&budget>0?`<span>Project budget <strong>₹${budget.toLocaleString('en-IN')}</strong></span>`:'';
+  const btn=ready?`<button type="button" class="btn btn-primary btn-xs ax-secure-pay-btn" data-app-click="${appEvent('axPayInChat',[String(projectId)])}">Pay securely with Razorpay <span aria-hidden="true">→</span></button>`
+     :`<button type="button" class="btn btn-ghost btn-xs ax-billing-refresh" data-app-click="${appEvent('axRefreshBillingStatus',[String(projectId)])}">↻ Check payment status</button>`;
+  return `<div class="ax-billing-meta ${ready?'is-ready':'is-review'}" role="status"><span class="ax-status-dot"></span><span>${escapeHtml(axBillingText(status))}</span></div>
+    ${ready?`<div class="ax-billing-amount">${money}<span>Fees shown at checkout</span></div>`:''}${btn}`;
+}
+async function axRefreshBillingStatus(projectId){
+  const id=String(projectId||''),userId=CU?.id;
+  if(!userId||!supaClient||!axChatUUID.test(id))return;
+  const cacheKey=axBillingKey(id);
+  if(axBillingPending.has(cacheKey))return;
+  axBillingPending.add(cacheKey);
+  const epoch=window._accountSessionEpoch;
+  try{
+    const {data,error}=await supaClient.functions.invoke('project-billing-readiness-v1',{body:{projectId:id}});
+    if(!CU||CU.id!==userId||epoch!==window._accountSessionEpoch)return;
+    if(error||!data||data.projectId!==id||typeof data.status!=='string')throw Error('readiness_unavailable');
+    axBillingReady.set(cacheKey,{status:data.status,canStartCheckout:data.canStartCheckout===true,budgetRupees:data.budgetRupees});
+  }catch(_){if(CU?.id===userId)axBillingReady.set(cacheKey,{status:'service_unavailable',canStartCheckout:false});}
+  finally{
+    axBillingPending.delete(cacheKey);
+    // Repaint ONLY controls, never the video/preview DOM or the message list.
+    if(CU?.id===userId)document.querySelectorAll('[data-ax-billing-project-id]').forEach(element=>{
+      if(element.getAttribute('data-ax-billing-project-id')===id)element.innerHTML=axBillingMarkup(id);
+    });
+  }
+}
+function axQueueBillingStatus(projectId){
+  const key=axBillingKey(projectId);
+  if(!axBillingReady.has(key)&&!axBillingPending.has(key))queueMicrotask(()=>{void axRefreshBillingStatus(projectId);});
+}
 const axVerifiedChatPayments = new Map();
 async function axCheckVerifiedChatPayment(projectId) {
   if(!supaClient || !CU || CU.role !== 'creator')return;
@@ -560,6 +616,12 @@ async function axPayInChat(projectId) {
     String(m.file_url||'').includes(`/projects/${projectId}/preview/`) &&
     String(m.text||'').startsWith('Project Preview:'));
   if(!previewReady){showToast('Watermarked preview required before approval and checkout.','err','');return;}
+  const readiness=axBillingReady.get(axBillingKey(projectId));
+  if(!readiness||readiness.canStartCheckout!==true){
+    await axRefreshBillingStatus(projectId);
+    const latest=axBillingReady.get(axBillingKey(projectId));
+    if(!latest?.canStartCheckout){showToast(axBillingText(latest?.status),'err','');return;}
+  }
   activeManageProjectId = String(projectId);
   window._axPayStartedInChat = String(projectId);
   await completePayment();
