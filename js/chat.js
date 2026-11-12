@@ -536,8 +536,9 @@ const axBillingReady = new Map();
 const axBillingPending = new Set();
 const axBillingStatuses = Object.freeze({
   ready: 'Ready for secure checkout. Final amount will be shown by Razorpay.',
-  test_only: 'This project was approved for testing only. Live billing review is required.',
-  billing_review_required: 'This project needs operator billing approval before a real payment.',
+  test_only: 'This project is marked test-only. Request genuine live-billing review before charging anyone.',
+  billing_review_required: 'Live billing needs review before a real payment can be collected.',
+  review_requested: 'Billing review requested. Approval has not been granted; no charge was created.',
   final_delivery_pending: 'The editor must submit the final delivery before checkout.',
   checkout_paused: 'New project payments are temporarily paused.',
   live_configuration_required: 'Live payment configuration needs verification.',
@@ -554,8 +555,10 @@ function axBillingMarkup(projectId){
   const ready=v.canStartCheckout===true && status==='ready';
   const budget=Number(v.budgetRupees);
   const money=Number.isSafeInteger(budget)&&budget>0?`<span>Project budget <strong>₹${budget.toLocaleString('en-IN')}</strong></span>`:'';
+  const requestAllowed=v.canRequestReview===true && !ready;
   const btn=ready?`<button type="button" class="btn btn-primary btn-xs ax-secure-pay-btn" data-app-click="${appEvent('axPayInChat',[String(projectId)])}">Pay securely with Razorpay <span aria-hidden="true">→</span></button>`
-     :`<button type="button" class="btn btn-ghost btn-xs ax-billing-refresh" data-app-click="${appEvent('axRefreshBillingStatus',[String(projectId)])}">↻ Check payment status</button>`;
+     :requestAllowed?`<button type="button" class="btn btn-primary btn-xs ax-review-request-btn" data-app-click="${appEvent('axRequestBillingReview',[String(projectId)])}">Request live-billing review <span aria-hidden="true">→</span></button><button type="button" class="btn btn-ghost btn-xs ax-billing-refresh" data-app-click="${appEvent('axRefreshBillingStatus',[String(projectId)])}">↻ Refresh status</button>`
+     :`<button type="button" class="btn btn-ghost btn-xs ax-billing-refresh" data-app-click="${appEvent('axRefreshBillingStatus',[String(projectId)])}">↻ Check status</button>`;
   return `<div class="ax-billing-meta ${ready?'is-ready':'is-review'}" role="status"><span class="ax-status-dot"></span><span>${escapeHtml(axBillingText(status))}</span></div>
     ${ready?`<div class="ax-billing-amount">${money}<span>Fees shown at checkout</span></div>`:''}${btn}`;
 }
@@ -570,7 +573,7 @@ async function axRefreshBillingStatus(projectId){
     const {data,error}=await supaClient.functions.invoke('project-billing-readiness-v1',{body:{projectId:id}});
     if(!CU||CU.id!==userId||epoch!==window._accountSessionEpoch)return;
     if(error||!data||data.projectId!==id||typeof data.status!=='string')throw Error('readiness_unavailable');
-    axBillingReady.set(cacheKey,{status:data.status,canStartCheckout:data.canStartCheckout===true,budgetRupees:data.budgetRupees});
+    axBillingReady.set(cacheKey,{status:data.status,canStartCheckout:data.canStartCheckout===true,canRequestReview:data.canRequestReview===true,budgetRupees:data.budgetRupees});
   }catch(_){if(CU?.id===userId)axBillingReady.set(cacheKey,{status:'service_unavailable',canStartCheckout:false});}
   finally{
     axBillingPending.delete(cacheKey);
@@ -584,6 +587,29 @@ function axQueueBillingStatus(projectId){
   const key=axBillingKey(projectId);
   if(!axBillingReady.has(key)&&!axBillingPending.has(key))queueMicrotask(()=>{void axRefreshBillingStatus(projectId);});
 }
+// Genuine project billing review request: NEVER creates a Razorpay order or enables billing.
+function axRequestBillingReview(projectId){
+  if(!CU||CU.role!=='creator'||!supaClient){showToast('Creator account required.','err','');return;}
+  const project=DB.projects().find(p=>String(p.id)===String(projectId) && String(p.creatorId)===String(CU.id));
+  if(!project){showToast('Open a project you own to request billing review.','err','');return;}
+  showModal('Request live billing review',
+    'Request approval ONLY for a genuine creator-editor agreement and delivered work. This does not collect money, change your Razorpay keys, or unlock the original video.',async()=>{
+      const owner=CU?.id;
+      try{
+        const {data,error}=await supaClient.functions.invoke('project-billing-review-request-v1',{body:{projectId:String(projectId)}});
+        if(!CU||CU.id!==owner)return;
+        if(error||data?.ok!==true){
+          let message='Billing review request could not be submitted.';
+          try{const info=await error?.context?.clone?.().json();if(info?.error)message=String(info.error).replaceAll('_',' ');}catch(_){}
+          throw Error(message);
+        }
+        showToast(data.status==='already_approved'?'Billing already approved; refresh to pay.':'Review request submitted. No payment was created.','ok','');
+        await axRefreshBillingStatus(String(projectId));
+      }catch(e){showToast(e.message||'Review request unavailable.','err','');}
+    });
+  const confirm=document.getElementById('modal-confirm');if(confirm)confirm.textContent='Request review';
+}
+
 const axVerifiedChatPayments = new Map();
 async function axCheckVerifiedChatPayment(projectId) {
   if(!supaClient || !CU || CU.role !== 'creator')return;

@@ -66,3 +66,9 @@
 #chat-msgs-el .ax-payment-info{color:var(--text-3);font-size:12px;}
 @media (max-width:600px){#chat-msgs-el .ax-protected-delivery{padding:15px !important;width:min(100%,370px) !important;max-width:min(100%,370px) !important;}#chat-msgs-el .ax-delivery-progress span{font-size:9px;}}
 @media (prefers-reduced-motion:reduce){#chat-msgs-el .ax-protected-delivery *{scroll-behavior:auto;transition-duration:0.01ms !important;animation-duration:0.01ms !important;}}
+
+/* V9.1: checkout vs operator review are explicit separate actions. */
+#chat-msgs-el .ax-protected-delivery .ax-review-request-btn{width:100%;min-height:48px!important;border-radius:13px!important;display:inline-flex;align-items:center;justify-content:center;gap:8px;background:linear-gradient(105deg,#334155,#475569)!important;color:#fff!important;border:0;font-weight:800;box-shadow:0 8px 20px rgba(51,65,85,.13);}
+#chat-msgs-el .ax-protected-delivery .ax-review-request-btn:hover{filter:brightness(1.06);}
+#chat-msgs-el .ax-protected-delivery .ax-review-request-btn:focus-visible{outline:3px solid var(--accent);outline-offset:3px;}
+#chat-msgs-el .ax-billing-slot .ax-billing-refresh{align-self:stretch;text-align:center;min-height:41px;}
