@@ -706,7 +706,7 @@ async function wfContent() {
     }
     return `
       <h3>Receive &amp; Review Edited Video</h3>
-      <div class="alert alert-s"><strong>${escapeHtml(selFreelancerName || 'Your editor')}</strong> has uploaded the edited video! The original remains locked until verified payment and rating. Ask your editor for a separate watermarked preview before approval.</div>
+      <div class="alert alert-s"><strong>${escapeHtml(selFreelancerName || 'Your editor')}</strong> has uploaded the edited video! The original remains locked until server-verified payment. Ask your editor for a separate watermarked preview before approval.</div>
       <div style="background:var(--bg2);border:1px solid var(--glass-border);border-radius:var(--radius);padding:16px;margin-bottom:14px;">
         <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px;">
           <div style="font-size:1.8rem;">
@@ -716,7 +716,7 @@ async function wfContent() {
             <div style="font-weight:500;font-size:.88rem;color:var(--text);">Final_Delivered_Video</div>
             <div style="color:var(--text-3);font-size:.75rem;">Requires Payment to Download</div>
           </div>
-          <span style="margin-left:auto;font-size:.75rem;color:var(--text-3);">Original locked until payment + rating</span>
+          <span style="margin-left:auto;font-size:.75rem;color:var(--text-3);">Original locked until verified payment</span>
         </div>
         <div class="pb"><div class="pf" style="width:100%;"></div></div>
       </div>
@@ -742,7 +742,7 @@ async function wfContent() {
   <h3>Project Complete</h3>
   <div class="alert alert-s" style="margin-bottom:16px;display:flex;align-items:center;gap:10px;">
     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="var(--green)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-    Payment done and rating submitted. This project is fully complete!
+    Payment verified. Your final video is ready to download!
   </div>
   <div style="background:linear-gradient(135deg,rgba(224,92,42,.06),rgba(124,58,237,.05));border:1px solid rgba(224,92,42,.2);border-radius:var(--radius);padding:20px 22px;margin-bottom:16px;text-align:center;">
     <div style="display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:8px;">
@@ -790,7 +790,7 @@ async function wfContent() {
       <div>
         <div class="section-title">Rate ${escapeHtml(eName)}</div>
         <div class="det-card">
-          <p style="margin-bottom:10px;">How was your experience?</p>
+          <p style="margin-bottom:10px;">How was your experience? (Optional — download does not require a rating.)</p>
           <div class="star-rating" id="sr1">${[1, 2, 3, 4, 5].map(n => `<span data-app-click="${appEvent("rateStar", ["sr1", n])}">&#9733;</span>`).join('')}</div>
           <div class="fg" style="margin-top:10px;"><label>Write a Review</label><input id="review-text" placeholder="Amazing work, delivered on time!"/></div>
           <button class="btn btn-primary full-btn" onclick="submitReview()">Submit Review</button>
@@ -810,8 +810,8 @@ async function wfContent() {
 async function downloadEditedVideo(projectId) {
   const p = DB.projects().find(x => x.id === projectId);
   if (!p) return;
-  if (!p.paid || !(Number(p.rating)>=1 && Number(p.rating)<=5)) {
-    showToast('Complete verified payment and rate your editor before downloading.', 'err', '');
+  if (!p.paid) {
+    showToast('Server-verified payment is required before downloading.', 'err', '');
   } else {
     if (!supaClient) {showToast('Sign in required.', 'err', '');return;}
     const {data:verified,error:verifyErr}=await supaClient.functions.invoke('project-media-v2',

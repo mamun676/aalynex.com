@@ -328,7 +328,7 @@ async function axMessageSignedUrl(messageId) {
   if (error || !data?.downloadUrl) {
     const reason=String(data?.error||'');
     throw new Error(reason==='payment_required'?'Original locked until verified payment.':
-      reason==='rating_required'?'Rate your editor before downloading.':
+      reason==='rating_required'?'Original needs server verification before download.':
       reason==='legacy_file_needs_project_link'?'Older file needs exact project verification.':
       'Secure attachment could not be authorized.');
   }
@@ -391,7 +391,7 @@ function renderMsgs(msgs, myId) {
         (!isMine && isCreator && !String(m.file_url).includes('/preview/') && /\.(mp4|mov|webm|m4v|mkv|avi)$/i.test(String(m.file_url)));
       const secureFinal = final && !isMine && isCreator;
       const payProof = proj ? axVerifiedChatPayments.get(proj.id) : null;
-      const unlocked = !!(payProof && payProof.verified && payProof.unlocked && Number(proj.rating) >= 1);
+      const unlocked = !!(payProof && payProof.verified && payProof.unlocked);
       // Only separately uploaded PREVIEW objects (not the original) are eligible
       // for prepayment playback. It must be from the actual assigned editor.
       const previewMsg = proj && msgs.find(x => x.file_url &&
@@ -410,19 +410,16 @@ function renderMsgs(msgs, myId) {
             : `<span style="font-size:.73rem;color:var(--text-3)">Waiting for editor's watermarked preview.</span>`;
           const payControl = !proj.paid
             ? previewMsg
-                ? `<button class="btn btn-primary btn-xs" data-app-click="${appEvent('axPayInChat',[String(proj.id)])}">${String(proj.id)==='2ccb248a-ca4b-4349-9ed0-fd07dd55bdba'?'Test checkout (TEST mode required)':'Pay securely'} · ₹${escapeHtml(fmt(proj.budget))}</button>`
+                ? String(proj.id)==='2ccb248a-ca4b-4349-9ed0-fd07dd55bdba'
+                  ? `<span style="font-size:.77rem;color:var(--text-3)">Demo project — real-money checkout is disabled.</span>`
+                  : `<button class="btn btn-primary btn-xs" data-app-click="${appEvent('axPayInChat',[String(proj.id)])}">Pay securely · ₹${escapeHtml(fmt(proj.budget))}</button>`
                 : `<span style="font-size:.73rem;color:var(--text-3)">Preview required before approving this project. Checkout unavailable.</span>`
             : !payProof
               ? `<button class="btn btn-ghost btn-xs" data-app-click="${appEvent('axCheckVerifiedChatPayment',[String(proj.id)])}">Check verified payment</button>`
               : !payProof.verified
                 ? `<span style="font-size:.74rem;color:var(--text-3)">Payment record needs verification. Do not pay again.</span>`
-                : Number(proj.rating)<1
-                  ? `<div style="width:100%;font-size:.78rem;color:var(--text-2)">Payment verified. Rate your editor:
-                    <div class="star-rating" id="sr-${escapeHtml(proj.id)}">${[1,2,3,4,5].map(n=>`<span data-app-click="${appEvent('rateStar',['sr-'+String(proj.id),n])}">★</span>`).join('')}</div>
-                    <button class="btn btn-primary btn-xs" data-app-click="${appEvent('saveRating',[String(proj.id)])}">Save rating</button>
-                  </div>`
-                  : unlocked ? `<button class="btn btn-primary btn-xs" data-app-click="${appEvent('downloadEditedVideo',[String(proj.id)])}">⬇ Download original (verified)</button>`
-                    : `<button class="btn btn-ghost btn-xs" data-app-click="${appEvent('axCheckVerifiedChatPayment',[String(proj.id)])}">Verify unlock status</button>`;
+                : unlocked ? `<button class="btn btn-primary btn-xs" data-app-click="${saveAction}">⬇ Download original (verified)</button>`
+                  : `<button class="btn btn-ghost btn-xs" data-app-click="${appEvent('axCheckVerifiedChatPayment',[String(proj.id)])}">Verify unlock status</button>`;
           controls = `${previewControl}${payControl}`;
         }
       } else if(final && isMine && proj && String(proj.freelancerId)===String(myId) && !previewMsg) {
@@ -433,9 +430,9 @@ function renderMsgs(msgs, myId) {
       }
       const label = secureFinal ? 'Protected final delivery' : 'Project attachment';
       const note = secureFinal && !unlocked ?
-        '<div style="font-size:.73rem;color:var(--text-3);margin-top:7px">Original is locked until server-verified payment and rating. View only the separate watermarked preview; the original is never served before unlock.</div>':'';
+        '<div style="font-size:.73rem;color:var(--text-3);margin-top:7px">Original remains locked until payment is verified by the server. The watermarked preview is separate; the original is only served after verification.</div>':'';
       return `<div style="display:flex;flex-direction:column;align-items:${escapeHtml(flexAlign)};margin-bottom:9px;width:100%;">
-        <div class="msg-video ${escapeHtml(isMine?'sent-video':'')}" style="padding:12px;max-width:340px;">
+        <div class="msg-video ${escapeHtml(isMine?'sent-video':'')} ${secureFinal?'ax-protected-delivery':''}" style="padding:12px;max-width:340px;">
           <div class="msg-video-label"><span style="font-weight:800">${escapeHtml(label)}</span></div>
           ${secureFinal && proj ? `<div style="font-size:.8rem;color:var(--text-2);margin-top:5px">Project: <strong>${escapeHtml(proj.title||proj.id)}</strong></div>` : ''}
           <div style="font-size:.82rem;margin:10px 0;overflow-wrap:anywhere">${escapeHtml(fname)}</div>

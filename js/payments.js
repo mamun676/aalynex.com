@@ -40,13 +40,13 @@ async function completePayment() {
    showToast('Existing payment verified. No new charge created.','ok','');reset();return;
   }
   if(!['no_managed_checkout','unpaid'].includes(recovery.status))throw new Error('Existing checkout needs review. Do not pay again.');
-  // Dedicated, server-restricted TEST checkout for the one audited ₹1 test project.
-  // Live production checkout remains paused and no other project can use this endpoint.
-  const orderEndpoint = projectId==='2ccb248a-ca4b-4349-9ed0-fd07dd55bdba'
-    ? 'project-order-test-v3' : 'project-order-v2';
-  const order=await call(orderEndpoint,{projectId});
+  // MAIN checkout only: do not mix Razorpay TEST orders with live verification.
+  // The demo-only project must never turn into a real-money charge.
+  if(projectId==='2ccb248a-ca4b-4349-9ed0-fd07dd55bdba')
+    throw new Error('This demo project cannot receive live payments. Create a real approved project for billing.');
+  const order=await call('project-order-v2',{projectId});
   if(!owns()){reset();return;}
-  if(order.project_id!==projectId||!/^order_[A-Za-z0-9]+$/.test(order.id||'')||!/^rzp_(test|live)_/.test(order.key_id||'')||!Number.isSafeInteger(order.amount)||order.amount<=0||order.currency!=='INR') throw new Error('Invalid server checkout response');
+  if(order.project_id!==projectId||!/^order_[A-Za-z0-9]+$/.test(order.id||'')||!/^rzp_live_/.test(order.key_id||'')||!Number.isSafeInteger(order.amount)||order.amount<=0||order.currency!=='INR') throw new Error('Invalid server checkout response');
   const rzp=new window.Razorpay({
    key:order.key_id, amount:order.amount, currency:order.currency, order_id:order.id,
    name:'Aalynex',description:`Payment for: ${p.title}`,image:'aalynex-logo.png',
@@ -57,14 +57,17 @@ async function completePayment() {
      const result=await call('project-verify-v2',{projectId,razorpay_order_id:response.razorpay_order_id,razorpay_payment_id:response.razorpay_payment_id,razorpay_signature:response.razorpay_signature});
      if(!result.ok||result.project_id!==projectId) throw new Error('Payment requires reconciliation');
      if(!owns()) return;
-     // Never set paid locally or send a fake settlement message from the browser.
+     // Never trust the browser callback alone: check server-verified payment evidence.
+     const entitlement=await call('project-media-v2',{action:'payment_status',projectId});
+     if(entitlement.projectId!==projectId || entitlement.verified!==true || entitlement.downloadUnlocked!==true)
+       throw new Error('Payment accepted but final unlock still needs server reconciliation. Do not pay again.');
      await syncFromSupabase(CU);
      if(!owns()) return;
      if(window._axPayStartedInChat===projectId){
      window._axPayStartedInChat=null;
      if(typeof axCheckVerifiedChatPayment==='function') await axCheckVerifiedChatPayment(projectId);
    } else {activeManageProjectId=projectId;wfStep=7;renderC('new');}
-     showToast('Payment verified. You can now rate your editor.','ok','');
+     showToast('Payment verified. Your original video can now be downloaded.','ok','');
     }catch(e){if(owns()) showToast('Payment verify nahi hua: '+e.message+' Paisa cut gaya ho to dobara pay mat karo; support se contact karo.','err','');}
     finally{reset();}
    },
