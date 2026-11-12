@@ -94,3 +94,169 @@
 #chat-msgs-el .ax-protected-delivery .ax-delivery-actions .ax-two-preview {background:var(--card,var(--bg2));border:1px solid var(--border);color:var(--text)!important;}
 #chat-msgs-el .ax-protected-delivery .ax-delivery-actions .ax-two-action {background:linear-gradient(105deg,#db572c,#f17c46)!important;color:#fff!important;border:0!important;}
 #chat-msgs-el .ax-protected-delivery .ax-delivery-actions .ax-download-original {background:linear-gradient(105deg,#16764b,#20a266)!important;}
+
+/* Aalynex V9.5 · premium frosted delivery. Visual-only; events and payment gates unchanged. */
+#chat-msgs-el .ax-protected-delivery {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  width: min(100%, 398px) !important;
+  max-width: min(100%, 398px) !important;
+  padding: 17px 18px 14px !important;
+  border: 1px solid rgba(255, 255, 255, .58) !important;
+  border-radius: 26px !important;
+  background: linear-gradient(135deg,rgba(255,255,255,.38) 0%,rgba(255,255,255,.12) 49%,rgba(237,109,65,.075) 100%), color-mix(in srgb,var(--card,var(--bg2)) 83%,transparent) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(145%);
+  backdrop-filter: blur(20px) saturate(145%);
+  box-shadow: 0 20px 45px rgba(31,35,46,.105), 0 4px 14px rgba(31,35,46,.045), inset 0 1px rgba(255,255,255,.60) !important;
+  transition: box-shadow .22s ease, border-color .22s ease;
+}
+#chat-msgs-el .ax-protected-delivery::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: radial-gradient(ellipse at 0 0,rgba(255,255,255,.34),transparent 58%),radial-gradient(ellipse at 100% 100%,rgba(235,101,57,.08),transparent 54%);
+}
+#chat-msgs-el .ax-protected-delivery:hover {
+  border-color: rgba(234,125,89,.35) !important;
+  box-shadow: 0 23px 48px rgba(31,35,46,.14),0 5px 14px rgba(31,35,46,.04),inset 0 1px rgba(255,255,255,.6) !important;
+}
+#chat-msgs-el .ax-protected-delivery .msg-video-label {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  gap: 10px;
+  padding: 11px 12px;
+  margin: 0 0 13px;
+  border-radius: 16px;
+  border: 1px solid rgba(255,255,255,.54);
+  background: rgba(255,255,255,.33);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.50);
+  font-size: 13px;
+  font-weight: 850;
+  line-height: 1.3;
+}
+#chat-msgs-el .ax-protected-delivery .msg-video-label::before {
+  content: "✓";
+  display: inline-flex;
+  flex: 0 0 36px;
+  width: 36px;
+  height: 36px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  background: linear-gradient(135deg,rgba(243,131,80,.20),rgba(243,131,80,.07));
+  color: #dc6235;
+  font-size: 18px;
+}
+#chat-msgs-el .ax-protected-delivery .ax-delivery-project {
+  margin: 1px 3px 0;
+  font-weight: 850;
+  font-size: 18px;
+  line-height: 1.3;
+  letter-spacing: -.45px;
+  color: var(--text);
+  overflow-wrap: anywhere;
+}
+#chat-msgs-el .ax-protected-delivery .ax-delivery-filename {
+  margin: 5px 3px 0;
+  color: var(--text-2,var(--text));
+  opacity: .72;
+  font-size: 12px;
+}
+#chat-msgs-el .ax-protected-delivery .ax-delivery-actions {
+  display: grid !important;
+  grid-template-columns: minmax(0,1fr) minmax(0,1fr);
+  gap: 12px !important;
+  margin-top: 19px !important;
+  align-items: stretch;
+}
+#chat-msgs-el .ax-protected-delivery .ax-delivery-actions > button {
+  min-height: 51px !important;
+  border-radius: 16px !important;
+  font-size: 13px !important;
+  letter-spacing: .05px;
+  font-weight: 850 !important;
+  line-height: 1.2 !important;
+  white-space: nowrap;
+  transition: transform .17s ease,box-shadow .17s ease,filter .17s ease,background-color .17s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+#chat-msgs-el .ax-protected-delivery .ax-delivery-actions .ax-two-preview {
+  color: var(--text) !important;
+  background: rgba(255,255,255,.58) !important;
+  border: 1px solid rgba(255,255,255,.75) !important;
+  box-shadow: inset 0 1px rgba(255,255,255,.55),0 5px 16px rgba(31,35,46,.065) !important;
+}
+#chat-msgs-el .ax-protected-delivery .ax-delivery-actions .ax-two-action {
+  background: linear-gradient(115deg,#dd673b,#f17b49) !important;
+  color: #fff !important;
+  border: 1px solid rgba(255,255,255,.16) !important;
+  box-shadow: 0 8px 18px rgba(217,100,53,.23),inset 0 1px rgba(255,255,255,.20) !important;
+}
+#chat-msgs-el .ax-protected-delivery .ax-delivery-actions .ax-download-original {
+  background: linear-gradient(115deg,#167a51,#22ad71) !important;
+  box-shadow: 0 8px 18px rgba(25,146,92,.20),inset 0 1px rgba(255,255,255,.18) !important;
+}
+#chat-msgs-el .ax-protected-delivery .ax-delivery-actions > button:not(:disabled):hover {
+  transform: translateY(-2px);
+  filter: brightness(1.025);
+}
+#chat-msgs-el .ax-protected-delivery .ax-delivery-actions > button:not(:disabled):active {
+  transform: translateY(0) scale(.985);
+}
+#chat-msgs-el .ax-protected-delivery .ax-delivery-actions > button:focus-visible {
+  outline: 3px solid var(--accent,#e66c3d) !important;
+  outline-offset: 3px;
+}
+#chat-msgs-el .ax-protected-delivery .ax-delivery-actions > button:disabled {
+  opacity: .52 !important;
+  box-shadow: none !important;
+  transform: none !important;
+}
+#chat-msgs-el .ax-protected-delivery .msg-video-footer {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 13px;
+  padding-top: 11px;
+  border-top: 1px solid rgba(130,140,155,.12);
+  color: var(--text-3,var(--text-2));
+  font-size: 11px;
+}
+@media (max-width: 560px) {
+  #chat-msgs-el .ax-protected-delivery {
+    width: min(100%,360px) !important;
+    max-width: min(100%,360px) !important;
+    padding: 14px !important;
+    border-radius: 22px !important;
+  }
+  #chat-msgs-el .ax-protected-delivery .ax-delivery-actions {gap: 8px !important;}
+  #chat-msgs-el .ax-protected-delivery .ax-delivery-actions > button {min-height: 48px !important;font-size: 12px !important;padding: 8px 4px !important;}
+}
+/* Dark mode: keep the glass dark and text readable. */
+html[data-theme='dark'] #chat-msgs-el .ax-protected-delivery,
+body.dark #chat-msgs-el .ax-protected-delivery,
+body.dark-mode #chat-msgs-el .ax-protected-delivery {
+  border-color: rgba(255,255,255,.14) !important;
+  background: linear-gradient(130deg,rgba(255,255,255,.085),rgba(255,255,255,.025) 55%,rgba(255,125,76,.055)),color-mix(in srgb,var(--card,var(--bg2)) 88%,transparent) !important;
+  box-shadow: 0 18px 44px rgba(0,0,0,.30),inset 0 1px rgba(255,255,255,.08) !important;
+}
+html[data-theme='dark'] #chat-msgs-el .ax-protected-delivery .msg-video-label,
+body.dark #chat-msgs-el .ax-protected-delivery .msg-video-label,
+body.dark-mode #chat-msgs-el .ax-protected-delivery .msg-video-label {
+  background: rgba(255,255,255,.055);
+  border-color: rgba(255,255,255,.12);
+}
+html[data-theme='dark'] #chat-msgs-el .ax-protected-delivery .ax-two-preview,
+body.dark #chat-msgs-el .ax-protected-delivery .ax-two-preview,
+body.dark-mode #chat-msgs-el .ax-protected-delivery .ax-two-preview {
+  background: rgba(255,255,255,.09) !important;
+  border-color: rgba(255,255,255,.16) !important;
+}
+@media (prefers-reduced-motion: reduce) {
+  #chat-msgs-el .ax-protected-delivery,
+  #chat-msgs-el .ax-protected-delivery .ax-delivery-actions > button {transition:none !important;}
+}

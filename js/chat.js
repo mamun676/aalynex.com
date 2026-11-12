@@ -4,7 +4,7 @@
   if(typeof document==='undefined'||document.getElementById('ax-v94-checkout-css'))return;
   const link=document.createElement('link');
   link.id='ax-v94-checkout-css';link.rel='stylesheet';
-  link.href='/css/ax-delivery-v88.css?v=aalynex-v94';
+  link.href='/css/ax-delivery-v88.css?v=aalynex-v95';
   document.head.appendChild(link);
 })();
 // Text-message outbox only. Attachment path below remains the legacy flow.
