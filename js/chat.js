@@ -410,9 +410,7 @@ function renderMsgs(msgs, myId) {
             : `<span style="font-size:.73rem;color:var(--text-3)">Waiting for editor's watermarked preview.</span>`;
           const payControl = !proj.paid
             ? previewMsg
-                ? String(proj.id)==='2ccb248a-ca4b-4349-9ed0-fd07dd55bdba'
-                  ? `<span style="font-size:.77rem;color:var(--text-3)">Demo project — real-money checkout is disabled.</span>`
-                  : `<button class="btn btn-primary btn-xs" data-app-click="${appEvent('axPayInChat',[String(proj.id)])}">Pay securely · ₹${escapeHtml(fmt(proj.budget))}</button>`
+                ? `<button class="btn btn-primary btn-xs ax-secure-pay-btn" data-app-click="${appEvent('axPayInChat',[String(proj.id)])}">Pay with Razorpay · Review amount</button>`
                 : `<span style="font-size:.73rem;color:var(--text-3)">Preview required before approving this project. Checkout unavailable.</span>`
             : !payProof
               ? `<button class="btn btn-ghost btn-xs" data-app-click="${appEvent('axCheckVerifiedChatPayment',[String(proj.id)])}">Check verified payment</button>`

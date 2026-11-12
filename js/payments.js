@@ -9,24 +9,44 @@ async function completePayment() {
  const owns=()=>CU?.id===userId && window._accountSessionEpoch===epoch;
  const btn=document.querySelector('.btn-green-btn');
  const reset=()=>{window._axPayStartedInChat=null;_axProjectCheckoutBusy=false;if(owns()&&btn?.isConnected){btn.disabled=false;btn.textContent='Pay Now →';}};
- const base='https://sfzbrygqpodjinhpagaz.supabase.co/functions/v1/';
  async function call(name,body) {
-  const {data:{session}}=await supaClient.auth.getSession();
-  if(!owns()||!session||session.user.id!==userId) throw new Error('Account changed. Sign in with the paying account; do not pay again.');
-  const res=await fetch(base+name,{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${session.access_token}`},body:JSON.stringify(body)});
-  const result=await res.json();
-  if(!res.ok) {
-   if(res.status===503 && result?.error==='Test checkout unavailable: provider is not in test mode')
-    throw new Error('TEST checkout is paused: MAIN provider is not in Razorpay TEST mode. A separate test-key verification flow is required; no payment was started.');
-   if(res.status===503 && result?.error==='Project checkout is paused')
-    throw new Error('Project checkout is paused on the server. Do not transfer money outside Aalynex.');
-   throw new Error(typeof result.error==='string'?result.error:'Payment request failed');
+  const {data:{session},error:sessionError}=await supaClient.auth.getSession();
+  if(sessionError||!owns()||!session||session.user.id!==userId) throw new Error('Account changed. Sign in with the paying account; do not pay again.');
+  // The SDK sends the publishable apikey plus the user's session JWT.
+  // Keep the same authenticated transport used by chat and media calls.
+  const {data,error}=await supaClient.functions.invoke(name,{body});
+  if(error){
+   let status=0,details=null;
+   const context=error.context;
+   if(context && typeof context.status==='number')status=context.status;
+   if(context && typeof context.clone==='function'){
+    try{details=await context.clone().json();}catch(_){/* Keep safe generic message */}
+   }
+   const message=String(details?.error||'');
+   if(status===503 && message==='Project checkout is paused')
+    throw new Error('Razorpay project checkout is paused by the server. Merchant activation is still pending; no charge was created.');
+   if(status===403 && /test.only|demo|live approval/i.test(message))
+    throw new Error('This project is test-only. It requires genuine live billing approval before a real-money payment.');
+   if(status===409)throw new Error('Existing checkout needs reconciliation. Do not pay again.');
+   throw new Error(message||'Secure payment service unavailable. No new payment should be attempted.');
   }
-  return result;
+  if(!owns()||!data||typeof data!=='object')throw new Error('Invalid session or payment response.');
+  return data;
  }
  _axProjectCheckoutBusy=true;
  if(btn){btn.disabled=true;btn.textContent='Processing…';}
  try {
+  // Check signed server evidence before attempting any charge.
+  const state=await call('project-media-v2',{action:'payment_status',projectId});
+  if(state.projectId!==projectId)throw new Error('Payment proof project mismatch');
+  if(state.verified===true||state.paid===true){
+   if(state.downloadUnlocked===true){
+    if(window._axPayStartedInChat===projectId && typeof axCheckVerifiedChatPayment==='function')
+      await axCheckVerifiedChatPayment(projectId);
+    showToast('Payment already verified. Original download is available.','ok','');
+   }else showToast('Existing payment is awaiting verification. Do not pay again.','info','');
+   reset();return;
+  }
   // First check an existing checkout without creating/capturing another payment.
   const recovery=await call('project-recover-v2',{projectId});
   if(!owns()){reset();return;}
@@ -40,13 +60,12 @@ async function completePayment() {
    showToast('Existing payment verified. No new charge created.','ok','');reset();return;
   }
   if(!['no_managed_checkout','unpaid'].includes(recovery.status))throw new Error('Existing checkout needs review. Do not pay again.');
-  // MAIN checkout only: do not mix Razorpay TEST orders with live verification.
-  // The demo-only project must never turn into a real-money charge.
-  if(projectId==='2ccb248a-ca4b-4349-9ed0-fd07dd55bdba')
-    throw new Error('This demo project cannot receive live payments. Create a real approved project for billing.');
+  // The production Edge Function is authoritative for project eligibility,
+  // provider mode, existing payment, and operator approval. Never bypass it.
   const order=await call('project-order-v2',{projectId});
   if(!owns()){reset();return;}
   if(order.project_id!==projectId||!/^order_[A-Za-z0-9]+$/.test(order.id||'')||!/^rzp_live_/.test(order.key_id||'')||!Number.isSafeInteger(order.amount)||order.amount<=0||order.currency!=='INR') throw new Error('Invalid server checkout response');
+  if(typeof window.Razorpay!=='function')throw new Error('Razorpay Checkout failed to load. Reload the secure site before trying again.');
   const rzp=new window.Razorpay({
    key:order.key_id, amount:order.amount, currency:order.currency, order_id:order.id,
    name:'Aalynex',description:`Payment for: ${p.title}`,image:'aalynex-logo.png',
