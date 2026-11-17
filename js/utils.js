@@ -10,6 +10,19 @@ async function axGetOwnPhone() {
   return typeof data === 'string' ? data : '';
 }
 
+// Public freelancer leaderboard metrics, never derived from other clients' private project rows.
+function axFreelancerStats(freelancerId) {
+  const row = DB.freelancerStats().find(x => String(x.freelancer_id) === String(freelancerId));
+  const asNumber = value => Number.isFinite(Number(value)) ? Number(value) : 0;
+  return {
+    completedCount: asNumber(row?.completed_projects),
+    avgRating: asNumber(row?.avg_rating),
+    reviewsCount: asNumber(row?.total_reviews),
+    recentCount: asNumber(row?.recent_completed_7d),
+    recentRated: asNumber(row?.recent_rated_7d)
+  };
+}
+
 /* ── ID + FORMATTERS ── */
 function uid() { return 'u' + Date.now() + Math.random().toString(36).slice(2, 7); }
 function pid() {

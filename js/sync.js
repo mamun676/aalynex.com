@@ -94,9 +94,17 @@ DB.saveUsers(localUsers);
       if (_plan) window._premiumPlan = _plan;
     } catch (e) {}
 
-    const { data: projects } = await supaClient.from('projects').select('*');
+    // Stats are public aggregated numbers, not raw client/project details.
+    const { data: statsRows, error: statsError } = await supaClient.from('public_freelancer_stats')
+      .select('freelancer_id,completed_projects,avg_rating,total_reviews,recent_completed_7d,recent_rated_7d');
     if (!ownsSession()) return;
-    if (projects && projects.length) {
+    if (Array.isArray(statsRows)) DB.saveFreelancerStats(statsRows);
+    else if (statsError) console.warn('Public freelancer stats unavailable', statsError);
+
+    // Once RLS is tightened, only owned/assigned/invited projects will be returned.
+    const { data: projects, error: projectSyncError } = await supaClient.from('projects').select('*');
+    if (!ownsSession()) return;
+    if (Array.isArray(projects) && !projectSyncError) {
       const mapped = projects.map(p => ({
         id: p.id, creatorId: p.creator_id, freelancerId: p.freelancer_id || null,
         invited_freelancers: p.invited_freelancers || [],
@@ -108,6 +116,8 @@ DB.saveUsers(localUsers);
       }));
       mapped.sort((a, b) => (a.createdAt - b.createdAt) || String(a.id).localeCompare(String(b.id)));
 DB.saveProjects(mapped);
+    } else if (projectSyncError) {
+      console.warn('Project sync failed; leaving existing projects unchanged', projectSyncError);
     }
 
     const { data: attachments } = await supaClient.from('project_attachments').select('*');

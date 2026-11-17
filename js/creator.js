@@ -332,21 +332,7 @@ function cHome() {
   // ── Freelancer preview row (Top 6, last 7 days) ──
   const sevenDaysAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
   const allF = DB.users().filter(u => u.role === 'freelancer');
-  const allP = DB.projects();
-
-  const getFStats = (fid) => {
-    const allComp     = allP.filter(p => p.freelancerId === fid && p.status === 'completed');
-    const recentComp  = allComp.filter(p => p.createdAt >= sevenDaysAgo);
-    const rated       = allComp.filter(p => p.rating && p.rating > 0);
-    const recentRated = recentComp.filter(p => p.rating && p.rating > 0);
-    const avg         = rated.length > 0 ? rated.reduce((s, p) => s + p.rating, 0) / rated.length : 0;
-    return {
-      completedCount: allComp.length,
-      recentCount:    recentComp.length,
-      recentRated:    recentRated.length,
-      avgRating:      avg
-    };
-  };
+  const getFStats = fid => axFreelancerStats(fid);
 
   const sortedF = [...allF]
     .sort((a, b) => {
@@ -486,15 +472,11 @@ async function viewFreelancerPortfolio(freelancerId) {
     const links = profile.portfolio_links || {};
     const exp = profile.experience || [];
 
-    // Dynamic rating & completed projects (same logic as freelancer card)
-    const allProjects = DB.projects();
-    const completedProjs = allProjects.filter(p => p.freelancerId === freelancerId && p.status === 'completed');
-    const ratedProjs = completedProjs.filter(p => p.rating && p.rating > 0);
-    const avgRating = ratedProjs.length > 0
-      ? (ratedProjs.reduce((s, p) => s + p.rating, 0) / ratedProjs.length).toFixed(1)
-      : null;
-    const completedCount = completedProjs.length;
-    const reviewsCount = ratedProjs.length;
+    // Public aggregate replaces every other creator's private completed project records.
+    const publicStats = axFreelancerStats(freelancerId);
+    const completedCount = publicStats.completedCount;
+    const reviewsCount = publicStats.reviewsCount;
+    const avgRating = publicStats.avgRating > 0 ? publicStats.avgRating.toFixed(1) : null;
 
     let html = `
       <div style="display:flex;flex-direction:column;gap:18px;">
@@ -633,15 +615,9 @@ async function wfContent() {
     }
     if (!editors || editors.length === 0) editors = DB.users().filter(u => u.role === "freelancer");
 
-    // Dynamic rating & completed projects per freelancer
-    const allProjects = DB.projects();
-    const getFreelancerStats = (fid) => {
-      const completed = allProjects.filter(p => p.freelancerId === fid && p.status === 'completed');
-      const rated = completed.filter(p => p.rating && p.rating > 0);
-      const avgRating = rated.length > 0
-        ? (rated.reduce((s, p) => s + p.rating, 0) / rated.length).toFixed(1)
-        : null;
-      return { completedCount: completed.length, avgRating };
+    const getFreelancerStats = fid => {
+      const stats = axFreelancerStats(fid);
+      return { completedCount: stats.completedCount, avgRating: stats.avgRating > 0 ? stats.avgRating.toFixed(1) : null };
     };
 
     return `
@@ -1360,14 +1336,10 @@ function fisherYatesShuffle(arr) {
 }
 
 function hybridQualityScore(f) {
-  const allP = DB.projects();
-  const completed = allP.filter(p => p.freelancerId === f.id && p.status === 'completed');
-  const rated = completed.filter(p => p.rating && p.rating > 0);
-  const avg = rated.length > 0 ? rated.reduce((s, p) => s + p.rating, 0) / rated.length : 0;
+  const stats = axFreelancerStats(f.id);
   const skillBonus = Math.min((f.skills || []).length, 5) * 0.2;
   const portfolioBonus = (f.portfolio_links && Object.values(f.portfolio_links).some(v => v && v.trim())) ? 0.5 : 0;
-  // Weighted blend: rating (x2) + completed volume + profile completeness
-  return (avg * 2) + completed.length + skillBonus + portfolioBonus;
+  return (stats.avgRating * 2) + stats.completedCount + skillBonus + portfolioBonus;
 }
 
 function cBrowseFreelancers() {
@@ -1386,12 +1358,7 @@ function cBrowseFreelancers() {
     list = list.filter(f => f.is_managed_editor);
   }
 
-  const statOf = (f) => {
-    const completed = DB.projects().filter(p => p.freelancerId === f.id && p.status === 'completed');
-    const rated = completed.filter(p => p.rating && p.rating > 0);
-    const avg = rated.length > 0 ? (rated.reduce((s, p) => s + p.rating, 0) / rated.length) : 0;
-    return { completedCount: completed.length, avgRating: avg };
-  };
+  const statOf = (f) => axFreelancerStats(f.id);
 
   if (_browseSort === 'best') {
     list = fisherYatesShuffle(list).sort((a, b) => hybridQualityScore(b) - hybridQualityScore(a));
@@ -1585,9 +1552,8 @@ function cManagedEditing() {
        </div>`;
 
   const cards = editors.length ? editors.map(f => {
-    const completed = DB.projects().filter(p => p.freelancerId === f.id && p.status === 'completed');
-    const rated = completed.filter(p => p.rating && p.rating > 0);
-    const avg = rated.length ? (rated.reduce((s, p) => s + p.rating, 0) / rated.length) : 0;
+    const publicStats = axFreelancerStats(f.id);
+    const avg = publicStats.avgRating;
     const ratingDisplay = avg > 0 ? avg.toFixed(1) : 'New';
     const stars = avg > 0
       ? Array.from({ length: 5 }, (_, i) => `<span style="color:${escapeHtml(i < Math.round(avg) ? 'var(--yellow)' : 'rgba(0,0,0,0.12)')}">&#9733;</span>`).join('')
@@ -1600,7 +1566,7 @@ function cManagedEditing() {
       <div class="f-avatar" style="${escapeHtml(f.photo_url ? 'background:transparent;' : '')}">${f.photo_url ? `<img src="${safeMediaUrl(f.photo_url)}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">` : (escapeHtml(f.avatar || 'F'))}</div>
       <div class="f-name">${escapeHtml(f.name)} <span class="tag" style="background:var(--accent);color:#fff;font-size:.58rem;vertical-align:middle;">🏆 Managed</span></div>
       <div class="stars">${stars}</div>
-      <div class="f-rate">${escapeHtml(ratingDisplay)} &middot; ${escapeHtml(completed.length)} Projects</div>
+      <div class="f-rate">${escapeHtml(ratingDisplay)} &middot; ${escapeHtml(publicStats.completedCount)} Projects</div>
       <div class="f-spec">${escapeHtml(f.specialization || f.profession || 'Managed Editor')}</div>
       ${priceLine}
       <div style="display:flex;flex-direction:column;gap:6px;width:100%;margin-top:10px;">
