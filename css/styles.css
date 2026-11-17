@@ -582,6 +582,28 @@ height:100%;min-height:0;
    now, deliberately WITHOUT its own scrolling or flex growth, so the nav
    items participate in the sidebar's single scroll. */
 .sb-scroll{display:flex;flex-direction:column;gap:2px;}
+
+/* Freelancer: match creator's bottom Logout while keeping navigation flexible.
+   Future nav items scroll inside .sb-scroll; Logout remains visible at the foot. */
+#f-sidebar {
+  overflow: hidden;
+}
+#f-sidebar .sb-scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior-y: contain;
+  scrollbar-width: thin;
+  padding-bottom: 12px;
+}
+#f-sidebar .sb-scroll > * {
+  flex-shrink: 0;
+}
+#f-sidebar .sb-logout {
+  margin-top: 8px;
+}
+
 .sb-profile{background:var(--bg2);border:1px solid var(--glass-border);border-radius:var(--radius);padding:14px;margin-bottom:16px;display:flex;align-items:center;gap:11px;}
 .sb-avatar{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:1rem;flex-shrink:0;font-family:'Outfit',sans-serif;}
 .sb-av-creator{background:linear-gradient(135deg,var(--creator),#059669);color:#fff;}
