@@ -1,5 +1,6 @@
-/* Aalynex Chat V2 — opt-in only. Legacy message, payment and file paths stay intact.
- * Enable in the current tab with ?axchatv2=1; disable with ?axchatv2=0.
+/* Aalynex Chat V2 — default enabled after two-account preview validation.
+ * Emergency per-tab fallback: ?axchatv2=0; re-enable: ?axchatv2=1.
+ * This flag changes ONLY the optional V2 client; legacy send, media and payments stay intact.
  * Do not store message content or peer presence in browser storage.
  */
 (function () {
@@ -8,10 +9,12 @@
   let enabled = false;
   try {
     const requested = new URLSearchParams(window.location.search).get('axchatv2');
+    // Explicit opt-out must persist for the tab; removing the key would
+    // accidentally turn V2 straight back on now that V2 is the default.
     if (requested === '1') sessionStorage.setItem(configKey, '1');
-    if (requested === '0') sessionStorage.removeItem(configKey);
-    enabled = sessionStorage.getItem(configKey) === '1';
-  } catch (_) { enabled = false; }
+    if (requested === '0') sessionStorage.setItem(configKey, '0');
+    enabled = sessionStorage.getItem(configKey) !== '0';
+  } catch (_) { enabled = false; } // Fail closed to legacy chat.
 
   window.axChatV2 = { enabled: false };
   if (!enabled) return;
