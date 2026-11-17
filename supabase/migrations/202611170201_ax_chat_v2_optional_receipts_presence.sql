@@ -113,10 +113,21 @@ GRANT ALL ON TABLE public.axv2_presence TO service_role;
 CREATE POLICY axv2_presence_conversation_peers
 ON public.axv2_presence FOR SELECT TO authenticated
 USING (
-  user_id = (SELECT auth.uid()) OR EXISTS (
-    SELECT 1 FROM public.conversations c
-    WHERE (c.user1_id = (SELECT auth.uid()) AND c.user2_id = user_id)
-       OR (c.user2_id = (SELECT auth.uid()) AND c.user1_id = user_id)
+  user_id = (SELECT auth.uid()) OR (
+    EXISTS (
+      SELECT 1 FROM public.conversations c
+      WHERE (c.user1_id = (SELECT auth.uid()) AND c.user2_id = axv2_presence.user_id)
+         OR (c.user2_id = (SELECT auth.uid()) AND c.user1_id = axv2_presence.user_id)
+    )
+    AND EXISTS (
+      SELECT 1 FROM public.projects p
+      WHERE
+        (p.creator_id = (SELECT auth.uid()) AND
+         (p.freelancer_id = axv2_presence.user_id OR axv2_presence.user_id::text = ANY(p.invited_freelancers)))
+        OR
+        (p.creator_id = axv2_presence.user_id AND
+         (p.freelancer_id = (SELECT auth.uid()) OR (SELECT auth.uid())::text = ANY(p.invited_freelancers)))
+    )
   )
 );
 CREATE POLICY axv2_presence_self_insert
@@ -142,6 +153,42 @@ END;
 $$;
 REVOKE ALL ON FUNCTION public.axv2_touch_presence() FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.axv2_touch_presence() TO authenticated, service_role;
+
+
+-- Stop browser roles from supplying forged delivery/read/last-active timestamps.
+-- These triggers run only on the NEW optional V2 tables, never on legacy messages.
+CREATE OR REPLACE FUNCTION public.axv2_receipt_server_timestamps()
+RETURNS trigger LANGUAGE plpgsql SECURITY INVOKER SET search_path = ''
+AS $
+BEGIN
+  IF TG_OP = 'INSERT' THEN
+    NEW.delivered_at := now();
+    IF NEW.read_at IS NOT NULL THEN NEW.read_at := now(); END IF;
+  ELSE
+    NEW.delivered_at := OLD.delivered_at;
+    NEW.read_at := CASE WHEN OLD.read_at IS NOT NULL THEN OLD.read_at
+                        WHEN NEW.read_at IS NOT NULL THEN now() ELSE NULL END;
+  END IF;
+  RETURN NEW;
+END;
+$;
+REVOKE ALL ON FUNCTION public.axv2_receipt_server_timestamps() FROM PUBLIC, anon, authenticated;
+CREATE TRIGGER axv2_receipt_server_timestamps
+BEFORE INSERT OR UPDATE ON public.axv2_message_receipts
+FOR EACH ROW EXECUTE FUNCTION public.axv2_receipt_server_timestamps();
+
+CREATE OR REPLACE FUNCTION public.axv2_presence_server_timestamp()
+RETURNS trigger LANGUAGE plpgsql SECURITY INVOKER SET search_path = ''
+AS $
+BEGIN
+  NEW.last_active_at := now();
+  RETURN NEW;
+END;
+$;
+REVOKE ALL ON FUNCTION public.axv2_presence_server_timestamp() FROM PUBLIC, anon, authenticated;
+CREATE TRIGGER axv2_presence_server_timestamp
+BEFORE INSERT OR UPDATE ON public.axv2_presence
+FOR EACH ROW EXECUTE FUNCTION public.axv2_presence_server_timestamp();
 
 -- Realtime receipts are visible only to authorized conversation participants (RLS).
 -- Typing status already belongs to the existing supabase_realtime publication.
