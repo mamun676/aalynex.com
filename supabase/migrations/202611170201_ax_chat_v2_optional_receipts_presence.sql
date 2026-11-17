@@ -159,7 +159,7 @@ GRANT EXECUTE ON FUNCTION public.axv2_touch_presence() TO authenticated, service
 -- These triggers run only on the NEW optional V2 tables, never on legacy messages.
 CREATE OR REPLACE FUNCTION public.axv2_receipt_server_timestamps()
 RETURNS trigger LANGUAGE plpgsql SECURITY INVOKER SET search_path = ''
-AS $
+AS $$
 BEGIN
   IF TG_OP = 'INSERT' THEN
     NEW.delivered_at := now();
@@ -171,7 +171,7 @@ BEGIN
   END IF;
   RETURN NEW;
 END;
-$;
+$$;
 REVOKE ALL ON FUNCTION public.axv2_receipt_server_timestamps() FROM PUBLIC, anon, authenticated;
 CREATE TRIGGER axv2_receipt_server_timestamps
 BEFORE INSERT OR UPDATE ON public.axv2_message_receipts
@@ -179,12 +179,12 @@ FOR EACH ROW EXECUTE FUNCTION public.axv2_receipt_server_timestamps();
 
 CREATE OR REPLACE FUNCTION public.axv2_presence_server_timestamp()
 RETURNS trigger LANGUAGE plpgsql SECURITY INVOKER SET search_path = ''
-AS $
+AS $$
 BEGIN
   NEW.last_active_at := now();
   RETURN NEW;
 END;
-$;
+$$;
 REVOKE ALL ON FUNCTION public.axv2_presence_server_timestamp() FROM PUBLIC, anon, authenticated;
 CREATE TRIGGER axv2_presence_server_timestamp
 BEFORE INSERT OR UPDATE ON public.axv2_presence
