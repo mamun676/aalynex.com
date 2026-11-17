@@ -377,6 +377,7 @@ function renderMsgs(msgs, myId) {
 
   return msgs.map((m, idx) => {
     const isMine    = String(m.from).toLowerCase() === String(myId).toLowerCase();
+    const chatV2Ticks = window.axChatV2?.enabled ? window.axChatV2.ticks(m, isMine) : '';
     const timeAlign = isMine ? 'text-align:right' : '';
     const flexAlign = isMine ? 'flex-end' : 'flex-start';
 
@@ -530,14 +531,14 @@ function renderMsgs(msgs, myId) {
           ${note ? `<div style="margin-top:6px; font-style:italic;">"${escapeHtml(note)}"</div>` : ''}
           ${buttonsHtml}
         </div>
-        <div class="msg-time" style="${escapeHtml(timeAlign)}; width:100%; margin-top:2px;">${escapeHtml(fmtTime(m.time))}</div>${axChatPendingHTML(m,isMine)}
+        <div class="msg-time" style="${escapeHtml(timeAlign)}; width:100%; margin-top:2px;">${escapeHtml(fmtTime(m.time))}${chatV2Ticks}</div>${axChatPendingHTML(m,isMine)}
       </div>`;
     }
 
     return `
       <div style="display:flex; flex-direction:column; align-items:${escapeHtml(flexAlign)}; margin-bottom:8px; width:100%;">
         <div class="msg ${escapeHtml(isMine ? 'sent' : 'received')}">${escapeHtml(m.text)}</div>
-        <div class="msg-time" style="${escapeHtml(timeAlign)}; width:100%; margin-top:2px;">${escapeHtml(fmtTime(m.time))}</div>${axChatPendingHTML(m,isMine)}
+        <div class="msg-time" style="${escapeHtml(timeAlign)}; width:100%; margin-top:2px;">${escapeHtml(fmtTime(m.time))}${chatV2Ticks}</div>${axChatPendingHTML(m,isMine)}
       </div>`;
   }).join('');
 }
@@ -893,6 +894,9 @@ async function subscribeToConversation(conversationId, otherUserId) {
     }
   } finally {
     _subLock = false;
+    if (window.axChatV2?.enabled && currentConversationId && currentChatUserId) {
+      try { window.axChatV2.onConversation(currentConversationId, currentChatUserId); } catch (_) {}
+    }
   }
 }
 
