@@ -11,8 +11,8 @@ const CID = '33333333-3333-4333-8333-333333333333';
 const MSG = '44444444-4444-4444-8444-444444444444';
 const OTHER = '55555555-5555-4555-8555-555555555555';
 
-function fixture(query = '', { receiptRows = [], messages = [], peerLastActive = null } = {}) {
-  const storage = new Map();
+function fixture(query = '', { receiptRows = [], messages = [], peerLastActive = null, persistedSession = null } = {}) {
+  const storage = persistedSession || new Map();
   const callbacks = new Map();
   const calls = [];
   const channels = [];
@@ -105,14 +105,14 @@ function fixture(query = '', { receiptRows = [], messages = [], peerLastActive =
 }
 const flush = async () => { for (let i = 0; i < 8; i++) await Promise.resolve(); };
 
-test('Chat V2 is completely off by default', () => {
+test('Chat V2 is on by default on the normal main website, without changing legacy send', () => {
   const env = fixture();
-  assert.equal(env.api.enabled, false);
-  assert.equal(env.calls.length, 0);
+  assert.equal(env.api.enabled, true);
+  assert.equal(env.calls.length, 0); // No server activity until login.
   assert.equal(env.channels.length, 0);
 });
 
-test('explicit preview opt-in activates V2 without enabling it globally', () => {
+test('explicit ?axchatv2=1 also enables Chat V2', () => {
   const env = fixture('?axchatv2=1');
   assert.equal(env.api.enabled, true);
   assert.equal(typeof env.api.ticks, 'function');
@@ -273,13 +273,13 @@ test('typing refresh never duplicates an already-visible bubble', async () => {
   assert.equal(env.msgBox.children.length, 1);
 });
 
-test('typing bubble is scoped to opt-in only; CSS/JS versions are cache-busted', () => {
+test('typing bubble stays disabled in legacy fallback; CSS/JS versions are cache-busted', () => {
   const index = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
   const css = readFileSync(new URL('../css/ax-chat-v2.css', import.meta.url), 'utf8');
-  const env = fixture();
+  const env = fixture('?axchatv2=0');
   assert.equal(env.api.enabled, false);
   assert.equal(env.msgBox.children.length, 0);
-  assert.match(index, /ax-chat-v2\.js\?v=aalynex-v2-chat-typing-bubble-20261117/);
+  assert.match(index, /ax-chat-v2\.js\?v=aalynex-v2-default-on-20261117/);
   assert.match(index, /ax-chat-v2\.css\?v=aalynex-v2-chat-typing-bubble-20261117/);
   assert.match(css, /prefers-reduced-motion/);
   assert.match(css, /axv2-typing-bubble/);
@@ -319,4 +319,28 @@ test('typing bubble never replaces or mutates existing chat message elements', a
   env.api.cleanup();
   assert.equal(env.msgBox.children.length, 1);
   assert.equal(env.msgBox.children[0], existing);
+});
+
+
+test('explicit ?axchatv2=0 disables optional V2 without touching legacy chat', () => {
+  const env = fixture('?axchatv2=0');
+  assert.equal(env.api.enabled, false);
+  assert.equal(env.calls.length, 0);
+  assert.equal(env.channels.length, 0);
+  assert.equal(env.callbacks.has('input'), false);
+});
+
+test('fallback persists for subsequent navigations in this tab', () => {
+  const persistedSession = new Map();
+  assert.equal(fixture('?axchatv2=0', { persistedSession }).api.enabled, false);
+  assert.equal(fixture('', { persistedSession }).api.enabled, false);
+  assert.equal(persistedSession.get('aalynex-chat-v2-preview'), '0');
+});
+
+test('explicit ?axchatv2=1 re-enables V2 after fallback, including next navigation', () => {
+  const persistedSession = new Map();
+  fixture('?axchatv2=0', { persistedSession });
+  assert.equal(fixture('?axchatv2=1', { persistedSession }).api.enabled, true);
+  assert.equal(fixture('', { persistedSession }).api.enabled, true);
+  assert.equal(persistedSession.get('aalynex-chat-v2-preview'), '1');
 });
