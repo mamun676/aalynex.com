@@ -1,13 +1,15 @@
 // ═══════════════════════════════════════════════
 //  DB — in-memory database handler + global state
 // ═══════════════════════════════════════════════
-const MemDB = { users: [], projects: [], msgs: {}, attachments: [], currentUser: null };
+const MemDB = { users: [], projects: [], freelancerStats: [], msgs: {}, attachments: [], currentUser: null };
 
 const DB = {
   users()               { return MemDB.users; },
   saveUsers(data)       { MemDB.users = data; },
   projects()            { return MemDB.projects; },
   saveProjects(data)    { MemDB.projects = data; },
+  freelancerStats()     { return MemDB.freelancerStats; },
+  saveFreelancerStats(data) { MemDB.freelancerStats = Array.isArray(data) ? data : []; },
   messages()            { return MemDB.msgs; },
   saveMessages(data)    { MemDB.msgs = data; },
   attachments()         { return MemDB.attachments; },
@@ -19,6 +21,7 @@ const DB = {
     MemDB.currentUser = null;
     MemDB.users       = [];
     MemDB.projects    = [];
+    MemDB.freelancerStats = [];
     MemDB.msgs        = {};
     MemDB.attachments = [];
   }
