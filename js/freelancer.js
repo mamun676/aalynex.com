@@ -210,33 +210,10 @@ async function acceptProject(id) {
     if (!creatorId) creatorId = p.creatorId;
   }
 
-  if (supaClient && creatorId) {
-    try {
-      const { data: atts } = await supaClient
-        .from('project_attachments')
-        .select('*')
-        .eq('project_id', id);
-
-      if (atts && atts.length > 0) {
-        for (const att of atts) {
-          if (att.file_url) {
-            await sendMsg(CU.id, creatorId, att.file_url, att.file_name,
-              `📁 Project File (uploaded by creator): ${att.file_name}`);
-          }
-        }
-        showToast(`Accepted! ${atts.length} raw file(s) sent to chat.`, 'ok', '🎉');
-      } else {
-        sendAcceptanceNotificationEmail(creatorId, p?.title, p?.budget, p?.deadline, p?.contentType);
-        showToast('Project accepted! Chat activated.', 'ok', '');
-      }
-    } catch (e) {
-      sendAcceptanceNotificationEmail(creatorId, p?.title, p?.budget, p?.deadline, p?.contentType);
-      showToast('Project accepted! Chat activated.', 'ok', '');
-    }
-  } else {
-    sendAcceptanceNotificationEmail(creatorId, p?.title, p?.budget, p?.deadline, p?.contentType);
-    showToast('Project accepted! Chat activated.', 'ok', '');
-  }
+  // Files are creator-owned project attachments, not outgoing freelancer chat messages.
+  // Never repost them with freelancer sender_id: this mislabels source as a final.
+  sendAcceptanceNotificationEmail(creatorId, p?.title, p?.budget, p?.deadline, p?.contentType);
+  showToast('Project accepted! Open Ongoing to view creator files.', 'ok', '🎉');
 
   renderF('ongoing');
 }
@@ -269,6 +246,79 @@ function viewProject(id) {
 
   showModal(p.title, bodyHtml, () => { acceptProject(id); });
   document.getElementById('modal-confirm').textContent = 'Accept Project';
+}
+
+
+async function axListOngoingSourceFiles(projectId) {
+  const host=document.getElementById('ax-ongoing-source-files');
+  const accountId=CU?.id,epoch=window._accountSessionEpoch||0;
+  const valid=()=>CU?.id===accountId&&(window._accountSessionEpoch||0)===epoch;
+  const project=DB.projects().find(p=>String(p.id)===String(projectId));
+  if(!host||!supaClient||!project||String(project.freelancerId)!==String(accountId)||project.status==='open') {
+    if(host)host.textContent='Project files are not available to this account.';
+    return;
+  }
+  try {
+    const {data,error}=await supaClient.from('project_attachments')
+      .select('id,project_id,file_name,file_url').eq('project_id',projectId);
+    if(!valid()||!host.isConnected)return;
+    if(error)throw Error('Unable to load source files.');
+    const files=(data||[]).filter(a=>a.file_url&&String(a.project_id)===String(projectId));
+    if(!files.length){host.textContent='No files attached to this project.';return;}
+    host.innerHTML=files.map(a=>'<div style="display:flex;gap:7px;align-items:center;flex-wrap:wrap;margin:6px 0;">'
+      +'<span style="flex:1;min-width:140px;overflow-wrap:anywhere;">'+escapeHtml(a.file_name||'Project file')+'</span>'
+      +'<button type="button" class="btn btn-ghost btn-xs" data-app-click="'+appEvent('axOpenCreatorSource',[String(projectId),String(a.id),'view'])+'">▶ Open</button>'
+      +'<button type="button" class="btn btn-ghost btn-xs" data-app-click="'+appEvent('axOpenCreatorSource',[String(projectId),String(a.id),'download'])+'">⬇ Save</button>'
+      +'</div>').join('');
+  }catch(e){if(valid()&&host.isConnected)host.textContent=e.message||'Unable to load files.';}
+}
+
+// The server validates project membership and creator ownership before signing.
+async function axOpenCreatorSource(projectId,attachmentId,mode) {
+  if(mode!=='view'&&mode!=='download')return;
+  const accountId=CU?.id,epoch=window._accountSessionEpoch||0;
+  const valid=()=>CU?.id===accountId&&(window._accountSessionEpoch||0)===epoch;
+  const project=DB.projects().find(p=>String(p.id)===String(projectId));
+  if(!accountId||!supaClient||!project||project.status==='open'||
+     ![project.creatorId,project.freelancerId].some(id=>String(id)===String(accountId))) {
+    showToast('Project access denied.','err','');return;
+  }
+  // Open a blank tab during the click, before asynchronous signing.
+  const tab=window.open('about:blank','_blank');
+  if(tab){tab.opener=null;tab.document.title='Aalynex source file';tab.document.body.textContent='Preparing secure file…';}
+  try {
+    const {data:auth,error:authError}=await supaClient.auth.getSession();
+    if(authError||!valid()||auth?.session?.user?.id!==accountId)throw Error('Session expired.');
+    const {data:att,error:fileError}=await supaClient.from('project_attachments')
+      .select('id,project_id,file_name,file_url,file_size').eq('id',attachmentId).eq('project_id',projectId).maybeSingle();
+    if(fileError||!att?.file_url||!valid())throw Error('Source file is unavailable.');
+    const {data,error}=await supaClient.functions.invoke('project-media-v2',{
+      body:{action:'download',projectId,kind:'source',fileKey:att.file_url}
+    });
+    if(error||!data?.downloadUrl||!valid())throw Error('Secure source access was not authorized.');
+    const url=validatedHttpUrl(data.downloadUrl);
+    if(!url)throw Error('Invalid secure download URL.');
+    if(mode==='download'&&Number(att.file_size)>0&&Number(att.file_size)<=48*1024*1024){
+      try{
+        const response=await fetch(url,{cache:'no-store'});
+        if(!response.ok)throw Error('Storage request failed');
+        const blob=await response.blob();
+        if(!valid())throw Error('Session changed.');
+        const objectUrl=URL.createObjectURL(blob),a=document.createElement('a');
+        a.href=objectUrl;a.download=String(att.file_name||'aalynex-source-file').replace(/[\\/:*?"<>|]/g,'_');
+        document.body.appendChild(a);a.click();a.remove();
+        setTimeout(()=>URL.revokeObjectURL(objectUrl),30000);
+        if(tab&&!tab.closed)tab.close();
+        return;
+      }catch(_){if(!valid())throw Error('Session changed.');}
+    }
+    if(mode==='download')showToast('Use browser Save As if download does not start automatically.','info','');
+    if(tab&&!tab.closed)tab.location.replace(url);
+    else {window.open(url,'_blank','noopener,noreferrer');showToast('Allow pop-ups and try again if the file did not open.','info','');}
+  }catch(e){
+    if(tab&&!tab.closed)tab.close();
+    if(valid())showToast(e.message||'Unable to access source file.','err','');
+  }
 }
 
 function fOngoing() {
@@ -306,7 +356,8 @@ function fViewOngoing(id) {
       <div class="info-row"><span class="key">Content Type</span><span>${escapeHtml(p.contentType || '-')}</span></div>
       <div class="info-row"><span class="key">Deadline</span><span>${escapeHtml(p.deadline ? fmtDate(p.deadline) : '-')}</span></div>
       <div class="info-row"><span class="key">Priority</span><span>${escapeHtml(p.priority || 'Normal')}</span></div>
-      <div class="info-row"><span class="key">Raw Files</span><span><span class="tag g">Received</span></span></div>
+      <div class="info-row"><span class="key">Raw Files</span><span><span class="tag g">Creator uploads</span></span></div>
+      <div id="ax-ongoing-source-files" style="padding:10px;border:1px solid var(--glass-border);border-radius:10px;font-size:.82rem;">Loading attached files…</div>
       <div style="margin-top:10px;">
         <div style="display:flex;justify-content:space-between;font-size:.72rem;color:var(--text-3);margin-bottom:4px;"><span>Progress</span><span>${escapeHtml(prog)}%</span></div>
         <div class="pb"><div class="pf" style="width:${escapeHtml(prog)}%;"></div></div>
@@ -319,6 +370,7 @@ function fViewOngoing(id) {
     </div>`;
   showModal(p.title, bodyHtml, () => {});
   document.getElementById('modal-confirm').textContent = 'Close';
+  void axListOngoingSourceFiles(id);
 }
 
 function fNegotiate() {

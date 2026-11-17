@@ -384,6 +384,29 @@ function renderMsgs(msgs, myId) {
       return `<div style="display:flex;flex-direction:column;align-items:flex-end;margin-bottom:8px"><div class="msg sent">${escapeHtml(m.text)}</div>${axChatPendingHTML(m,true)}</div>`;
     }
     if (m.file_url) {
+      // Legacy acceptance messages reused a creator upload under the editor's
+      // sender_id. Their metadata is not a final delivery or payment evidence.
+      if (/^📁 Project File \(uploaded by creator\):/.test(String(m.text||''))) {
+        const att=(DB.attachments()||[]).find(a=>a.file_url===m.file_url);
+        const project=att&&DB.projects().find(p=>
+          String(p.id)===String(att.projectId)&&p.status!=='open'&&
+          [p.creatorId,p.freelancerId].some(id=>String(id)===String(myId))&&
+          [p.creatorId,p.freelancerId].some(id=>String(id)===String(currentChatUserId)));
+        const verified=!!(project&&att?.id);
+        const fromCreator=verified&&String(project.creatorId)===String(myId);
+        const controls=verified
+          ? '<button type="button" class="btn btn-ghost btn-xs" data-app-click="'+appEvent('axOpenCreatorSource',[String(project.id),String(att.id),'view'])+'">▶ Open</button>'
+           +'<button type="button" class="btn btn-ghost btn-xs" data-app-click="'+appEvent('axOpenCreatorSource',[String(project.id),String(att.id),'download'])+'">⬇ Save</button>'
+          : '<span style="font-size:.75rem;color:var(--text-3);">Open Ongoing → Raw Files, or contact support to verify this legacy attachment.</span>';
+        const fileName=att?.name||String(m.text).replace(/^📁 Project File \(uploaded by creator\):\s*/,'');
+        return '<div style="display:flex;justify-content:'+(fromCreator?'flex-end':'flex-start')+';margin-bottom:9px;">'
+          +'<div class="msg-video" style="padding:12px;max-width:340px;">'
+          +'<div class="msg-video-label"><strong>'+(verified?'Creator source attachment':'Unverified source attachment')+'</strong></div>'
+          +'<div class="ax-delivery-filename">'+escapeHtml(fileName)+'</div>'
+          +'<div class="ax-delivery-actions">'+controls+'</div>'
+          +'<div class="msg-video-footer"><span>'+(verified?(fromCreator?'You (creator)':'From creator'):'Project verification needed')+'</span><span>'+escapeHtml(fmtTime(m.time))+'</span></div>'
+          +'</div></div>';
+      }
       const fname = String(m.text || '').replace(/^(Raw Video: |Video: |Final Delivery: |Final Delivery)/, '').trim() || 'attachment';
       const scoped = String(m.file_url).match(/\/projects\/([A-Za-z0-9_-]+)\//);
       const possible = DB.projects().filter(p => p.status !== 'open' &&
