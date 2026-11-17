@@ -384,7 +384,25 @@ function renderMsgs(msgs, myId) {
       return `<div style="display:flex;flex-direction:column;align-items:flex-end;margin-bottom:8px"><div class="msg sent">${escapeHtml(m.text)}</div>${axChatPendingHTML(m,true)}</div>`;
     }
     if (m.file_url) {
-      // Legacy acceptance messages reused a creator upload under the editor's
+      // Each preview is tied to its own project and one final revision.
+      const previewScope = String(m.file_url).match(/\/projects\/([A-Za-z0-9_-]+)\/preview\//);
+      if (previewScope && /^Project Preview:/i.test(String(m.text || ''))) {
+        const previewProject = DB.projects().find(p =>
+          String(p.id) === previewScope[1] &&
+          String(p.freelancerId) === String(m.from) &&
+          [p.creatorId,p.freelancerId].some(id => String(id) === String(myId)) &&
+          [p.creatorId,p.freelancerId].some(id => String(id) === String(currentChatUserId)));
+        if (previewProject) {
+          const current = axDeliveryRevision.latest(msgs,previewProject);
+          // The latest preview is opened from its final card. Do not duplicate it.
+          if (current?.preview && String(current.preview.id) === String(m.id)) return '';
+          const awaiting = !current || Number(m.time) > Number(current.final.time);
+          return '<div class="msg-time" style="margin:9px 0;text-align:center;">'
+            + escapeHtml(awaiting ? 'Watermarked preview uploaded · final delivery pending'
+              : 'Earlier watermarked preview · replaced by newer delivery')
+            + '</div>';
+        }
+      }      // Legacy acceptance messages reused a creator upload under the editor's
       // sender_id. Their metadata is not a final delivery or payment evidence.
       if (/^📁 Project File \(uploaded by creator\):/.test(String(m.text||''))) {
         const att=(DB.attachments()||[]).find(a=>a.file_url===m.file_url);
@@ -407,7 +425,7 @@ function renderMsgs(msgs, myId) {
           +'<div class="msg-video-footer"><span>'+(verified?(fromCreator?'You (creator)':'From creator'):'Project verification needed')+'</span><span>'+escapeHtml(fmtTime(m.time))+'</span></div>'
           +'</div></div>';
       }
-      const fname = String(m.text || '').replace(/^(Raw Video: |Video: |Final Delivery: |Final Delivery)/, '').trim() || 'attachment';
+      const fname = axDeliveryRevision.cleanText(m.text).replace(/^(Raw Video: |Video: |Final Delivery: |Final Delivery)/, '').trim() || 'attachment';
       const scoped = String(m.file_url).match(/\/projects\/([A-Za-z0-9_-]+)\//);
       const possible = DB.projects().filter(p => p.status !== 'open' &&
         ((String(p.creatorId) === String(myId) && String(p.freelancerId) === String(currentChatUserId)) ||
@@ -422,40 +440,44 @@ function renderMsgs(msgs, myId) {
       const final = /^Final Delivery/.test(String(m.text||'')) || /\/final\//.test(String(m.file_url)) ||
         (!isMine && isCreator && !String(m.file_url).includes('/preview/') && /\.(mp4|mov|webm|m4v|mkv|avi)$/i.test(String(m.file_url)));
       const secureFinal = final && !isMine && isCreator;
+      const revision = (proj && final) ? axDeliveryRevision.forFinal(msgs,proj,m.id) : null;
+      const latestRevision = revision?.isLatest === true;
+      const oldRevision = !!revision && !latestRevision;
       // Payment is server-owned. Never trust the local project.paid cache as an unlock.
       const payProof = proj ? axVerifiedChatPayments.get(axChatProofKey(proj.id)) : null;
       const unlocked = !!(payProof && payProof.verified && payProof.unlocked);
-      if(secureFinal && proj) axQueueVerifiedChatPayment(String(proj.id));
+      if(secureFinal && proj && latestRevision) axQueueVerifiedChatPayment(String(proj.id));
       // Only separately uploaded PREVIEW objects (not the original) are eligible
       // for prepayment playback. It must be from the actual assigned editor.
-      const previewMsg = proj && msgs.find(x => x.file_url &&
-        String(x.file_url).includes(`/projects/${proj.id}/preview/`) &&
-        String(x.from) === String(proj.freelancerId));
+      const previewMsg = revision?.preview || null;
       const id = `ax-media-${idx}`;
       const openAction = appEvent('axOpenMessageMedia', [String(m.id||''), id]);
       const saveAction = appEvent('axDownloadMessageFile', [String(m.id||'')]);
       let controls = '';
       if (secureFinal) {
-        if (!proj) {
-          controls = `<button class="btn btn-ghost btn-xs ax-two-preview" disabled aria-disabled="true">▶ Preview</button><button class="btn btn-primary btn-xs ax-two-action" disabled aria-disabled="true">Pay</button>`;
+        if (oldRevision) {
+          controls = '<span style="font-size:.78rem;color:var(--text-3);">Earlier revision — replaced by newer final. No checkout on old uploads.</span>';
+        } else if (!proj || !latestRevision || revision.pendingNewPreview) {
+          controls = '<span style="font-size:.78rem;color:var(--text-3);">A newer preview is awaiting its final, or this delivery needs verification. Do not pay yet.</span>';
         } else {
-          // Two actions only. Proof is fetched server-side and never inferred from
-          // an old cached project.paid value. Original stays locked until verified.
+          // A preview must belong to THIS exact final (never the first preview).
           const previewControl = previewMsg
             ? `<button class="btn btn-ghost btn-xs ax-two-preview" data-app-click="${appEvent('axOpenMessageMedia',[String(previewMsg.id),id])}">▶ Preview</button>`
-            : `<button class="btn btn-ghost btn-xs ax-two-preview" disabled aria-disabled="true" title="Editor preview not uploaded">▶ Preview</button>`;
+            : `<button class="btn btn-ghost btn-xs ax-two-preview" disabled aria-disabled="true" title="No confirmed matching preview">▶ Preview</button>`;
           const actionControl = unlocked
             ? `<button class="btn btn-primary btn-xs ax-two-action ax-download-original" data-app-click="${saveAction}">⬇ Download</button>`
-            : `<button class="btn btn-primary btn-xs ax-two-action ax-secure-pay-btn" ${!previewMsg?'disabled aria-disabled="true" title="Waiting for project preview"':''} data-app-click="${appEvent('axPayInChat',[String(proj.id)])}">Pay</button>`;
+            : `<button class="btn btn-primary btn-xs ax-two-action ax-secure-pay-btn" ${!previewMsg?'disabled aria-disabled="true" title="Waiting for this final’s matching preview"':''} data-app-click="${appEvent('axPayInChat',[String(proj.id),String(m.id)])}">Pay</button>`;
           controls = `${previewControl}${actionControl}`;
         }
-      } else if(final && isMine && proj && String(proj.freelancerId)===String(myId) && !previewMsg) {
+      } else if(final && isMine && oldRevision) {
+        controls = '<span style="font-size:.78rem;color:var(--text-3);">Earlier final revision — replaced.</span>';
+      } else if(final && isMine && legacyFinal && proj && String(proj.freelancerId)===String(myId) && !previewMsg) {
         controls = `<button class="btn btn-primary btn-xs" data-app-click="${appEvent('axUploadLegacyPreview',[String(m.id)])}">🎬 Upload watermarked preview</button>`;
       } else {
         controls = `<button class="btn btn-ghost btn-xs" data-app-click="${openAction}">▶ Open</button>
                     <button class="btn btn-ghost btn-xs" data-app-click="${saveAction}">⬇ Save</button>`;
       }
-      const label = secureFinal ? 'Protected final delivery' : 'Project attachment';
+      const label = oldRevision ? 'Earlier final delivery (replaced)' : secureFinal ? 'Protected final delivery' : 'Project attachment';
       // The final action is always server-verified, not a UI flag.
       return `<div style="display:flex;flex-direction:column;align-items:${escapeHtml(flexAlign)};margin-bottom:9px;width:100%;">
         <div class="msg-video ${escapeHtml(isMine?'sent-video':'')} ${secureFinal?'ax-protected-delivery':''}" ${secureFinal&&proj?`data-ax-project-id="${escapeHtml(String(proj.id))}"`:''} style="padding:12px;max-width:340px;">
@@ -731,7 +753,7 @@ async function axCheckVerifiedChatPayment(projectId,silent=false){
 // V8.3: use the site's existing authenticated, verified checkout flow
 // without jumping away from chat. This does not bypass the server's
 // PROJECT_PAYMENTS_ENABLED flag, payment proof, or signature verification.
-async function axPayInChat(projectId) {
+async function axPayInChat(projectId, finalMessageId = null) {
   if (!CU || CU.role !== 'creator' || !supaClient) { showToast('Creator sign-in required.','err',''); return; }
   const p = DB.projects().find(x => String(x.id) === String(projectId));
   if (!p || String(p.creatorId) !== String(CU.id) || !p.editedUploaded) {
@@ -741,11 +763,11 @@ async function axPayInChat(projectId) {
     showToast('Secure checkout is unavailable. Do not send money outside Aalynex.','err',''); return;
   }
   const conversationKey=[CU.id,p.freelancerId].sort().join('_');
-  const previewReady=(DB.messages()[conversationKey]||[]).some(m=>
-    String(m.from)===String(p.freelancerId) &&
-    String(m.file_url||'').includes(`/projects/${projectId}/preview/`) &&
-    String(m.text||'').startsWith('Project Preview:'));
-  if(!previewReady){showToast('Watermarked preview required before approval and checkout.','err','');return;}
+  const latest=axDeliveryRevision.latest(DB.messages()[conversationKey]||[],p);
+  if(!latest?.paired || latest.pendingNewPreview || (finalMessageId && String(latest.final.id)!==String(finalMessageId))) {
+    showToast('Latest final needs its own matching watermarked preview. Payment was not started.','err','');
+    return;
+  }
   // Fresh server proof must be checked BEFORE any new order, even if the local
   // project cache still says unpaid. Server recovery is the second guard.
   const payment=await axCheckVerifiedChatPayment(String(projectId),true);
