@@ -17,9 +17,26 @@ function fixture(query = '', { receiptRows = [], messages = [], peerLastActive =
   const calls = [];
   const channels = [];
   const clearedTimers = [];
+  const intervalCallbacks = [];
   const status = { textContent: '', style: {} };
   const dot = { style: {} };
-  const msgBox = { getClientRects: () => [{}] };
+  // Tiny DOM stand-in: the typing bubble is a child of the existing chat container.
+  const children = [];
+  const msgBox = {
+    children, scrollTop: 900, scrollHeight: 1000, clientHeight: 100,
+    getClientRects: () => [{}],
+    get lastElementChild() { return children[children.length - 1] || null; },
+    querySelector(selector) {
+      return selector === '[data-axv2-typing]'
+        ? children.find(node => node.attributes['data-axv2-typing'] === 'true') || null : null;
+    },
+    appendChild(node) {
+      node.remove(); // Mirrors real DOM move-to-end semantics.
+      node.parent = this;
+      children.push(node);
+      this.scrollHeight += 40;
+    }
+  };
   const document = {
     visibilityState: 'visible',
     addEventListener(type, callback) { callbacks.set(type, callback); },
@@ -29,7 +46,22 @@ function fixture(query = '', { receiptRows = [], messages = [], peerLastActive =
       if (id === 'chat-online-dot') return dot;
       return null;
     },
-    querySelectorAll() { return []; }
+    createElement() {
+      const node = { attributes: {}, parent: null, className: '', innerHTML: '',
+        setAttribute(key, val) { this.attributes[key] = val; },
+        remove() {
+          if (!this.parent) return;
+          const index = this.parent.children.indexOf(this);
+          if (index >= 0) this.parent.children.splice(index, 1);
+          this.parent = null;
+        }
+      };
+      return node;
+    },
+    querySelectorAll(selector) {
+      return selector === '[data-axv2-typing]'
+        ? children.filter(node => node.attributes['data-axv2-typing'] === 'true') : [];
+    }
   };
   const sessionStorage = {
     getItem: key => storage.get(key) || null,
@@ -65,11 +97,11 @@ function fixture(query = '', { receiptRows = [], messages = [], peerLastActive =
   const ctx = {
     window: { location: { search: query } }, document, sessionStorage, URLSearchParams,
     CU: { id: ME }, DB, supaClient, currentConversationId: CID, currentChatUserId: PEER,
-    setInterval() { return 1; }, clearInterval(id) { clearedTimers.push(id); },
+    setInterval(callback) { intervalCallbacks.push(callback); return intervalCallbacks.length; }, clearInterval(id) { clearedTimers.push(id); },
     setTimeout() { return 2; }, clearTimeout() {}, Date
   };
   runInNewContext(source, ctx, { timeout: 2000 });
-  return { api: ctx.window.axChatV2, calls, callbacks, channels, clearedTimers, status, dot };
+  return { api: ctx.window.axChatV2, calls, callbacks, channels, clearedTimers, intervalCallbacks, status, dot, msgBox, ctx };
 }
 const flush = async () => { for (let i = 0; i < 8; i++) await Promise.resolve(); };
 
@@ -159,4 +191,132 @@ test('SQL is additive and uses RLS and invoker RPCs, never rewrites old chat or 
   assert.match(sql, /axv2_receipts_receiver_insert/);
   assert.match(sql, /axv2_presence_conversation_peers/);
   assert.doesNotMatch(sql, /DROP TABLE|TRUNCATE TABLE|UPDATE public\.messages|DELETE FROM public\.messages/i);
+});
+
+
+test('peer typing appears as three dots INSIDE chat while header stays Online', async () => {
+  const env = fixture('?axchatv2=1', { peerLastActive: new Date().toISOString() });
+  env.api.onLogin({ id: ME });
+  await flush();
+  const typing = env.channels[0].events.find(e => e.opts.table === 'axv8_typing_status');
+  assert.ok(typing, 'typing status realtime listener exists');
+  typing.callback({
+    eventType: 'INSERT', new: { conversation_id: CID, user_id: PEER,
+      expires_at: new Date(Date.now() + 5000).toISOString() }
+  });
+  assert.equal(env.status.textContent, 'Online'); // no 'typing...' in header
+  assert.equal(env.msgBox.children.length, 1);
+  assert.equal(env.msgBox.children[0].attributes['data-axv2-typing'], 'true');
+  assert.equal(env.msgBox.children[0].attributes['aria-label'], 'Other person is typing');
+  assert.equal((env.msgBox.children[0].innerHTML.match(/<span><\/span>/g) || []).length, 3);
+  assert.equal(env.calls.filter(c => c.name === 'messages').length, 0);
+});
+
+test('typing stops and ephemeral chat bubble disappears without altering message data', async () => {
+  const original = [{ id: MSG, from: PEER, text: 'existing message' }];
+  const env = fixture('?axchatv2=1', { messages: original });
+  env.api.onLogin({ id: ME });
+  await flush();
+  const typing = env.channels[0].events.find(e => e.opts.table === 'axv8_typing_status');
+  typing.callback({
+    eventType: 'INSERT', new: { user_id: PEER, expires_at: new Date(Date.now() + 5000).toISOString() }
+  });
+  assert.equal(env.msgBox.children.length, 1);
+  typing.callback({ eventType: 'DELETE', old: { user_id: PEER } });
+  assert.equal(env.msgBox.children.length, 0);
+  assert.equal(original.length, 1);
+  assert.equal(original[0].text, 'existing message');
+});
+
+test('typing from another conversation is ignored and account cleanup removes bubble', async () => {
+  const env = fixture('?axchatv2=1');
+  env.api.onLogin({ id: ME });
+  await flush();
+  const typing = env.channels[0].events.find(e => e.opts.table === 'axv8_typing_status');
+  typing.callback({
+    eventType: 'INSERT', new: { user_id: OTHER, expires_at: new Date(Date.now() + 5000).toISOString() }
+  });
+  assert.equal(env.msgBox.children.length, 0);
+  typing.callback({
+    eventType: 'INSERT', new: { user_id: PEER, expires_at: new Date(Date.now() + 5000).toISOString() }
+  });
+  assert.equal(env.msgBox.children.length, 1);
+  env.api.cleanup();
+  assert.equal(env.msgBox.children.length, 0);
+});
+
+test('switching chats clears old typing indicator without modifying the old chat', async () => {
+  const env = fixture('?axchatv2=1');
+  env.api.onLogin({ id: ME });
+  await flush();
+  const typing = env.channels[0].events.find(e => e.opts.table === 'axv8_typing_status');
+  typing.callback({
+    eventType: 'INSERT', new: { user_id: PEER, expires_at: new Date(Date.now() + 5000).toISOString() }
+  });
+  assert.equal(env.msgBox.children.length, 1);
+  env.ctx.currentChatUserId = OTHER;
+  env.api.onConversation(CID, OTHER);
+  assert.equal(env.msgBox.children.length, 0);
+});
+
+test('typing refresh never duplicates an already-visible bubble', async () => {
+  const env = fixture('?axchatv2=1');
+  env.api.onLogin({ id: ME });
+  await flush();
+  const typing = env.channels[0].events.find(e => e.opts.table === 'axv8_typing_status');
+  for (let i = 0; i < 3; i++) {
+    typing.callback({
+      eventType: 'UPDATE', new: { user_id: PEER,
+        expires_at: new Date(Date.now() + 5000).toISOString() }
+    });
+  }
+  assert.equal(env.msgBox.children.length, 1);
+});
+
+test('typing bubble is scoped to opt-in only; CSS/JS versions are cache-busted', () => {
+  const index = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
+  const css = readFileSync(new URL('../css/ax-chat-v2.css', import.meta.url), 'utf8');
+  const env = fixture();
+  assert.equal(env.api.enabled, false);
+  assert.equal(env.msgBox.children.length, 0);
+  assert.match(index, /ax-chat-v2\.js\?v=aalynex-v2-chat-typing-bubble-20261117/);
+  assert.match(index, /ax-chat-v2\.css\?v=aalynex-v2-chat-typing-bubble-20261117/);
+  assert.match(css, /prefers-reduced-motion/);
+  assert.match(css, /axv2-typing-bubble/);
+});
+
+
+test('typing bubble expires automatically even without a DELETE event', async () => {
+  const env = fixture('?axchatv2=1', { peerLastActive: new Date().toISOString() });
+  env.api.onLogin({ id: ME });
+  await flush();
+  const typing = env.channels[0].events.find(e => e.opts.table === 'axv8_typing_status');
+  typing.callback({ eventType: 'INSERT',
+    new: { user_id: PEER, expires_at: new Date(Date.now() + 5000).toISOString() }
+  });
+  assert.equal(env.msgBox.children.length, 1);
+  const future = Date.now() + 9000;
+  env.ctx.Date = class SimulatedDate extends Date { static now() { return future; } };
+  const statusTimer = env.intervalCallbacks.at(-1);
+  statusTimer();
+  assert.equal(env.msgBox.children.length, 0);
+  assert.notEqual(env.status.textContent, 'typing…');
+});
+
+test('typing bubble never replaces or mutates existing chat message elements', async () => {
+  const env = fixture('?axchatv2=1');
+  const existing = { attributes: {}, parent: env.msgBox, textContent: 'protected video card' };
+  env.msgBox.children.push(existing);
+  env.api.onLogin({ id: ME });
+  await flush();
+  const typing = env.channels[0].events.find(e => e.opts.table === 'axv8_typing_status');
+  typing.callback({ eventType: 'INSERT',
+    new: { user_id: PEER, expires_at: new Date(Date.now() + 5000).toISOString() }
+  });
+  assert.equal(env.msgBox.children.length, 2);
+  assert.equal(env.msgBox.children[0], existing);
+  assert.equal(existing.textContent, 'protected video card');
+  env.api.cleanup();
+  assert.equal(env.msgBox.children.length, 1);
+  assert.equal(env.msgBox.children[0], existing);
 });
