@@ -14,13 +14,15 @@ window.addEventListener('load', async () => {
       const { data: { session } } = await supaClient.auth.getSession();
       if (session) {
         const { data: profile } = await supaClient
-          .from('profiles').select('*').eq('id', session.user.id).single();
+          .from('profiles').select(AX_PROFILE_PUBLIC_FIELDS).eq('id', session.user.id).single();
         if (profile) {
+          let ownPhone = '';
+          try { ownPhone = await axGetOwnPhone(); } catch (e) { console.warn('Own phone unavailable', e); }
           const u = {
             id: profile.id,
             name: profile.name || session.user.email.split('@')[0],
             email: session.user.email,
-            phone: profile.phone || '',
+            phone: ownPhone,
             role: profile.role || 'creator',
             profession: profile.profession || '',
             platform: profile.platform || '',

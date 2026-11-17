@@ -101,7 +101,7 @@ async function doLogin() {
     }
 
     const { data: profile, error: pErr } = await supaClient
-      .from('profiles').select().eq('id', data.user.id).single();
+      .from('profiles').select(AX_PROFILE_PUBLIC_FIELDS).eq('id', data.user.id).single();
 
     if (pErr || !profile) {
       await supaClient.auth.signOut();
@@ -115,11 +115,13 @@ async function doLogin() {
       return;
     }
 
+    let ownPhone = '';
+    try { ownPhone = await axGetOwnPhone(); } catch (e) { console.warn('Own phone unavailable', e); }
     const u = {
       id: profile.id,
       name: profile.name || email.split('@')[0],
       email: data.user.email,
-      phone: profile.phone || '',
+      phone: ownPhone,
       role: profile.role,
       profession: profile.profession || '',
       platform: profile.platform || '',

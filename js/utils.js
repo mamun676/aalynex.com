@@ -1,5 +1,15 @@
 
 
+/* Restricted profile reads: never request private phone from broad profile listings.
+   Own phone is obtained through an authenticated, user-scoped Supabase RPC. */
+const AX_PROFILE_PUBLIC_FIELDS = 'id,name,role,profession,platform,avatar,created_at,skills,portfolio_links,resume_url,photo_url,experience,specialization,min_price_longform,min_price_reel';
+async function axGetOwnPhone() {
+  if (!supaClient) return '';
+  const { data, error } = await supaClient.rpc('ax_my_profile_phone');
+  if (error) throw error;
+  return typeof data === 'string' ? data : '';
+}
+
 /* ── ID + FORMATTERS ── */
 function uid() { return 'u' + Date.now() + Math.random().toString(36).slice(2, 7); }
 function pid() {

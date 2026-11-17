@@ -36,14 +36,15 @@ async function syncFromSupabase(u, opts = {}) {
   const sessionEpoch = window._accountSessionEpoch || 0;
   const ownsSession = () => CU && CU.id === u.id && (window._accountSessionEpoch || 0) === sessionEpoch;
   try {
-    const { data: profiles } = await supaClient.from('profiles').select('*');
+    const { data: profiles } = await supaClient.from('profiles').select(AX_PROFILE_PUBLIC_FIELDS);
     if (!ownsSession()) return;
     if (profiles && profiles.length) {
       const localUsers = DB.users();
       profiles.forEach(p => {
         const exists = localUsers.find(x => x.id === p.id);
         const mapped = {
-          id: p.id, name: p.name || 'User', email: '', phone: p.phone || '',
+          id: p.id, name: p.name || 'User', email: '',
+          phone: p.id === CU.id ? (CU.phone || '') : '',
           role: p.role || 'creator', profession: p.profession || '',
           platform: p.platform || '', avatar: (p.name || 'U').charAt(0).toUpperCase(),
           createdAt: new Date(p.created_at).getTime(),

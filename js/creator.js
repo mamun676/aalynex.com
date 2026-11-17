@@ -474,7 +474,7 @@ async function viewFreelancerPortfolio(freelancerId) {
   }
 
   try {
-    const { data: profile, error } = await supaClient.from('profiles').select('*').eq('id', freelancerId).single();
+    const { data: profile, error } = await supaClient.from('profiles').select(AX_PROFILE_PUBLIC_FIELDS).eq('id', freelancerId).single();
     if (error || !profile) throw error;
 
     const photoHtml = profile.photo_url
@@ -627,7 +627,7 @@ async function wfContent() {
     let editors = [];
     if (supaClient) {
       try {
-        const { data, error } = await supaClient.from("profiles").select("*").eq("role", "freelancer");
+        const { data, error } = await supaClient.from("profiles").select(AX_PROFILE_PUBLIC_FIELDS).eq("role", "freelancer");
         if (!error && data) editors = data;
       } catch (e) {}
     }
