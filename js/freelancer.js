@@ -586,12 +586,15 @@ async function uploadFinalVideo(pid) {
     const previewKey = await axUploadScopedPreview(previewFile,pid);
     if (progFill) progFill.style.width = '35%';
     const previewSent=await sendMsg(CU.id,proj.creatorId,previewKey,previewFile.name,`Project Preview: ${proj.title}`);
-    if(!previewSent?.ok)throw Error('Watermarked preview was uploaded but its message was not confirmed. Do not retry blindly.');
+    if(!previewSent?.ok||!axDeliveryRevision.validId(previewSent.id))throw Error('Watermarked preview was not confirmed with a valid message ID. Do not retry blindly.');
     const s3Key = await axUploadScopedFinal(file,pid);
     if (progFill) progFill.style.width = '75%';
     fileUrl=s3Key;
 
-    const msgText = note ? `Final Delivery: ${note}` : `Final Delivery`;
+    // Bind this exact final to the preview uploaded during this submission.
+    // Stored in the existing text field; no payment/schema changes required.
+    const msgText = (note ? `Final Delivery: ${note}` : 'Final Delivery') +
+      ' [AXPV:' + previewSent.id + ']';
     const sent = await sendMsg(CU.id, proj.creatorId, fileUrl, file.name, msgText);
     if (!sent?.ok) throw Error('File uploaded securely, but chat delivery was not confirmed. Contact support before retrying.');
     if (supaClient) {
