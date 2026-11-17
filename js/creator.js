@@ -1425,7 +1425,8 @@ function cBrowseFreelancers() {
         <div class="f-name">${escapeHtml(f.name)}${f.is_managed_editor ? ` <span class="tag" style="background:var(--accent);color:#fff;font-size:.58rem;vertical-align:middle;">🏆 Managed</span>` : ''}</div>
         <div class="stars">${stars}</div>
         <div class="f-rate">${escapeHtml(ratingDisplay)} &middot; ${escapeHtml(st.completedCount)} Projects</div>
-        <div class="f-spec">${escapeHtml(f.is_managed_editor && f.specialization ? f.specialization : (f.profession || 'Editor'))}</div>
+        <div class="f-spec" style="font-weight:700;color:var(--accent2);">Freelancer</div>
+        <div class="f-spec" style="font-size:.64rem;color:var(--text-3);">Specialty: ${escapeHtml(f.is_managed_editor && f.specialization ? f.specialization : (f.profession || 'Video Editor'))}</div>
         ${f.is_managed_editor && (f.min_price_longform || f.min_price_reel) ? `<div style="font-size:.68rem;color:var(--accent);font-weight:600;margin-top:2px;">${escapeHtml(f.min_price_longform ? 'Long-form from ₹' + f.min_price_longform : '')}${escapeHtml(f.min_price_longform && f.min_price_reel ? ' · ' : '')}${escapeHtml(f.min_price_reel ? 'Reel from ₹' + f.min_price_reel : '')}</div>` : ''}
         <div style="display:flex;flex-direction:column;gap:6px;width:100%;margin-top:10px;">
           <button class="btn btn-outline-f btn-xs full-btn" data-app-click="${appEvent("viewFreelancerPortfolio", [String(f.id ?? '')])}">View Portfolio</button>
