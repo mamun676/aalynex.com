@@ -255,7 +255,7 @@ function appEvent(action, args, options) {
     'viewAISuggestHistory', 'switchChat', 'handleChatUpload', 'sendMsg',
     'axOpenMessageMedia', 'axDownloadMessageFile', 'axUploadLegacyPreview', 'axPayInChat', 'axCheckVerifiedChatPayment', 'axRefreshBillingStatus', 'axRequestBillingReview', 'axOperatorApproveBilling',
     'triggerApproveAndPay', 'requestRevision', 'acceptNegotiation', 'rejectNegotiation',
-    'openProjectFile', 'cProjectEdit', 'deleteProjectConfirm', 'manageProject',
+    'axOpenCreatorSource', 'openProjectFile', 'cProjectEdit', 'deleteProjectConfirm', 'manageProject',
     'saveProjectEdit', 'toggleRemoveAtt', 'viewFreelancerPortfolio', 'openSendRequestModal',
     'selCT', 'selFL', 'downloadEditedVideo', 'rateStar', 'filterProjects', 'cViewPayment',
     'saveRating', 'cBrowseSort', 'requestManagedEditor', 'fViewProject', 'acceptProject',
