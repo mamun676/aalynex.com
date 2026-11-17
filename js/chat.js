@@ -46,10 +46,18 @@ function axChatPaint(e) {
  if(el){el.innerHTML=renderMsgs(DB.messages()[e.key]||[],e.myId);scrollChatToBottom();}
 }
 function axChatPendingHTML(m,isMine) {
- if(!isMine||!['sending','failed','sent','blocked'].includes(m._deliveryStatus))return '';
- const label={sending:'Sending…',failed:'Not confirmed — retry checks before resending.',sent:'Sent',blocked:'Message ID conflict — contact support.'}[m._deliveryStatus];
- const retry=m._deliveryStatus==='failed'?` <button type="button" class="btn btn-ghost btn-xs" data-chat-retry="${escapeHtml(m.id)}">Retry</button>`:'';
- return `<div class="msg-time" role="status">${escapeHtml(label)}${retry}</div>`;
+ if(!isMine)return '';
+ // Delivered/read state is communicated by Chat V2 ticks. Don't repeat "Sent" in text.
+ // Pending send uses only a discreet clock; retry is offered ONLY when server
+ // confirmation failed, never merely because the receiver is offline.
+ if(m._deliveryStatus==='sent')return '';
+ if(m._deliveryStatus==='sending')
+   return '<div class="msg-time" role="status" aria-label="Sending message" title="Sending"><span aria-hidden="true">◷</span></div>';
+ if(m._deliveryStatus==='failed')
+   return `<div class="msg-time" role="alert"><span style="color:var(--red);">Not sent</span> <button type="button" class="btn btn-ghost btn-xs" data-chat-retry="${escapeHtml(m.id)}">Retry</button></div>`;
+ if(m._deliveryStatus==='blocked')
+   return '<div class="msg-time" role="alert">Message ID conflict — contact support.</div>';
+ return '';
 }
 async function axChatWait(e,request) {
  if(!e.owner.owns()||e.cancelled)throw Error('Account changed');
