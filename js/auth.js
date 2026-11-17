@@ -1,6 +1,7 @@
 // Each login/logout invalidates callbacks and in-flight sync from the previous session.
 window._accountSessionEpoch = window._accountSessionEpoch || 0;
 function cleanupAccountRealtime() {
+  if (window.axChatV2?.enabled) { try { window.axChatV2.cleanup(); } catch (_) {} }
   clearTimeout(window._rtProjTimer);
   window._rtProjTimer = null;
   if (typeof stopChatPolling === 'function') stopChatPolling();
@@ -400,6 +401,15 @@ async function loginSuccess(u) {
     window.realtimeInitialized = true;
     const masterChannel = supaClient.channel('aalynex_master_' + sessionEpoch + '_' + u.id);
     window._accountMasterChannel = masterChannel;
+    // Opt-in V2: account-wide incoming receipts. Existing messaging listeners stay intact.
+    if (window.axChatV2?.enabled) {
+      masterChannel.on('postgres_changes', {
+        event: 'INSERT', schema: 'public', table: 'messages',
+        filter: 'receiver_id=eq.' + u.id
+      }, payload => {
+        if (ownsSession()) window.axChatV2.onIncoming(payload);
+      });
+    }
 
     masterChannel
       // 1. Projects
@@ -428,6 +438,7 @@ else if (CU.role === 'freelancer' && currentFreelancerPage !== 'chat') renderF(c
           if (state[id][0]?.user_id) onlineUsers.add(state[id][0].user_id);
         }
         updateChatHeaderPresence();
+        if (window.axChatV2?.enabled) void window.axChatV2.refreshPresence();
       })
       // 3. Subscribe + track self
       .subscribe(async (status) => {
@@ -443,6 +454,9 @@ else if (CU.role === 'freelancer' && currentFreelancerPage !== 'chat') renderF(c
           if (dot) dot.style.background = 'var(--yellow)';
         }
       });
+  }
+  if (window.axChatV2?.enabled) {
+    try { window.axChatV2.onLogin(u); } catch (_) { /* Legacy auth remains usable. */ }
   }
 }
 

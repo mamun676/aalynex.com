@@ -176,6 +176,7 @@ DB.saveAttachments(mappedAtts);
           }
         }
         DB.saveMessages(msgMap);
+        if (window.axChatV2?.enabled) { try { window.axChatV2.onSynced(); } catch (_) {} }
       }
     }
   } catch (e) {
