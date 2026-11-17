@@ -1,0 +1,26 @@
+/* Aalynex Chat V2 opt-in: only styles optional receipt badges. */
+.axv2-ticks {
+  display: inline-flex;
+  vertical-align: middle;
+  margin-left: 5px;
+  gap: 0;
+  font-family: "Outfit", system-ui, sans-serif;
+  font-weight: 800;
+  letter-spacing: -3px;
+  font-size: 13px;
+  line-height: 1;
+  white-space: nowrap;
+  user-select: none;
+}
+.axv2-ticks.is-sent,
+.axv2-ticks.is-delivered {
+  color: var(--text-3, #94a3b8);
+}
+.axv2-ticks.is-delivered { padding-right: 3px; }
+.axv2-ticks.is-read {
+  padding-right: 3px;
+  color: #209df5;
+}
+@media (prefers-reduced-motion: reduce) {
+  .axv2-ticks { transition: none; }
+}
