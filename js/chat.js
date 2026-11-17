@@ -425,7 +425,8 @@ function renderMsgs(msgs, myId) {
           +'<div class="msg-video-footer"><span>'+(verified?(fromCreator?'You (creator)':'From creator'):'Project verification needed')+'</span><span>'+escapeHtml(fmtTime(m.time))+'</span></div>'
           +'</div></div>';
       }
-      const fname = axDeliveryRevision.cleanText(m.text).replace(/^(Raw Video: |Video: |Final Delivery: |Final Delivery)/, '').trim() || 'attachment';
+      const fnameFromMessage = axDeliveryRevision.cleanText(m.text).replace(/^(Raw Video: |Video: |Final Delivery: |Final Delivery)/, '').trim();
+      const fname = /\/final\//.test(String(m.file_url)) ? axFinalOriginalName(m.file_url) : (fnameFromMessage || 'attachment');
       const scoped = String(m.file_url).match(/\/projects\/([A-Za-z0-9_-]+)\//);
       const possible = DB.projects().filter(p => p.status !== 'open' &&
         ((String(p.creatorId) === String(myId) && String(p.freelancerId) === String(currentChatUserId)) ||
@@ -451,6 +452,11 @@ function renderMsgs(msgs, myId) {
       // for prepayment playback. It must be from the actual assigned editor.
       const previewMsg = revision?.preview || null;
       const id = `ax-media-${idx}`;
+      // A freelancer's own final is a delivery revision, not an ordinary chat attachment.
+      // The helper uses the already verified project/revision and preserves secure media actions.
+      if (isMine && CU.role === 'freelancer' && proj && revision) {
+        return axEditorFinalCard(m, proj, revision, previewMsg, id);
+      }
       const openAction = appEvent('axOpenMessageMedia', [String(m.id||''), id]);
       const saveAction = appEvent('axDownloadMessageFile', [String(m.id||'')]);
       let controls = '';
