@@ -141,21 +141,48 @@
     if (elapsed < 86400000) return 'Last active ' + Math.floor(elapsed / 3600000) + 'h ago';
     return 'Last active ' + new Date(value).toLocaleDateString();
   }
-  function renderStatus() {
-    if (!active()) return;
-    const label = document.getElementById('chat-status-text');
-    const dot = document.getElementById('chat-online-dot');
-    if (!label) return;
-    if (typingUntil > Date.now()) {
-      label.textContent = 'typing…';
-      label.style.color = 'var(--green)';
-      if (dot) dot.style.background = 'var(--green)';
+  // Ephemeral indicator: a separate bubble at the end of the visible chat.
+  // Do not edit, persist, or re-render any real message or protected media card.
+  function removeTypingBubble() {
+    document.querySelectorAll('[data-axv2-typing]').forEach(node => node.remove());
+  }
+  function renderTypingBubble() {
+    const box = document.getElementById('chat-msgs-el');
+    if (!box) return;
+    let bubble = box.querySelector('[data-axv2-typing]');
+    if (!chatVisible() || typingUntil <= Date.now()) {
+      if (bubble) bubble.remove();
       return;
     }
+    if (bubble && box.lastElementChild === bubble) return;
+    const nearBottom = box.scrollHeight - box.scrollTop - box.clientHeight < 90;
+    if (!bubble) {
+      bubble = document.createElement('div');
+      bubble.className = 'axv2-typing-row';
+      bubble.setAttribute('data-axv2-typing', 'true');
+      bubble.setAttribute('role', 'status');
+      bubble.setAttribute('aria-label', 'Other person is typing');
+      bubble.innerHTML = '<span class="axv2-typing-bubble" aria-hidden="true">' +
+        '<span></span><span></span><span></span></span>';
+    }
+    box.appendChild(bubble);
+    if (nearBottom) box.scrollTop = box.scrollHeight;
+  }
+  function renderStatus() {
+    if (!active()) {
+      removeTypingBubble();
+      return;
+    }
+    // Keep Online/Last active in the header; show typing ONLY inside the chat.
+    const label = document.getElementById('chat-status-text');
+    const dot = document.getElementById('chat-online-dot');
     const status = lastSeenLabel(peerLastActive);
-    label.textContent = status;
-    label.style.color = status === 'Online' ? 'var(--green)' : 'var(--text-3)';
+    if (label) {
+      label.textContent = status;
+      label.style.color = status === 'Online' ? 'var(--green)' : 'var(--text-3)';
+    }
     if (dot) dot.style.background = status === 'Online' ? 'var(--green)' : 'var(--text-3)';
+    renderTypingBubble();
   }
   async function refreshPresence() {
     if (!active()) return;
@@ -220,8 +247,10 @@
     if (!owner() || !uuidRe.test(String(cid)) || !uuidRe.test(String(other))) return;
     if (conversation === cid && peer === String(other) && receiptChannel) {
       markReadIfVisible();
+      renderStatus();
       return;
     }
+    removeTypingBubble();
     stopTyping();
     if (receiptChannel) { try { void client().removeChannel(receiptChannel); } catch (_) {} }
     receiptChannel = null;
@@ -230,6 +259,7 @@
     receipts.clear();
     peerLastActive = null;
     typingUntil = 0;
+    renderStatus();
     const localCid = conversation, epoch = generation;
     const channel = client().channel('axv2_' + localCid + '_' + me + '_' + epoch);
     receiptChannel = channel
@@ -250,6 +280,7 @@
   }
   function cleanup() {
     generation++;
+    removeTypingBubble();
     stopTyping();
     if (receiptChannel && client()) {
       try { void client().removeChannel(receiptChannel); } catch (_) {}
