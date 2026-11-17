@@ -529,6 +529,14 @@ async function viewFreelancerPortfolio(freelancerId) {
   }
 }
 
+// Eligibility comes from the account role, never the free-text profession.
+function axIsEligibleFreelancer(profile) {
+  return !!profile && !!profile.id &&
+    String(profile.role || '').trim().toLowerCase() === 'freelancer' &&
+    (!CU || String(profile.id) !== String(CU.id));
+}
+let axEligibleEditorIds = new Set();
+
 function cNew() {
   const steps = ['Details', 'Content', 'Deadline', 'Upload Files', 'Freelancer', 'Chat', 'Review', 'Payment'];
 
@@ -606,14 +614,26 @@ async function wfContent() {
     </div>`;
 
   if (wfStep === 4) {
+    // The role is the account type. A freelancer may list "Content Creator"
+    // as a profession, which must not be mistaken for a creator account.
     let editors = [];
+    let loadedFromServer = false;
     if (supaClient) {
       try {
-        const { data, error } = await supaClient.from("profiles").select(AX_PROFILE_PUBLIC_FIELDS).eq("role", "freelancer");
-        if (!error && data) editors = data;
+        const { data, error } = await supaClient.from("profiles")
+          .select(AX_PROFILE_PUBLIC_FIELDS).eq("role", "freelancer");
+        if (!error && Array.isArray(data)) {
+          editors = data;
+          loadedFromServer = true;
+        }
       } catch (e) {}
     }
-    if (!editors || editors.length === 0) editors = DB.users().filter(u => u.role === "freelancer");
+    // Only fall back to the local cache when the server could not be read,
+    // not when the server successfully reports no eligible freelancers.
+    if (!loadedFromServer) editors = DB.users();
+    editors = editors.filter(axIsEligibleFreelancer);
+    axEligibleEditorIds = new Set(editors.map(f => String(f.id)));
+    selFreelancerIds = selFreelancerIds.filter(id => axEligibleEditorIds.has(String(id)));
 
     const getFreelancerStats = fid => {
       const stats = axFreelancerStats(fid);
@@ -622,7 +642,7 @@ async function wfContent() {
 
     return `
     <h3>Choose Editors to Request</h3>
-    <p style="color:var(--text-3);font-size:.8rem;margin-bottom:14px;">Select multiple freelancers. First to accept gets the job!</p>
+    <p style="color:var(--text-3);font-size:.8rem;margin-bottom:14px;">Only freelancer accounts are listed. A freelancer's specialty can be "Content Creator" or another creative service. First to accept gets the job!</p>
     <div class="f-grid">
       ${(editors && editors.length > 0) ? editors.map(f => {
         const stats = getFreelancerStats(f.id);
@@ -636,7 +656,8 @@ async function wfContent() {
           <div class="f-name">${escapeHtml(f.name)}</div>
           <div class="stars">${starsHtml}</div>
           <div class="f-rate">${escapeHtml(ratingDisplay)} &middot; ${escapeHtml(stats.completedCount)} Projects</div>
-          <div class="f-spec">${escapeHtml(f.profession || 'Editor')}</div>
+          <div class="f-spec" style="font-weight:700;color:var(--accent2);">Freelancer</div>
+          <div class="f-spec" style="font-size:.64rem;color:var(--text-3);">Specialty: ${escapeHtml(f.profession || 'Video Editor')}</div>
           <div style="margin-top:10px;">
             <button class="btn btn-outline-f btn-xs full-btn" data-app-click="${appEvent("viewFreelancerPortfolio", [String(f.id ?? '')], { stop: true })}">View Portfolio</button>
           </div>
@@ -857,7 +878,10 @@ function wfN() {
   // Upload Step (3) -> Just moves forward.
 
   if (wfStep === 4) { // Choose Editors Step
-    if (selFreelancerIds.length === 0) { showToast('Select at least one editor', 'err', ''); return; }
+    if (!selFreelancerIds.length || !selFreelancerIds.every(id => axEligibleEditorIds.has(String(id)))) {
+      showToast('Select a valid freelancer account', 'err', '');
+      return;
+    }
 
     // ── DUPLICATE-SUBMIT GUARD ──
     if (_wfPosting) return;
@@ -1017,6 +1041,10 @@ function wfB() {
 function selCT(t) { selContent = t; document.getElementById('c-main').innerHTML = cNew(); }
 
 function selFL(id, name) {
+  if (!axEligibleEditorIds.has(String(id))) {
+    showToast('Only freelancer accounts can receive project requests', 'err', '');
+    return;
+  }
   if (selFreelancerIds.includes(id)) {
     selFreelancerIds = selFreelancerIds.filter(x => x !== id);
   } else {
