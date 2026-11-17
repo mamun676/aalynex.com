@@ -964,7 +964,7 @@ async function saveManagedProfile() {
 async function loadFreelancerProfile() {
   if (!supaClient || !CU) return;
   try {
-    const { data, error } = await supaClient.from('profiles').select('*').eq('id', CU.id).single();
+    const { data, error } = await supaClient.from('profiles').select(AX_PROFILE_PUBLIC_FIELDS).eq('id', CU.id).single();
     if (data && !error) {
       CU.skills = data.skills || [];
       CU.portfolio_links = data.portfolio_links || {};
