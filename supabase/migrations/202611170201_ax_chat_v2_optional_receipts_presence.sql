@@ -15,7 +15,7 @@ CREATE INDEX IF NOT EXISTS axv2_receipts_conversation_user_idx
   ON public.axv2_message_receipts (conversation_id, user_id);
 
 ALTER TABLE public.axv2_message_receipts ENABLE ROW LEVEL SECURITY;
-REVOKE ALL ON TABLE public.axv2_message_receipts FROM PUBLIC, anon;
+REVOKE ALL ON TABLE public.axv2_message_receipts FROM PUBLIC, anon, authenticated;
 GRANT SELECT, INSERT, UPDATE ON TABLE public.axv2_message_receipts TO authenticated;
 GRANT ALL ON TABLE public.axv2_message_receipts TO service_role;
 
@@ -106,7 +106,7 @@ CREATE TABLE IF NOT EXISTS public.axv2_presence (
   last_active_at timestamptz NOT NULL DEFAULT now()
 );
 ALTER TABLE public.axv2_presence ENABLE ROW LEVEL SECURITY;
-REVOKE ALL ON TABLE public.axv2_presence FROM PUBLIC, anon;
+REVOKE ALL ON TABLE public.axv2_presence FROM PUBLIC, anon, authenticated;
 GRANT SELECT, INSERT, UPDATE ON TABLE public.axv2_presence TO authenticated;
 GRANT ALL ON TABLE public.axv2_presence TO service_role;
 
