@@ -108,6 +108,7 @@ DB.saveUsers(localUsers);
       const mapped = projects.map(p => ({
         id: p.id, creatorId: p.creator_id, freelancerId: p.freelancer_id || null,
         invited_freelancers: p.invited_freelancers || [],
+        openMarket: p.open_market === true, marketReady: p.market_ready === true,
         title: p.title || '', description: p.description || '', budget: p.budget || 0,
         contentType: p.content_type || '', deadline: p.deadline || '', priority: p.priority || 'Normal',
         status: p.status || 'open', rawShared: p.raw_shared || false,
@@ -116,6 +117,7 @@ DB.saveUsers(localUsers);
       }));
       mapped.sort((a, b) => (a.createdAt - b.createdAt) || String(a.id).localeCompare(String(b.id)));
 DB.saveProjects(mapped);
+      if (u.role === 'freelancer' && typeof axEnsureOpenMarketRealtime === 'function') axEnsureOpenMarketRealtime(u);
     } else if (projectSyncError) {
       console.warn('Project sync failed; leaving existing projects unchanged', projectSyncError);
     }
