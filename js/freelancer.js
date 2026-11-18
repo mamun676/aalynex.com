@@ -1,6 +1,47 @@
 /* ════════════════════════════════════════
    FREELANCER PAGES
 ════════════════════════════════════════ */
+// Open Market requests are separate from private creator invitations.
+function axIsFreelancerRequest(p) {
+  return p && p.status === 'open' && !p.freelancerId &&
+    ((p.openMarket === true && p.marketReady === true) ||
+      (Array.isArray(p.invited_freelancers) && p.invited_freelancers.includes(CU?.id)));
+}
+let axMarketChannel = null;
+let axMarketSubscriberId = null;
+const axMarketNoticeIds = new Set();
+function axEnsureOpenMarketRealtime(user) {
+  if (!supaClient || !user || user.role !== 'freelancer') return;
+  if (axMarketSubscriberId === user.id && axMarketChannel) return;
+  if (axMarketChannel) { try { supaClient.removeChannel(axMarketChannel); } catch (_) {} }
+  axMarketSubscriberId = user.id;
+  axMarketNoticeIds.clear();
+  const subscribedId = user.id;
+  axMarketChannel = supaClient.channel('ax-market-' + subscribedId)
+    .on('postgres_changes', {
+      event: '*', schema: 'public', table: 'projects', filter: 'open_market=eq.true'
+    }, async payload => {
+      if (!CU || CU.id !== subscribedId || CU.role !== 'freelancer') return;
+      const next = payload.new || {};
+      const fresh = !!next.id && next.open_market === true && next.market_ready === true &&
+        next.status === 'open' && next.freelancer_id == null;
+      if (fresh && !axMarketNoticeIds.has(next.id)) {
+        axMarketNoticeIds.add(next.id);
+        showToast('New Open Market project is available in Project Requests.', 'info', '');
+      }
+      await axRefreshOpenMarketRequests();
+    }).subscribe();
+}
+async function axRefreshOpenMarketRequests() {
+  if (!supaClient || !CU || CU.role !== 'freelancer') return;
+  const user = CU;
+  await syncFromSupabase(user, {coreOnly: true});
+  if (CU?.id === user.id && (currentFreelancerPage === 'home' || currentFreelancerPage === 'browse')) {
+    renderF(currentFreelancerPage, true);
+  }
+}
+const axAcceptingProjects = new Set();
+
 function fPage(p, el) {
   document.querySelectorAll('#screen-freelancer .nav-item').forEach(n => n.classList.remove('active'));
   if (el) el.classList.add('active');
@@ -117,7 +158,7 @@ m.innerHTML = html;
 function fHome() {
   const projs    = DB.projects().filter(p => p.freelancerId === CU.id);
   const earned   = projs.filter(p => p.paid).reduce((s, p) => s + p.budget, 0);
-  const openProjs = DB.projects().filter(p => p.status === 'open' && (p.invited_freelancers || []).includes(CU.id));
+  const openProjs = DB.projects().filter(axIsFreelancerRequest);
   return `
   <div class="page-head"><h2>Dashboard</h2><p>Your freelancing overview</p></div>
   <div class="cards-grid">
@@ -163,49 +204,73 @@ function fViewProject(id) {
 }
 
 function fBrowse() {
-  const open = DB.projects().filter(p => p.status === 'open' && (p.invited_freelancers || []).includes(CU.id));
+  const open = DB.projects().filter(axIsFreelancerRequest).sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
   return `
-  <div class="page-head"><h2>Project Requests</h2><p>${escapeHtml(open.length)} request${escapeHtml(open.length !== 1 ? 's' : '')} waiting for you</p></div>
+  <div class="page-head"><h2>Project Requests</h2><p>Private invitations and Open Market opportunities · ${escapeHtml(open.length)} available</p></div>
+  <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:14px;">
+    <div class="ax-market-feed-label">${escapeHtml(open.filter(p=>p.openMarket).length)} Open Market · ${escapeHtml(open.filter(p=>!p.openMarket).length)} private invitations</div>
+    <button class="btn btn-ghost btn-sm" onclick="axRefreshOpenMarketRequests()">Refresh Requests</button>
+  </div>
   <div class="project-list">
     ${open.length
       ? open.map(p => { const c = DB.users().find(u => u.id === p.creatorId); return `
-        <div class="pc">
+        <div class="pc ${p.openMarket ? 'ax-market-request' : ''}">
   <div class="pico">${contentIconSvg(p.contentType)}</div>
   <div class="pinfo">
     <div class="ptitle">${escapeHtml(p.title)}</div>
               <div class="pmeta">By ${escapeHtml(c?.name || 'Creator')} · <strong style="color:var(--accent)">₹${escapeHtml(fmt(p.budget))}</strong> · Due ${escapeHtml(fmtDate(p.deadline))}</div>
               <div style="margin-top:5px;display:flex;gap:5px;flex-wrap:wrap;">
+                ${p.openMarket ? '<span class="ax-market-tag">Open Market · First come, first served</span>' : '<span class="tag">Private invitation</span>'}
                 <span class="tag">${escapeHtml(p.contentType)}</span><span class="tag b">${escapeHtml(p.priority)}</span>
               </div>
             </div>
             <div style="display:flex;flex-direction:column;gap:6px;flex-shrink:0;">
-              <button class="btn btn-primary btn-sm" data-app-click="${appEvent("acceptProject", [String(p.id ?? '')])}">Accept First</button>
+              <button class="btn btn-primary btn-sm" data-app-click="${appEvent("acceptProject", [String(p.id ?? '')])}">${p.openMarket ? 'Accept Project' : 'Accept First'}</button>
               <button class="btn btn-ghost btn-sm"   data-app-click="${appEvent("viewProject", [String(p.id ?? '')])}">View Details</button>
             </div>
           </div>`; }).join('')
-      : '<div class="alert alert-i">No project requests right now. Wait for creators to invite you!</div>'}
+      : '<div class="alert alert-i">No requests right now. New Open Market projects and private invitations will appear here.</div>'}
   </div>`;
 }
 
 async function acceptProject(id) {
+  if (axAcceptingProjects.has(String(id))) return;
+  axAcceptingProjects.add(String(id));
+  try {
   let creatorId = null;
+  const localProject = DB.projects().find(p=>String(p.id)===String(id));
+  const isMarket = localProject?.openMarket === true;
+  if (isMarket && (!supaClient || CU?.role !== 'freelancer')) {
+    showToast('Sign in as a freelancer to accept Open Market projects.', 'err', '');
+    return;
+  }
 
   if (supaClient) {
-    const { data, error } = await supaClient.from('projects')
-      .update({ freelancer_id: CU.id, status: 'ongoing' })
-      .eq('id', id).is('freelancer_id', null).select();
-
-    if (error || !data || data.length === 0) {
-      showToast('Project already taken by another freelancer!', 'err', '');
-      renderF('browse');
-      return;
+    if (isMarket) {
+      // The server performs the single-winner atomic claim; never trust a browser-side lock.
+      const {data: claimed, error} = await supaClient.rpc('ax_claim_open_market_project', {p_project_id: String(id)});
+      if (error || claimed !== true) {
+        showToast(error ? 'Unable to accept: ' + error.message : 'This project has already been accepted.', 'err', '');
+        await axRefreshOpenMarketRequests();
+        return;
+      }
+      creatorId = localProject?.creatorId || null;
+    } else {
+      const { data, error } = await supaClient.from('projects')
+        .update({ freelancer_id: CU.id, status: 'ongoing' })
+        .eq('id', id).eq('status', 'open').is('freelancer_id', null).select();
+      if (error || !data || data.length === 0) {
+        showToast('Project already taken by another freelancer!', 'err', '');
+        await axRefreshOpenMarketRequests();
+        return;
+      }
+      creatorId = data[0].creator_id;
     }
-    creatorId = data[0].creator_id;
   }
 
   const projs = DB.projects(), p = projs.find(x => x.id === id);
   if (p) {
-    if (p.freelancerId) { showToast('Project already taken!', 'err', ''); renderF('browse'); return; }
+    if (p.freelancerId && !supaClient) { showToast('Project already taken!', 'err', ''); renderF('browse'); return; }
     p.freelancerId = CU.id; p.status = 'ongoing'; DB.saveProjects(projs);
     if (!creatorId) creatorId = p.creatorId;
   }
@@ -216,11 +281,13 @@ async function acceptProject(id) {
   showToast('Project accepted! Open Ongoing to view creator files.', 'ok', '🎉');
 
   renderF('ongoing');
+  } finally { axAcceptingProjects.delete(String(id)); }
 }
 
 function viewProject(id) {
   const p = DB.projects().find(x => x.id === id); if (!p) return;
-  const atts = (DB.attachments() || []).filter(a => a.projectId === id);
+  // Open Market listing details do not expose file names before assignment.
+  const atts = p.openMarket && p.freelancerId !== CU?.id ? [] : (DB.attachments() || []).filter(a => a.projectId === id);
 
   let bodyHtml = `<div style="font-size:0.85rem; color:var(--text-2); margin-bottom:12px;">
      <strong>Budget:</strong> ₹${escapeHtml(fmt(p.budget))}<br/>

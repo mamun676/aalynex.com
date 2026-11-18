@@ -1,6 +1,16 @@
 // ═══════════════════════════════════════════════
 //  CREATOR — dashboard, workflow, projects, profile, browse
 // ═══════════════════════════════════════════════
+let axProjectAudience = 'invite';
+let axMarketRestoreFooterScroll = false;
+function axSetProjectAudience(mode, source) {
+  if (mode !== 'invite' && mode !== 'market') return;
+  axMarketRestoreFooterScroll = source === 'footer';
+  axProjectAudience = mode;
+  if (mode === 'market') selFreelancerIds = [];
+  const main = document.getElementById('c-main');
+  if (main) main.innerHTML = cNew();
+}
 function cPage(p, el) {
   document.querySelectorAll('#screen-creator .nav-item').forEach(n => n.classList.remove('active'));
   if (el) el.classList.add('active');
@@ -9,7 +19,7 @@ function cPage(p, el) {
   _pushNav({ view: 'creator', page: p });
   if (p !== 'new') activeManageProjectId = null;
   if (p === 'new') {
-    if (!activeManageProjectId) { wfStep = 0; selContent = ''; selFreelancerIds = []; newProjectDraft = {}; newProjectFiles = []; }
+    if (!activeManageProjectId) { wfStep = 0; selContent = ''; selFreelancerIds = []; newProjectDraft = {}; newProjectFiles = []; axProjectAudience = 'invite'; }
   } else {
     activeManageProjectId = null;
   }
@@ -51,7 +61,7 @@ function cPageMobile(p, el) {
   currentCreatorPage = p;
   _pushNav({ view: 'creator', page: p });
 
-  if (p === 'new' && !activeManageProjectId) { wfStep = 0; selContent = ''; selFreelancerIds = []; newProjectDraft = {}; newProjectFiles = []; }
+  if (p === 'new' && !activeManageProjectId) { wfStep = 0; selContent = ''; selFreelancerIds = []; newProjectDraft = {}; newProjectFiles = []; axProjectAudience = 'invite'; }
   if (p !== 'new') activeManageProjectId = null;
 
 const _navT = _navTicket();
@@ -144,7 +154,7 @@ function cProjectDetail(pid) {
   const invited    = (p.invited_freelancers || []).map(id => DB.users().find(u => u.id === id)).filter(Boolean);
   const acceptedBy = p.freelancerId ? DB.users().find(u => u.id === p.freelancerId) : null;
 
-  const statusBadge = `<span class="pstatus ${escapeHtml(statusClass(p.status))}">${escapeHtml(p.status === 'open' ? '🔒 Waiting for acceptance' : statusLabel(p.status))}</span>`;
+  const statusBadge = `<span class="pstatus ${escapeHtml(statusClass(p.status))}">${escapeHtml(p.status === 'open' ? (p.openMarket ? (p.marketReady ? 'Open Market · Awaiting acceptance' : 'Preparing Open Market listing') : 'Waiting for acceptance') : statusLabel(p.status))}</span>`;
   const acceptedLine = acceptedBy
     ? `Accepted by <strong>${escapeHtml(acceptedBy.name)}</strong>`
     : 'Not accepted yet — waiting for an editor to accept';
@@ -159,7 +169,7 @@ function cProjectDetail(pid) {
 
   const invitedHtml = invited.length
     ? invited.map(f => `<span style="display:inline-block;background:var(--accent-soft);color:var(--accent);border-radius:99px;padding:3px 10px;font-size:.75rem;margin:2px 4px 2px 0;">${escapeHtml(f.name)}</span>`).join('')
-    : '<span style="color:var(--text-3);font-size:.85rem;">No editors invited.</span>';
+    : (p.openMarket ? '<span class="ax-market-tag">Open Market · All eligible freelancers</span>' : '<span style="color:var(--text-3);font-size:.85rem;">No editors invited.</span>');
 
   return `
   <div class="page-head" style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;">
@@ -176,7 +186,7 @@ function cProjectDetail(pid) {
     <div class="info-row"><span class="key">Status</span><span>${acceptedLine}</span></div>
   </div>
 
-  <div class="section-title">Invited Editors</div>
+  <div class="section-title">${p.openMarket ? 'Open Market Distribution' : 'Invited Editors'}</div>
   <div class="det-card" style="margin-bottom:16px;">${invitedHtml}</div>
 
   <div class="section-title">Uploaded Files</div>
@@ -557,6 +567,11 @@ function cNew() {
     if (el) {
       el.innerHTML = await wfContent();
       if (wfStep === 3) renderFileListPreview();
+      if (wfStep === 4 && axMarketRestoreFooterScroll) {
+        axMarketRestoreFooterScroll = false;
+        const footer = el.querySelector('.ax-market-publish-choice');
+        if (footer) footer.scrollIntoView({block:'end'});
+      }
     }
   }, 0);
 
@@ -641,8 +656,19 @@ async function wfContent() {
     };
 
     return `
-    <h3>Choose Editors to Request</h3>
-    <p style="color:var(--text-3);font-size:.8rem;margin-bottom:14px;">Only freelancer accounts are listed. A freelancer's specialty can be "Content Creator" or another creative service. First to accept gets the job!</p>
+    <h3>Who can accept this project?</h3>
+    <p style="color:var(--text-2);font-size:.82rem;margin:4px 0 12px;">Choose how you want to publish. You can invite selected editors or share the opportunity with the full freelancer marketplace.</p>
+    <div class="ax-audience-mode" role="group" aria-label="Project audience">
+      <button type="button" class="ax-audience-option ${axProjectAudience === 'invite' ? 'active' : ''}" aria-pressed="${axProjectAudience === 'invite'}" onclick="axSetProjectAudience('invite')">
+        <span class="ax-audience-icon">◎</span><span class="ax-audience-content"><span class="ax-audience-label">Select Freelancers</span><span class="ax-audience-description">Choose who receives this private invitation. First selected editor to accept wins.</span></span>
+      </button>
+      <button type="button" class="ax-audience-option ${axProjectAudience === 'market' ? 'active' : ''}" aria-pressed="${axProjectAudience === 'market'}" onclick="axSetProjectAudience('market')">
+        <span class="ax-audience-icon">⌁</span><span class="ax-audience-content"><span class="ax-audience-label">Open Market</span><span class="ax-audience-description">Publish to all eligible freelancers. First successful acceptance gets the project.</span></span>
+      </button>
+    </div>
+    ${axProjectAudience === 'market' ? `<div class="ax-market-explainer"><span class="ax-audience-icon">✓</span><div><strong>Available to eligible freelancers</strong><p>After files upload, the project appears in eligible freelancers' Project Requests. First successful acceptance wins. Managed Editors follow existing Premium access rules. Once claimed, the listing closes.</p></div></div>` : ''}
+    <div class="ax-invite-list" style="${axProjectAudience === 'market' ? 'display:none;' : ''}">
+    <p style="color:var(--text-3);font-size:.8rem;margin-bottom:14px;">Select specific freelancer accounts. Their specialty may be any creative service. First invited editor to accept gets the job.</p>
     <div class="f-grid">
       ${(editors && editors.length > 0) ? editors.map(f => {
         const stats = getFreelancerStats(f.id);
@@ -665,9 +691,24 @@ async function wfContent() {
       }).join('') : `<div style="color:var(--text-3);font-size:.82rem;grid-column:1/-1;padding:16px 0;">No editors available.</div>`}
     </div><br/>
     ${selFreelancerIds.length > 0 ? `<div class="alert alert-s">Selected: <strong>${escapeHtml(selFreelancerIds.length)} Editors</strong></div>` : ''}
+    </div>
+    <!-- Repeat the audience choice beside Publish: long freelancer lists hide the first selector. -->
+    <section class="ax-market-publish-choice" aria-label="Choose how to publish">
+      <div class="ax-market-publish-heading">Where should this project go?</div>
+      <div class="ax-market-publish-options" role="group" aria-label="Publishing audience">
+        <button type="button" class="ax-market-publish-option ${axProjectAudience === 'invite' ? 'active' : ''}" aria-pressed="${axProjectAudience === 'invite'}" onclick="axSetProjectAudience('invite','footer')">
+          <span class="ax-market-publish-name">Select Freelancers</span>
+          <span class="ax-market-publish-desc">Send private invites to chosen editors</span>
+        </button>
+        <button type="button" class="ax-market-publish-option ${axProjectAudience === 'market' ? 'active' : ''}" aria-pressed="${axProjectAudience === 'market'}" onclick="axSetProjectAudience('market','footer')">
+          <span class="ax-market-publish-name">Open Market</span>
+          <span class="ax-market-publish-desc">All eligible freelancers · first to accept wins</span>
+        </button>
+      </div>
+    </section>
     <div style="display:flex;gap:10px;flex-wrap:wrap;">
       <button class="btn btn-ghost" onclick="wfB()">&larr; Back</button>
-      <button class="btn btn-primary" onclick="wfN()">Send Requests &amp; Post &rarr;</button>
+      <button class="btn btn-primary" onclick="wfN()">${axProjectAudience === 'market' ? 'Publish to Open Market' : 'Send Requests &amp; Post'} &rarr;</button>
     </div>`;
   }
 
@@ -878,7 +919,12 @@ function wfN() {
   // Upload Step (3) -> Just moves forward.
 
   if (wfStep === 4) { // Choose Editors Step
-    if (!selFreelancerIds.length || !selFreelancerIds.every(id => axEligibleEditorIds.has(String(id)))) {
+    const postingToMarket = axProjectAudience === 'market';
+    if (postingToMarket && !supaClient) {
+      showToast('Connect to Aalynex to publish to Open Market.', 'err', '');
+      return;
+    }
+    if (!postingToMarket && (!selFreelancerIds.length || !selFreelancerIds.every(id => axEligibleEditorIds.has(String(id))))) {
       showToast('Select a valid freelancer account', 'err', '');
       return;
     }
@@ -900,7 +946,9 @@ function wfN() {
       deadline: newProjectDraft.deadline,
       priority: newProjectDraft.priority,
       freelancerId: null,
-      invited_freelancers: selFreelancerIds, status: 'open', rawShared: true, // Auto rawShared!
+      invited_freelancers: postingToMarket ? [] : selFreelancerIds, openMarket: postingToMarket,
+      marketReady: postingToMarket && newProjectFiles.length === 0,
+      status: 'open', rawShared: true, // Auto rawShared!
       editedUploaded: false, paid: false, rating: 0, review: '', createdAt: Date.now()
     };
 
@@ -916,7 +964,9 @@ function wfN() {
     if (supaClient) {
       supaClient.from('projects').insert({
         id: newP.id, creator_id: CU.id, freelancer_id: null,
-        invited_freelancers: selFreelancerIds,
+        invited_freelancers: postingToMarket ? [] : selFreelancerIds,
+        open_market: postingToMarket,
+        market_ready: postingToMarket && newProjectFiles.length === 0,
         title: newP.title,
         description: newP.description,
         budget: newP.budget,
@@ -937,8 +987,9 @@ function wfN() {
           const newProjectFiles_copy = [...newProjectFiles];
 
           if (newProjectFiles_copy.length === 0) {
-            // No files to upload — finish immediately
-            showToast('Project Requests Sent! Waiting for a freelancer.', 'ok', '🎉');
+            // No files to upload — market is published atomically with creation.
+            if (!postingToMarket) for (const fid of selFreelancerIds) sendProjectNotificationEmail(fid, newP.title, newP.budget, newP.deadline, newP.contentType);
+            showToast(postingToMarket ? 'Published to Open Market!' : 'Project Requests Sent! Waiting for a freelancer.', 'ok', '');
             activeManageProjectId = null;
             newProjectFiles = [];
             _wfPosting = false;
@@ -983,9 +1034,23 @@ function wfN() {
             if (postBtnFail) { postBtnFail.disabled = false; postBtnFail.textContent = 'Send Requests & Post →'; }
             // newProjectFiles is intentionally NOT cleared so the user can retry
           } else {
-            // Every file uploaded and every attachment record saved — success
-            showToast('Project Requests Sent! Waiting for a freelancer.', 'ok', '🎉');
-            for (const fid of selFreelancerIds) {
+            // Only publish to everyone AFTER all source files and database records exist.
+            if (postingToMarket) {
+              const {data: published, error: publishErr} = await supaClient.from('projects')
+                .update({market_ready: true}).eq('id', newP.id)
+                .eq('creator_id', CU.id).eq('open_market', true).eq('status', 'open')
+                .select('id').maybeSingle();
+              if (publishErr || !published) {
+                showToast('Files uploaded but Open Market publishing failed. The project is not public; please contact support.', 'err', '');
+                _wfPosting = false;
+                return;
+              }
+              const saved = DB.projects();
+              const record = saved.find(p => p.id === newP.id);
+              if (record) { record.marketReady = true; DB.saveProjects(saved); }
+            }
+            showToast(postingToMarket ? 'Published to Open Market!' : 'Project Requests Sent! Waiting for a freelancer.', 'ok', '');
+            for (const fid of (postingToMarket ? [] : selFreelancerIds)) {
               sendProjectNotificationEmail(
                 fid, newP.title, newP.budget, newP.deadline, newP.contentType
               );
@@ -1071,7 +1136,7 @@ function cProjects() {
   </div>
             <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;">
               <div class="pstatus ${escapeHtml(statusClass(p.status))}">
-                ${escapeHtml(p.status === 'open' ? '🔒 Waiting' : statusLabel(p.status))}
+                ${escapeHtml(p.status === 'open' ? (p.openMarket ? (p.marketReady ? 'Open Market' : 'Preparing listing') : 'Waiting') : statusLabel(p.status))}
               </div>
               ${p.status !== 'open' ? `<button class="btn btn-primary btn-xs">Manage</button>` : ''}
             </div>
