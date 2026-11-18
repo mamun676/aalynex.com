@@ -235,3 +235,23 @@ test('successful logout clears session only after Supabase local logout complete
  assert.equal(f.state.users.length,0);
  assert.equal(f.state.screen,'screen-landing');
 });
+
+
+test('forgot-password code resend uses existing-only OTP and 60-second cooldown',async()=>{
+  const f=fixture();
+  const start=source.indexOf("let _resetEmail = ''");
+  const end=source.indexOf('async function doResetVerifyOTP()',start);
+  assert.ok(start>0&&end>start);
+  const forgot=new Function('deps','with(deps){'+source.slice(start,end)+
+    '\nreturn {doForgotPassword,resendResetOTP};}')(f.deps);
+  await forgot.doForgotPassword();
+  assert.equal(count(f,'otp'),1);
+  assert.equal(f.state.calls[0].args.options.shouldCreateUser,false);
+  await forgot.resendResetOTP();
+  assert.equal(count(f,'otp'),1);
+  assert.match(f.fields.get('reset-err').textContent,/wait/);
+});
+test('SQL also rejects new arbitrary role names before profiles can be created',()=>{
+  assert.match(sql,/ax_auth_profile_allowed_roles_chk/);
+  assert.match(sql,/role IS NOT NULL AND role IN \('creator','freelancer'\)/);
+});
