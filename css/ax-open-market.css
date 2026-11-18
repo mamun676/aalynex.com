@@ -16,15 +16,3 @@
 .ax-market-request{border-left:3px solid var(--green)}
 .ax-market-feed-label{font-size:.72rem;font-weight:650;color:var(--text-2);margin:0 0 10px}
 @media(max-width:620px){.ax-audience-mode{grid-template-columns:1fr;gap:10px}.ax-audience-option{min-height:88px;padding:14px}.ax-market-explainer{padding:14px}}
-
-/* Footer audience choice: visible directly above the publish action after long editor lists */
-.ax-market-publish-choice{margin:24px 0 16px;border:1px solid var(--glass-border-strong);border-radius:13px;background:var(--surface);padding:16px}
-.ax-market-publish-heading{font-size:.84rem;font-weight:750;color:var(--text);margin-bottom:12px}
-.ax-market-publish-options{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
-.ax-market-publish-option{display:flex;flex-direction:column;align-items:flex-start;gap:5px;cursor:pointer;text-align:left;font:inherit;color:var(--text);border:1.5px solid var(--glass-border-strong);border-radius:10px;padding:14px 15px;background:var(--surface2);min-height:80px;transition:border-color .12s,background .12s}
-.ax-market-publish-option:hover{border-color:var(--accent)}
-.ax-market-publish-option.active{border-color:var(--accent);background:var(--accent-soft);box-shadow:inset 3px 0 var(--accent)}
-.ax-market-publish-option:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
-.ax-market-publish-name{font-size:.82rem;font-weight:750}
-.ax-market-publish-desc{font-size:.72rem;line-height:1.5;color:var(--text-2)}
-@media(max-width:600px){.ax-market-publish-choice{padding:12px}.ax-market-publish-options{grid-template-columns:1fr}.ax-market-publish-option{min-height:65px;padding:11px}}

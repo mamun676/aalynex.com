@@ -2,10 +2,8 @@
 //  CREATOR — dashboard, workflow, projects, profile, browse
 // ═══════════════════════════════════════════════
 let axProjectAudience = 'invite';
-let axMarketRestoreFooterScroll = false;
-function axSetProjectAudience(mode, source) {
+function axSetProjectAudience(mode) {
   if (mode !== 'invite' && mode !== 'market') return;
-  axMarketRestoreFooterScroll = source === 'footer';
   axProjectAudience = mode;
   if (mode === 'market') selFreelancerIds = [];
   const main = document.getElementById('c-main');
@@ -567,11 +565,6 @@ function cNew() {
     if (el) {
       el.innerHTML = await wfContent();
       if (wfStep === 3) renderFileListPreview();
-      if (wfStep === 4 && axMarketRestoreFooterScroll) {
-        axMarketRestoreFooterScroll = false;
-        const footer = el.querySelector('.ax-market-publish-choice');
-        if (footer) footer.scrollIntoView({block:'end'});
-      }
     }
   }, 0);
 
@@ -692,20 +685,6 @@ async function wfContent() {
     </div><br/>
     ${selFreelancerIds.length > 0 ? `<div class="alert alert-s">Selected: <strong>${escapeHtml(selFreelancerIds.length)} Editors</strong></div>` : ''}
     </div>
-    <!-- Repeat the audience choice beside Publish: long freelancer lists hide the first selector. -->
-    <section class="ax-market-publish-choice" aria-label="Choose how to publish">
-      <div class="ax-market-publish-heading">Where should this project go?</div>
-      <div class="ax-market-publish-options" role="group" aria-label="Publishing audience">
-        <button type="button" class="ax-market-publish-option ${axProjectAudience === 'invite' ? 'active' : ''}" aria-pressed="${axProjectAudience === 'invite'}" onclick="axSetProjectAudience('invite','footer')">
-          <span class="ax-market-publish-name">Select Freelancers</span>
-          <span class="ax-market-publish-desc">Send private invites to chosen editors</span>
-        </button>
-        <button type="button" class="ax-market-publish-option ${axProjectAudience === 'market' ? 'active' : ''}" aria-pressed="${axProjectAudience === 'market'}" onclick="axSetProjectAudience('market','footer')">
-          <span class="ax-market-publish-name">Open Market</span>
-          <span class="ax-market-publish-desc">All eligible freelancers · first to accept wins</span>
-        </button>
-      </div>
-    </section>
     <div style="display:flex;gap:10px;flex-wrap:wrap;">
       <button class="btn btn-ghost" onclick="wfB()">&larr; Back</button>
       <button class="btn btn-primary" onclick="wfN()">${axProjectAudience === 'market' ? 'Publish to Open Market' : 'Send Requests &amp; Post'} &rarr;</button>
