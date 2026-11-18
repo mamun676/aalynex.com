@@ -642,6 +642,7 @@ async function wfContent() {
     editors = editors.filter(axIsEligibleFreelancer);
     axEligibleEditorIds = new Set(editors.map(f => String(f.id)));
     selFreelancerIds = selFreelancerIds.filter(id => axEligibleEditorIds.has(String(id)));
+    if (window.axSmartFindingWeb) window.axSmartFindingWeb.setEditors(editors);
 
     const getFreelancerStats = fid => {
       const stats = axFreelancerStats(fid);
@@ -662,6 +663,7 @@ async function wfContent() {
     ${axProjectAudience === 'market' ? `<div class="ax-market-explainer"><span class="ax-audience-icon">✓</span><div><strong>Available to eligible freelancers</strong><p>After files upload, the project appears in eligible freelancers' Project Requests. First successful acceptance wins. Managed Editors follow existing Premium access rules. Once claimed, the listing closes.</p></div></div>` : ''}
     <div class="ax-invite-list" style="${axProjectAudience === 'market' ? 'display:none;' : ''}">
     <p style="color:var(--text-3);font-size:.8rem;margin-bottom:14px;">Select specific freelancer accounts. Their specialty may be any creative service. First invited editor to accept gets the job.</p>
+    ${window.axSmartFindingWeb ? '<div id="ax-smart-finding-web" class="ax-sf-root" role="region" aria-label="Smart Finding recommended editors"></div>' : ''}
     <div class="f-grid">
       ${(editors && editors.length > 0) ? editors.map(f => {
         const stats = getFreelancerStats(f.id);

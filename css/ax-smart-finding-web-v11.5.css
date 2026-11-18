@@ -1,0 +1,267 @@
+/* Aalynex Smart Finding — Web UI polish V11.6.
+   Styling only: existing recommendation, selection and profile logic is unchanged.
+   Scoped to the installed #ax-smart-finding-web container.
+*/
+#ax-smart-finding-web.ax-sf-root {
+  --sf-ink: #221d2d;
+  --sf-muted: #605b6b;
+  --sf-caption: #716b79;
+  --sf-purple: #6436bb;
+  --sf-purple-hover: #51299c;
+  --sf-purple-soft: #f0eaff;
+  --sf-panel: #fcfbfe;
+  --sf-card: #ffffff;
+  --sf-border: #e8e2f0;
+  --sf-card-border: #eee9f4;
+  --sf-secondary: #ffffff;
+  --sf-secondary-hover: #f4f0fb;
+  --sf-shadow: 0 6px 30px rgba(36, 25, 60, .065), 0 1px 3px rgba(36, 25, 60, .04);
+
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  margin: 0 0 22px;
+  padding: 20px;
+  border: 1px solid var(--sf-border);
+  border-radius: 19px;
+  background: var(--sf-panel);
+  box-shadow: var(--sf-shadow);
+  color: var(--sf-ink);
+  font-family: inherit;
+}
+
+/* Quiet signature accent, not a full purple overlay. */
+#ax-smart-finding-web.ax-sf-root::before {
+  content: "";
+  position: absolute;
+  pointer-events: none;
+  inset: 0 0 auto;
+  height: 3px;
+  border: 0;
+  border-radius: 0;
+  background: linear-gradient(90deg, #7447d1, #b39aef 46%, transparent 84%);
+  animation: none;
+  opacity: 1;
+}
+
+#ax-smart-finding-web .ax-sf-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin: 0 0 16px;
+}
+#ax-smart-finding-web .ax-sf-head > div {
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr);
+  column-gap: 12px;
+  align-items: center;
+}
+#ax-smart-finding-web .ax-sf-spark {
+  grid-row: span 2;
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  border-radius: 13px;
+  background: var(--sf-purple-soft);
+  color: var(--sf-purple);
+  font-size: 22px;
+  line-height: 1;
+}
+#ax-smart-finding-web .ax-sf-head strong {
+  display: block;
+  color: var(--sf-ink);
+  font-size: 17px;
+  line-height: 1.25;
+  letter-spacing: -.3px;
+  font-weight: 800;
+}
+#ax-smart-finding-web .ax-sf-head small {
+  display: block;
+  margin-top: 2px;
+  color: var(--sf-muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+#ax-smart-finding-web .ax-sf-badge {
+  padding: 7px 11px;
+  border: 1px solid #e6dafa;
+  border-radius: 999px;
+  background: var(--sf-purple-soft);
+  color: var(--sf-purple);
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: .065em;
+  white-space: nowrap;
+}
+#ax-smart-finding-web .ax-sf-content { position: relative; display: grid; gap: 10px; }
+#ax-smart-finding-web .ax-sf-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(220px, 36%);
+  grid-template-rows: auto auto;
+  align-items: center;
+  column-gap: 16px;
+  row-gap: 4px;
+  padding: 15px 16px;
+  border: 1px solid var(--sf-card-border);
+  border-radius: 14px;
+  background: var(--sf-card);
+  box-shadow: 0 1px 2px rgba(33, 25, 55, .025);
+  min-width: 0;
+}
+#ax-smart-finding-web .ax-sf-person {
+  grid-column: 1;
+  grid-row: 1;
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  min-width: 0;
+}
+#ax-smart-finding-web .ax-sf-avatar {
+  flex: 0 0 39px;
+  width: 39px;
+  height: 39px;
+  display: grid;
+  place-items: center;
+  border-radius: 12px;
+  background: var(--sf-purple-soft);
+  color: var(--sf-purple);
+  font-size: 16px;
+  font-weight: 850;
+}
+#ax-smart-finding-web .ax-sf-person-title {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+#ax-smart-finding-web .ax-sf-person-title strong {
+  color: var(--sf-ink);
+  font-size: 13px;
+  line-height: 1.35;
+  font-weight: 750;
+  overflow-wrap: anywhere;
+}
+#ax-smart-finding-web .ax-sf-person-title small {
+  color: var(--sf-purple);
+  font-size: 11px;
+  line-height: 1.3;
+  font-weight: 650;
+  overflow-wrap: anywhere;
+}
+#ax-smart-finding-web .ax-sf-reason {
+  grid-column: 1;
+  grid-row: 2;
+  margin: 3px 0 0 50px;
+  color: var(--sf-muted);
+  font-size: 12px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+#ax-smart-finding-web .ax-sf-actions {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  min-width: 0;
+}
+#ax-smart-finding-web .ax-sf-actions button {
+  appearance: none;
+  min-width: 0;
+  min-height: 42px;
+  padding: 10px 12px;
+  border: 1px solid var(--sf-border);
+  border-radius: 10px;
+  background: var(--sf-secondary);
+  box-shadow: none;
+  color: var(--sf-ink);
+  font: inherit;
+  font-size: 12px;
+  line-height: 1.2;
+  font-weight: 750;
+  text-align: center;
+  cursor: pointer;
+  transition: background-color .18s ease, border-color .18s ease, box-shadow .18s ease, transform .18s ease;
+}
+#ax-smart-finding-web .ax-sf-actions .ax-sf-select {
+  border-color: var(--sf-purple);
+  background: var(--sf-purple);
+  color: #ffffff;
+  box-shadow: 0 2px 6px rgba(100, 54, 187, .18);
+}
+#ax-smart-finding-web .ax-sf-actions .ax-sf-view:hover {
+  background: var(--sf-secondary-hover);
+  border-color: #c8b6e8;
+}
+#ax-smart-finding-web .ax-sf-actions .ax-sf-select:hover {
+  background: var(--sf-purple-hover);
+  border-color: var(--sf-purple-hover);
+  box-shadow: 0 4px 10px rgba(100, 54, 187, .22);
+}
+#ax-smart-finding-web .ax-sf-actions button:active { transform: translateY(1px); }
+#ax-smart-finding-web .ax-sf-actions button:focus-visible {
+  outline: 3px solid #af86f1;
+  outline-offset: 3px;
+}
+#ax-smart-finding-web .ax-sf-note,
+#ax-smart-finding-web .ax-sf-caption {
+  margin: 2px 0 0;
+  color: var(--sf-muted);
+  font-size: 12px;
+  line-height: 1.65;
+}
+#ax-smart-finding-web .ax-sf-caption { color: var(--sf-caption); font-size: 11px; }
+
+/* The app's existing theme switch sets data-theme on <html>. */
+[data-theme="dark"] #ax-smart-finding-web.ax-sf-root {
+  --sf-ink: #f3f0f8;
+  --sf-muted: #beb7cb;
+  --sf-caption: #a9a1b9;
+  --sf-purple: #c5acff;
+  --sf-purple-hover: #6e3bc1;
+  --sf-purple-soft: #362a49;
+  --sf-panel: #252129;
+  --sf-card: #2b2631;
+  --sf-border: #4d415c;
+  --sf-card-border: #433a4e;
+  --sf-secondary: #312b39;
+  --sf-secondary-hover: #40364e;
+  --sf-shadow: 0 8px 24px rgba(0, 0, 0, .21);
+}
+[data-theme="dark"] #ax-smart-finding-web .ax-sf-badge { border-color: #55436e; }
+[data-theme="dark"] #ax-smart-finding-web .ax-sf-actions .ax-sf-select {
+  background: #6b38ba;
+  border-color: #8150d2;
+  color: #ffffff;
+  box-shadow: 0 2px 9px rgba(0, 0, 0, .2);
+}
+[data-theme="dark"] #ax-smart-finding-web .ax-sf-actions .ax-sf-select:hover {
+  background: #7947c7;
+  border-color: #9465dd;
+}
+[data-theme="dark"] #ax-smart-finding-web .ax-sf-actions .ax-sf-view:hover { border-color: #87709e; }
+
+/* Stack actions under editor details on phones and compact browser windows. */
+@media (max-width: 900px) {
+  #ax-smart-finding-web .ax-sf-card { grid-template-columns: minmax(0, 1fr); row-gap: 10px; }
+  #ax-smart-finding-web .ax-sf-reason { grid-column: 1; grid-row: 2; }
+  #ax-smart-finding-web .ax-sf-actions { grid-column: 1; grid-row: 3; }
+}
+@media (max-width: 480px) {
+  #ax-smart-finding-web.ax-sf-root { padding: 14px; border-radius: 16px; }
+  #ax-smart-finding-web .ax-sf-head { gap: 10px; }
+  #ax-smart-finding-web .ax-sf-head > div { grid-template-columns: 36px minmax(0, 1fr); column-gap: 9px; }
+  #ax-smart-finding-web .ax-sf-spark { width: 36px; height: 36px; font-size: 19px; }
+  #ax-smart-finding-web .ax-sf-head strong { font-size: 15px; }
+  #ax-smart-finding-web .ax-sf-badge { font-size: 9px; padding: 6px 9px; }
+  #ax-smart-finding-web .ax-sf-card { padding: 13px; }
+  #ax-smart-finding-web .ax-sf-reason { margin-left: 0; }
+  #ax-smart-finding-web .ax-sf-actions button { min-height: 42px; font-size: 11px; padding: 9px 6px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  #ax-smart-finding-web .ax-sf-actions button { transition: none; }
+}
