@@ -170,6 +170,7 @@ DB.saveAttachments(mappedAtts);
               from:     m.sender_id,
               text:     m.text,
               file_url: fileurl,
+              replyToMessageId: m.reply_to_message_id || null,
               time:     new Date(m.created_at).getTime()
             });
             renderedMessageIds.add(m.id); // prevents realtime re-adding same msg

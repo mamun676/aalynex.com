@@ -81,3 +81,82 @@
   color: #fff;
   box-sizing: border-box;
 }
+
+/* Reply to message: optional Chat V2-only UI, never changes protected media. */
+.axv2-reply-action {
+  background: transparent;
+  border: 0;
+  color: var(--text-3);
+  cursor: pointer;
+  font: inherit;
+  font-size: 11px;
+  margin-right: 9px;
+  padding: 2px 5px;
+  border-radius: 5px;
+}
+.axv2-reply-action:hover,
+.axv2-reply-action:focus-visible { color: var(--accent); background: var(--bg2); }
+.axv2-reply-composer {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  background: var(--surface);
+  border-top: 1px solid var(--glass-border);
+  padding: 9px 14px;
+  min-width: 0;
+}
+.axv2-reply-composer-text {
+  min-width: 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  border-left: 3px solid var(--accent);
+  padding-left: 10px;
+  line-height: 1.25;
+}
+.axv2-reply-composer-text strong { color: var(--accent); font-size: 12px; }
+.axv2-reply-composer-text span {
+  color: var(--text-3);
+  font-size: 12px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.axv2-reply-cancel {
+  border: 0;
+  background: transparent;
+  color: var(--text-3);
+  cursor: pointer;
+  font-size: 23px;
+  line-height: 1;
+  border-radius: 5px;
+  padding: 3px 7px;
+}
+.axv2-reply-cancel:hover, .axv2-reply-cancel:focus-visible { color: var(--accent); }
+.msg .axv2-message-quote {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 7px 9px;
+  border-radius: 6px;
+  border: 0;
+  border-left: 3px solid currentColor;
+  margin: 0 0 7px;
+  color: inherit;
+  background: rgba(127,127,127,.13);
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+  overflow: hidden;
+}
+.msg .axv2-message-quote strong { font-size: 11px; font-weight: 700; }
+.msg .axv2-message-quote span {
+  font-size: 11px;
+  opacity: .85;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.axv2-reply-highlight { outline: 2px solid var(--accent); outline-offset: 3px; }

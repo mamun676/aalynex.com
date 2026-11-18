@@ -22,7 +22,8 @@ function axChatPrune() {
  }
 }
 function axChatSameRow(e,r) {
- return !!r&&r.id===e.id&&r.sender_id===e.myId&&r.receiver_id===e.otherId&&r.conversation_id===e.conversationId&&r.text===e.text&&!r.file_url;
+ return !!r&&r.id===e.id&&r.sender_id===e.myId&&r.receiver_id===e.otherId&&r.conversation_id===e.conversationId&&r.text===e.text&&!r.file_url&&
+   String(r.reply_to_message_id||'')===String(e.replyToMessageId||'');
 }
 function axChatObserveRow(row) {
  axChatPrune();const e=axChatOutbox.get(row?.id);
@@ -35,7 +36,7 @@ function axChatMergeMessages(messages,myId) {
  for(const e of axChatOutbox.values()){
   if(e.myId!==myId||e.otherId!==currentChatUserId||!e.owner.owns())continue;
   const index=list.findIndex(m=>m.id===e.id);
-  const local={id:e.id,from:e.myId,text:e.text,file_url:null,time:e.time,_deliveryStatus:e.status};
+  const local={id:e.id,from:e.myId,text:e.text,file_url:null,time:e.time,replyToMessageId:e.replyToMessageId||null,_deliveryStatus:e.status};
   if(index<0)list.push(local);else list[index]={...list[index],_deliveryStatus:e.status};
  }
  return list.sort((a,b)=>a.time-b.time||String(a.id).localeCompare(String(b.id)));
@@ -97,7 +98,7 @@ function axChatConfirm(e,row) {
  // Save only server-confirmed rows. Keep recent session receipts in memory so
  // a sync snapshot taken before this insert cannot erase a just-sent bubble.
  const all=DB.messages(),arr=all[e.key]||[];
- const message={id:e.id,from:e.myId,text:e.text,file_url:null,time:e.time};
+ const message={id:e.id,from:e.myId,text:e.text,file_url:null,time:e.time,replyToMessageId:e.replyToMessageId||null};
  const old=arr.findIndex(m=>m.id===e.id);if(old<0)arr.push(message);else arr[old]=message;
  all[e.key]=arr;DB.saveMessages(all);renderedMessageIds.add(e.id);axChatPaint(e);
 }
@@ -111,7 +112,8 @@ async function axChatAttempt(e) {
   let row=await axChatLookup(e);
   if(!row){
    await axChatSession(e);
-   const result=await axChatWait(e,supaClient.from('messages').insert({id:e.id,conversation_id:e.conversationId,sender_id:e.myId,receiver_id:e.otherId,text:e.text,file_url:null}).select('*').single());
+   const result=await axChatWait(e,supaClient.from('messages').insert({id:e.id,conversation_id:e.conversationId,sender_id:e.myId,receiver_id:e.otherId,text:e.text,file_url:null,
+    ...(e.replyToMessageId?{reply_to_message_id:e.replyToMessageId}:{})}).select('*').single());
    if(result.error){
     if(result.error.code!=='23505')throw result.error;
     row=await axChatLookup(e);
@@ -150,8 +152,10 @@ async function sendMsg(myId,otherId,overrideFileUrl=null,overrideFileName=null,o
  // unconfirmed messages. Confirmed receipts can be evicted after 200 entries.
  if(axChatOutbox.size>=200){for(const [id,e]of axChatOutbox)if(e.status==='sent'){axChatOutbox.delete(id);break;}}
  if(axChatOutbox.size>=200){showToast('Too many unconfirmed messages. Retry existing messages first.','err');return {ok:false};}
+ const replyToMessageId=!programmatic&&window.axChatV2?.enabled
+    ? window.axChatV2.takeReply(myId,otherId) : null;
  const id=crypto.randomUUID();
- const e={id,myId,otherId,text,owner,key:[myId,otherId].sort().join('_'),time:Date.now(),status:'sending',conversationId:null,inFlight:false};
+ const e={id,myId,otherId,text,owner,key:[myId,otherId].sort().join('_'),time:Date.now(),status:'sending',conversationId:null,inFlight:false,replyToMessageId};
  axChatOutbox.set(id,e);if(!programmatic&&inp)inp.value='';
  return axChatAttempt(e);
 }
@@ -218,10 +222,12 @@ function scrollChatToBottom() {
 }
 
 function chatBack() {
+  if(window.axChatV2?.enabled)window.axChatV2.cancelReply();
   document.querySelector('.chat-wrap')?.classList.remove('show-chat');
 }
 
 function buildChat(myId, otherDefaultId) {
+  if(window.axChatV2?.enabled)window.axChatV2.cancelReply();
   const myProjects = DB.projects().filter(p => (p.creatorId === myId || p.freelancerId === myId) && p.status !== 'open');
   const relatedUserIds = [...new Set(myProjects.map(p => p.creatorId === myId ? p.freelancerId : p.creatorId).filter(id => id))];
   const allUsers = DB.users().filter(u => relatedUserIds.includes(u.id));
@@ -386,11 +392,13 @@ function renderMsgs(msgs, myId) {
   return msgs.map((m, idx) => {
     const isMine    = String(m.from).toLowerCase() === String(myId).toLowerCase();
     const chatV2Ticks = window.axChatV2?.enabled ? window.axChatV2.ticks(m, isMine) : '';
+    const replyQuote = window.axChatV2?.enabled ? window.axChatV2.quotedMessage(m,msgs) : '';
+    const replyAction = window.axChatV2?.enabled ? window.axChatV2.replyButton(m) : '';
     const timeAlign = isMine ? 'text-align:right' : '';
     const flexAlign = isMine ? 'flex-end' : 'flex-start';
 
     if(isMine && ['sending','failed','blocked'].includes(m._deliveryStatus)) {
-      return `<div style="display:flex;flex-direction:column;align-items:flex-end;margin-bottom:8px"><div class="msg sent">${escapeHtml(m.text)}</div>${axChatPendingHTML(m,true)}</div>`;
+      return `<div style="display:flex;flex-direction:column;align-items:flex-end;margin-bottom:8px"><div class="msg sent">${replyQuote}${escapeHtml(m.text)}</div>${axChatPendingHTML(m,true)}</div>`;
     }
     if (m.file_url) {
       // Each preview is tied to its own project and one final revision.
@@ -545,8 +553,8 @@ function renderMsgs(msgs, myId) {
 
     return `
       <div style="display:flex; flex-direction:column; align-items:${escapeHtml(flexAlign)}; margin-bottom:8px; width:100%;">
-        <div class="msg ${escapeHtml(isMine ? 'sent' : 'received')}">${escapeHtml(m.text)}</div>
-        <div class="msg-time" style="${escapeHtml(timeAlign)}; width:100%; margin-top:2px;">${escapeHtml(fmtTime(m.time))}${chatV2Ticks}</div>${axChatPendingHTML(m,isMine)}
+        <div class="msg ${escapeHtml(isMine ? 'sent' : 'received')}" data-axv2-msg-id="${escapeHtml(String(m.id||''))}">${replyQuote}${escapeHtml(m.text)}</div>
+        <div class="msg-time" style="${escapeHtml(timeAlign)}; width:100%; margin-top:2px;">${replyAction}${escapeHtml(fmtTime(m.time))}${chatV2Ticks}</div>${axChatPendingHTML(m,isMine)}
       </div>`;
   }).join('');
 }
@@ -944,6 +952,7 @@ async function handleIncomingRealtimeMessage(payload, otherUserId) {
     from:     newMsg.sender_id,
     text:     newMsg.text,
     file_url: fileUrl,
+    replyToMessageId: newMsg.reply_to_message_id || null,
     time:     new Date(newMsg.created_at).getTime()
   });
   DB.saveMessages(allMsgs);
@@ -1008,6 +1017,7 @@ function startChatPolling() {
           from:     m.sender_id,
           text:     m.text,
           file_url: fileUrl,
+          replyToMessageId: m.reply_to_message_id || null,
           time:     new Date(m.created_at).getTime()
         });
         renderedMessageIds.add(m.id);
@@ -1123,6 +1133,7 @@ async function axLegacyAttachmentSendMsg(myId, otherId, overrideFileUrl = null, 
 }
 
 async function switchChat(myId, otherId) {
+  if(window.axChatV2?.enabled)window.axChatV2.cancelReply();
   document.querySelector('.chat-list')?.classList.remove('open');
   const btn = document.getElementById('chatToggleBtn');
   if (btn) btn.innerText = 'Chats';
