@@ -1,6 +1,21 @@
 -- Existing account safety: role and profile ownership cannot be reassigned by
 -- an authenticated browser client. This is additive; it does not rewrite users.
 -- A trusted backend role may still perform an intentional administrative change.
+-- Prevent arbitrary new role names (including 'admin') from being self-assigned.
+-- The existing 79 profiles already use only creator/freelancer.
+DO $
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint WHERE conrelid='public.profiles'::regclass
+      AND conname='ax_auth_profile_allowed_roles_chk'
+  ) THEN
+    ALTER TABLE public.profiles
+      ADD CONSTRAINT ax_auth_profile_allowed_roles_chk
+      CHECK (role IS NOT NULL AND role IN ('creator','freelancer'));
+  END IF;
+END;
+$;
+
 CREATE OR REPLACE FUNCTION public.ax_auth_guard_profile_identity()
 RETURNS trigger
 LANGUAGE plpgsql
