@@ -239,6 +239,7 @@ test('successful logout clears session only after Supabase local logout complete
 
 test('forgot-password code resend uses existing-only OTP and 60-second cooldown',async()=>{
   const f=fixture();
+  f.deps.axSignupOtpCooldownMs=60000;
   const start=source.indexOf("let _resetEmail = ''");
   const end=source.indexOf('async function doResetVerifyOTP()',start);
   assert.ok(start>0&&end>start);
