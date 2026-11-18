@@ -545,6 +545,39 @@ function logout() {
 
 /* ---- FORGOT PASSWORD (OTP based) ---- */
 let _resetEmail = '';
+let _resetLastOtpAt = 0;
+async function resendResetOTP() {
+  if (!_resetEmail || !supaClient) return;
+  const left = axSignupOtpCooldownMs - (Date.now() - _resetLastOtpAt);
+  const err = document.getElementById('reset-err');
+  if (left > 0) {
+    if (err) {
+      err.textContent = 'Please wait ' + Math.ceil(left / 1000) + ' seconds before requesting another code.';
+      err.style.display = 'flex';
+    }
+    return;
+  }
+  const btn = document.getElementById('reset-resend-btn');
+  if (btn) btn.disabled = true;
+  try {
+    const { error } = await supaClient.auth.signInWithOtp({
+      email: _resetEmail, options: { shouldCreateUser: false }
+    });
+    if (error) throw error;
+    _resetLastOtpAt = Date.now();
+    if (err) err.style.display = 'none';
+    const field = document.getElementById('reset-otp');
+    if (field) field.value = '';
+    showToast('If your account exists, a new code was requested.', 'info', '');
+  } catch (_) {
+    if (err) {
+      err.textContent = 'Could not request another code. Please try again shortly.';
+      err.style.display = 'flex';
+    }
+  } finally {
+    if (btn) btn.disabled = false;
+  }
+}
 
 async function doForgotPassword() {
   const email = document.getElementById('login-email').value.trim();
@@ -573,10 +606,11 @@ async function doForgotPassword() {
       return;
     }
     _resetEmail = email;
+    _resetLastOtpAt = Date.now();
     showToast('If this account exists, a verification code was requested.', 'info', '');
     const body = `
       <p style="font-size:.85rem;color:var(--text-3);margin-bottom:12px;">Enter the OTP sent to <b>${escapeHtml(email)}</b> and set a new password.</p>
-      <div class="fg"><label>OTP Code</label><input id="reset-otp" type="text" inputmode="numeric" placeholder="6-digit code"/></div>
+      <div class="fg"><label>OTP Code</label><input id="reset-otp" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="8" placeholder="Verification code"/><button type="button" class="ax-auth-link-btn" id="reset-resend-btn" onclick="resendResetOTP()">Resend code</button></div>
       <div class="fg"><label>New Password</label><div class="ax-password-field"><input type="password" id="reset-pw" autocomplete="new-password" placeholder="8+ characters, letters and numbers"/><button type="button" onclick="toggleAuthPassword('reset-pw',this)" aria-pressed="false" aria-label="Show password">Show</button></div></div>
       <div class="fg"><label>Confirm Password</label><div class="ax-password-field"><input type="password" id="reset-pw2" autocomplete="new-password" placeholder="Re-enter new password"/><button type="button" onclick="toggleAuthPassword('reset-pw2',this)" aria-pressed="false" aria-label="Show password">Show</button></div></div>
       <div id="reset-err" class="alert alert-e" style="display:none;"></div>`;
