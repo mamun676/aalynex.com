@@ -161,3 +161,75 @@ test('password reset and logout both use local scope; no global device logout',(
  assert.match(source,/signOut\(\{ scope: 'local' \}\)/);
  assert.doesNotMatch(source,/auth\.signOut\(\)/);
 });
+
+test('wrong role login keeps email, clears password and only signs out this session',async()=>{
+ const f=fixture({loginRole:'freelancer'});
+ const start=source.indexOf('async function doLogin()');
+ const end=source.indexOf('// Keep existing password logins',start);
+ assert.ok(start>0&&end>start);
+ const login=new Function('deps','with(deps){'+source.slice(start,end)+'\nreturn doLogin;}')(f.deps);
+ await login();
+ assert.equal(f.state.loggedIn,null);
+ assert.equal(f.fields.get('login-email').value,'person@example.com');
+ assert.equal(f.fields.get('login-pw').value,'');
+ assert.equal(f.state.signedOut[0].scope,'local');
+ assert.match(f.fields.get('login-err').textContent,/Creator/);
+});
+test('correct role password login still works with existing password and profile',async()=>{
+ const f=fixture({loginRole:'creator'});
+ const start=source.indexOf('async function doLogin()');
+ const end=source.indexOf('// Keep existing password logins',start);
+ const login=new Function('deps','with(deps){'+source.slice(start,end)+'\nreturn doLogin;}')(f.deps);
+ await login();
+ assert.equal(f.state.loggedIn.id,ME);
+ assert.equal(f.state.loggedIn.role,'creator');
+ assert.equal(f.state.signedOut.length,0);
+});
+test('password reset rejects weak or mismatched passwords before OTP verify',async()=>{
+ const f=fixture();
+ const start=source.indexOf('async function doResetVerifyOTP()');
+ assert.ok(start>0);
+ const reset=new Function('deps',"with(deps){let _resetEmail='person@example.com';"+
+  source.slice(start)+"\nreturn doResetVerifyOTP;}")(f.deps);
+ f.fields.get('reset-pw').value='bad';
+ await reset();assert.equal(count(f,'verify'),0);
+ f.fields.get('reset-pw').value='NewSecure123';
+ f.fields.get('reset-pw2').value='different';
+ await reset();assert.equal(count(f,'verify'),0);
+ assert.match(f.fields.get('reset-err').textContent,/do not match/);
+});
+test('successful password recovery updates password and signs out locally',async()=>{
+ const f=fixture();
+ const start=source.indexOf('async function doResetVerifyOTP()');
+ const reset=new Function('deps',"with(deps){let _resetEmail='person@example.com';"+
+  source.slice(start)+"\nreturn doResetVerifyOTP;}")(f.deps);
+ await reset();
+ assert.equal(count(f,'verify'),1);
+ assert.equal(count(f,'updateUser'),1);
+ assert.equal(f.state.signedOut[0].scope,'local');
+});
+test('failed logout never pretends to log user out or clears in-memory account',async()=>{
+ const f=fixture({signoutError:true});
+ const start=source.indexOf('function logout()');
+ const end=source.indexOf('/* ---- FORGOT PASSWORD',start);
+ assert.ok(start>0&&end>start);
+ const logout=new Function('deps','with(deps){'+source.slice(start,end)+'\nreturn logout;}')(f.deps);
+ f.state.users.push({id:ME});
+ logout();
+ assert.ok(f.state.modal?.callback);
+ await f.state.modal.callback();
+ assert.equal(f.state.users.length,1);
+ assert.equal(f.state.screen,null);
+});
+test('successful logout clears session only after Supabase local logout completes',async()=>{
+ const f=fixture();
+ const start=source.indexOf('function logout()');
+ const end=source.indexOf('/* ---- FORGOT PASSWORD',start);
+ const logout=new Function('deps','with(deps){'+source.slice(start,end)+'\nreturn logout;}')(f.deps);
+ f.state.users.push({id:ME});
+ logout();
+ await f.state.modal.callback();
+ assert.equal(f.state.signedOut[0].scope,'local');
+ assert.equal(f.state.users.length,0);
+ assert.equal(f.state.screen,'screen-landing');
+});
