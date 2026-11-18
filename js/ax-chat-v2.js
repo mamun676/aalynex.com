@@ -21,6 +21,7 @@
 
   const uuidRe = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
   const receipts = new Map();
+  const unreadByPeer = new Map();
   const delivered = new Set();
   const read = new Set();
   const pending = new Set();
@@ -28,6 +29,7 @@
   let receiptChannel = null, peerLastActive = null, typingUntil = 0;
   let lastTypingRequest = 0, typingTimer = null, typingSent = false;
   let heartbeatTimer = null, refreshTimer = null, pollingTimer = null, statusTimer = null;
+  let unreadPollingTimer = null, unreadRefreshTimeout = null, unreadFetching = false, unreadQueued = false;
   const currentUser = () => typeof CU !== 'undefined' && CU ? String(CU.id) : '';
   const openConversation = () => typeof currentConversationId !== 'undefined' ? currentConversationId : null;
   const otherUser = () => typeof currentChatUserId !== 'undefined' ? currentChatUserId : null;
@@ -46,6 +48,89 @@
     const key = [me, peer].sort().join('_');
     return DB.messages()[key] || [];
   };
+
+  // Only confirmed receiver-side delivery receipts count toward unread badges.
+  // No historical message rows are treated as unread without a delivery receipt.
+  function paintUnreadBadges() {
+    if (!owner()) return;
+    document.querySelectorAll('.cc-item[data-uid]').forEach(item => {
+      const userId = item.getAttribute('data-uid');
+      const count = unreadByPeer.get(userId) || 0;
+      let badge = item.querySelector('.axv2-unread-badge');
+      if (count < 1) {
+        if (badge) badge.remove();
+        return;
+      }
+      if (!badge) {
+        badge = document.createElement('span');
+        badge.className = 'axv2-unread-badge';
+        item.appendChild(badge);
+      }
+      const text = count > 99 ? '99+' : String(count);
+      if (badge.textContent !== text) badge.textContent = text;
+      badge.setAttribute('aria-label', text + ' unread messages');
+      badge.setAttribute('title', text + ' unread messages');
+    });
+  }
+  function scheduleUnreadRefresh() {
+    if (!owner() || unreadRefreshTimeout !== null) return;
+    unreadRefreshTimeout = setTimeout(() => {
+      unreadRefreshTimeout = null;
+      void refreshUnread();
+    }, 250);
+  }
+  async function refreshUnread() {
+    if (!owner()) return;
+    if (unreadFetching) { unreadQueued = true; return; }
+    unreadFetching = true;
+    const myId = me, epoch = generation;
+    try {
+      // Conversation membership and receipt ownership are both enforced by RLS.
+      const peersByConversation = new Map();
+      let offset = 0, page = [];
+      do {
+        const { data, error } = await client().from('conversations')
+          .select('id,user1_id,user2_id')
+          .order('id', { ascending: true }).range(offset, offset + 499);
+        if (error) throw error;
+        page = data || [];
+        page.forEach(c => {
+          if (String(c.user1_id) === myId) peersByConversation.set(String(c.id), String(c.user2_id));
+          if (String(c.user2_id) === myId) peersByConversation.set(String(c.id), String(c.user1_id));
+        });
+        offset += page.length;
+      } while (page.length === 500 && offset < 50000 && epoch === generation && owner());
+
+      const counts = new Map();
+      offset = 0;
+      do {
+        const { data, error } = await client().from('axv2_message_receipts')
+          .select('message_id,conversation_id')
+          .eq('user_id', myId).is('read_at', null)
+          .order('message_id', { ascending: true }).range(offset, offset + 499);
+        if (error) throw error;
+        page = data || [];
+        page.forEach(r => {
+          const other = peersByConversation.get(String(r.conversation_id));
+          if (other) counts.set(other, (counts.get(other) || 0) + 1);
+        });
+        offset += page.length;
+      } while (page.length === 500 && offset < 50000 && epoch === generation && owner());
+
+      if (!owner() || epoch !== generation || myId !== me) return;
+      unreadByPeer.clear();
+      counts.forEach((count, other) => unreadByPeer.set(other, count));
+      paintUnreadBadges();
+    } catch (_) {
+      // Unread count is non-critical; never interrupt chats if offline or RLS denies the query.
+    } finally {
+      unreadFetching = false;
+      if (unreadQueued && owner()) {
+        unreadQueued = false;
+        scheduleUnreadRefresh();
+      }
+    }
+  }
 
   function badge(message, isMine) {
     if (!isMine || !uuidRe.test(String(message?.id || '')) ||
@@ -85,6 +170,7 @@
         const result = await client().rpc('axv2_ack_messages', { p_message_ids: chunk, p_read: !!markRead });
         if (!result.error && snapshot === generation && owner()) {
           chunk.forEach(id => { target.add(id); if (markRead) delivered.add(id); });
+          scheduleUnreadRefresh();
         }
       } catch (_) { /* Preview-only feature: no impact on sending or legacy UI. */ }
       finally { keys.forEach(k => pending.delete(k)); }
@@ -111,6 +197,7 @@
     });
     if (ids.length) void acknowledge(ids, false);
     markReadIfVisible();
+    scheduleUnreadRefresh();
   }
   function onIncoming(payload) {
     const m = payload?.new;
@@ -283,6 +370,12 @@
   }
   function cleanup() {
     generation++;
+    clearTimeout(unreadRefreshTimeout);
+    clearInterval(unreadPollingTimer);
+    unreadRefreshTimeout = unreadPollingTimer = null;
+    unreadQueued = false;
+    unreadByPeer.clear();
+    document.querySelectorAll('.axv2-unread-badge').forEach(node => node.remove());
     removeTypingBubble();
     stopTyping();
     if (receiptChannel && client()) {
@@ -306,7 +399,9 @@
     heartbeatTimer = setInterval(touchPresence, 45000);
     refreshTimer = setInterval(refreshPresence, 12500);
     pollingTimer = setInterval(pollTyping, 3300);
-    statusTimer = setInterval(() => { renderStatus(); markReadIfVisible(); }, 1800);
+    statusTimer = setInterval(() => { renderStatus(); markReadIfVisible(); paintUnreadBadges(); }, 1800);
+    unreadPollingTimer = setInterval(() => { void refreshUnread(); }, 30000);
+    void refreshUnread();
     if (openConversation() && otherUser()) onConversation(openConversation(), otherUser());
   }
 
