@@ -318,8 +318,8 @@ async function doSignupVerifyOTP() {
       .select('id').eq('id', verifiedId).maybeSingle();
     if (lookupError) throw lookupError;
     if (existing) {
-      _signupVerifiedUserId = null;
       await supaClient.auth.signOut({ scope: 'local' });
+      _resetSignupForm();
       axSignupError('This account already has a profile. Please log in or use Forgot password.');
       return;
     }
@@ -353,6 +353,10 @@ async function doSignupVerifyOTP() {
     axSignupError('Could not finish creating your account. Please retry. If it continues, contact support.');
   } finally {
     setBtn('signup-btn', false);
+    if (_signupOtpData?.email && document.getElementById('signup-otp-fg')) {
+      document.getElementById('signup-btn').textContent =
+        _signupVerifiedUserId ? 'Retry Account Setup' : 'Verify & Create Account';
+    }
   }
 }
 
