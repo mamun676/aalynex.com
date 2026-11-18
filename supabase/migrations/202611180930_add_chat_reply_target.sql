@@ -4,7 +4,7 @@ ALTER TABLE public.messages
   ADD COLUMN IF NOT EXISTS reply_to_message_id uuid;
 
 -- The target must exist, and removing an original message should never delete a reply.
-DO $
+DO $$
 BEGIN
   IF NOT EXISTS (
     SELECT 1 FROM pg_constraint
@@ -17,7 +17,7 @@ BEGIN
       ON DELETE SET NULL;
   END IF;
 END;
-$;
+$$;
 
 CREATE INDEX IF NOT EXISTS axv2_messages_reply_target_idx
   ON public.messages (reply_to_message_id) WHERE reply_to_message_id IS NOT NULL;
@@ -47,7 +47,7 @@ $$;
 -- Trigger routines are not direct client RPC endpoints.
 REVOKE ALL ON FUNCTION public.axv2_validate_reply_target() FROM PUBLIC, anon, authenticated;
 
-DO $
+DO $$
 BEGIN
   IF NOT EXISTS (
     SELECT 1 FROM pg_trigger
@@ -60,4 +60,4 @@ BEGIN
       FOR EACH ROW EXECUTE FUNCTION public.axv2_validate_reply_target();
   END IF;
 END;
-$;
+$$;
