@@ -41,7 +41,7 @@ function fixture(options={}) {
   from(table){assert.equal(table,'profiles');return{
    select(){return this;},eq(){return this;},
    maybeSingle:async()=>{calls.push({op:'profileLookup'});return{data:options.existingProfile?{id:ME}:null,error:options.lookupError?{message:'RLS error'}:null};},
-   single:async()=>({data:{id:ME,role:options.loginRole||'creator',name:'Test User',created_at:'2026-11-17',skills:[]},error:null}),
+   single:async()=>({data:{id:ME,role:options.profileRole||'creator',name:'Test User',created_at:'2026-11-17',skills:[]},error:null}),
    insert:async row=>{calls.push({op:'profileInsert',row});return{error:options.profileError?{message:'Insert rejected'}:null};}
   };}
  };
@@ -71,6 +71,7 @@ function fixture(options={}) {
  const authSource=source.slice(start,stop)+
  '\nreturn {axPasswordValidation,updateSignupStrength,toggleAuthPassword,doSignup,doSignupVerifyOTP,resendSignupOTP,_resetSignupForm};';
  const funcs=new Function('deps','with(deps){\n'+authSource+'\n}')(deps);
+ deps.axPasswordValidation=funcs.axPasswordValidation;
  return{state,fields,client,funcs,deps};
 }
 const count=(f,op)=>f.state.calls.filter(c=>c.op===op).length;
@@ -163,7 +164,8 @@ test('password reset and logout both use local scope; no global device logout',(
 });
 
 test('wrong role login keeps email, clears password and only signs out this session',async()=>{
- const f=fixture({loginRole:'freelancer'});
+ const f=fixture({profileRole:'creator'});
+ f.deps.loginRole='freelancer';
  const start=source.indexOf('async function doLogin()');
  const end=source.indexOf('// Keep existing password logins',start);
  assert.ok(start>0&&end>start);
