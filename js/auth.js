@@ -96,7 +96,7 @@ async function doLogin() {
     }
 
     if (!data.user.email_confirmed_at) {
-      await supaClient.auth.signOut();
+      await supaClient.auth.signOut({ scope: 'local' });
       loginFail('Please verify your email before logging in.');
       return;
     }
@@ -105,14 +105,14 @@ async function doLogin() {
       .from('profiles').select(AX_PROFILE_PUBLIC_FIELDS).eq('id', data.user.id).single();
 
     if (pErr || !profile) {
-      await supaClient.auth.signOut();
-      loginFail('Invalid credentials.');
+      await supaClient.auth.signOut({ scope: 'local' });
+      loginFail('Your account profile could not be loaded. Please contact support.');
       return;
     }
 
     if (profile.role !== loginRole) {
-      await supaClient.auth.signOut();
-      loginFail('Invalid credentials.');
+      await supaClient.auth.signOut({ scope: 'local' });
+      loginFail('This account uses the ' + (profile.role === 'creator' ? 'Creator' : 'Freelancer') + ' role. Select the correct role to log in.');
       return;
     }
 
@@ -192,6 +192,7 @@ function axSignupError(message) {
 async function resendSignupOTP() {
   const addr = _signupOtpData?.email;
   if (!addr || !supaClient) return;
+  if (_signupVerifiedUserId) { axSignupError('Email already verified. Finish creating your account.'); return; }
   const remaining = axSignupOtpCooldownMs - (Date.now() - _signupLastOtpAt);
   if (remaining > 0) {
     axSignupError('Please wait ' + Math.ceil(remaining / 1000) + ' seconds before requesting another code.');
@@ -318,7 +319,7 @@ async function doSignupVerifyOTP() {
     if (lookupError) throw lookupError;
     if (existing) {
       _signupVerifiedUserId = null;
-      await supaClient.auth.signOut();
+      await supaClient.auth.signOut({ scope: 'local' });
       axSignupError('This account already has a profile. Please log in or use Forgot password.');
       return;
     }
@@ -363,6 +364,14 @@ function _resetSignupForm() {
   if (otpFg) otpFg.remove();
   const btn = document.getElementById('signup-btn');
   if (btn) { btn.textContent = 'Create Account'; btn.onclick = doSignup; }
+  // Passwords must not remain in the form after successful account creation.
+  for (const id of ['su-pw', 'su-pw2', 'signup-otp']) {
+    const input = document.getElementById(id);
+    if (input) input.value = '';
+  }
+  const consent = document.getElementById('su-terms');
+  if (consent) consent.checked = false;
+  updateSignupStrength();
 }
 
 async function loginSuccess(u) {
@@ -514,15 +523,21 @@ else if (CU.role === 'freelancer' && currentFreelancerPage !== 'chat') renderF(c
 
 function logout() {
   showModal('Log Out', 'Are you sure you want to log out?', async () => {
+    if (supaClient) {
+      try {
+        const { error } = await supaClient.auth.signOut({ scope: 'local' });
+        if (error) throw error;
+      } catch (_) {
+        showToast('Logout could not be completed. Please try again.', 'error', '');
+        return;
+      }
+    }
     ++window._accountSessionEpoch;
     cleanupAccountRealtime();
     resetPremiumSession();
     CU = null; activeManageProjectId = null; currentChatUserId = null;
     DB.logout();
-    if (supaClient) {
-      try { await supaClient.auth.signOut(); } catch (_) {}
-    }
-        showScreen('screen-landing');
+    showScreen('screen-landing');
     showToast('Logged out successfully', 'info', '');
   });
   document.getElementById('modal-confirm').textContent = 'Log Out';
@@ -596,7 +611,7 @@ async function doResetVerifyOTP() {
     const { error: pwErr } = await supaClient.auth.updateUser({ password: pw });
     if (pwErr) { showErr(pwErr.message || 'Could not update password.'); return; }
     closeModal();
-    await supaClient.auth.signOut();
+    await supaClient.auth.signOut({ scope: 'local' });
     showToast('Password updated! Please log in with your new password.', 'ok', '');
   } catch (e) {
     showErr('Something went wrong. Please try again.');
