@@ -78,7 +78,7 @@ async function doLogin() {
     setBtn('login-btn', false);
     errEl.textContent = msg || 'Invalid credentials.';
     errEl.style.display = 'flex';
-    document.getElementById('login-email').value = '';
+    // Preserve email; clear only the password, to avoid needless retyping.
     document.getElementById('login-pw').value = '';
   }
 
@@ -273,6 +273,9 @@ async function doSignup() {
     axSignupError('Could not send verification code. Try again, or log in if you have an account.');
   } finally {
     setBtn('signup-btn', false);
+    if (document.getElementById('signup-otp-fg')) {
+      document.getElementById('signup-btn').textContent = 'Verify & Create Account';
+    }
   }
 }
 async function doSignupVerifyOTP() {
@@ -550,17 +553,17 @@ async function doForgotPassword() {
     });
     setBtn('login-btn', false);
     if (error) {
-      errEl.textContent = error.message || 'Could not send OTP. Check the email address.';
+      errEl.textContent = 'Could not request a code. Please try again shortly.';
       errEl.style.display = 'flex';
       return;
     }
     _resetEmail = email;
-    showToast('OTP sent to your email!', 'ok', '');
+    showToast('If this account exists, a verification code was requested.', 'info', '');
     const body = `
       <p style="font-size:.85rem;color:var(--text-3);margin-bottom:12px;">Enter the OTP sent to <b>${escapeHtml(email)}</b> and set a new password.</p>
       <div class="fg"><label>OTP Code</label><input id="reset-otp" type="text" inputmode="numeric" placeholder="6-digit code"/></div>
-      <div class="fg"><label>New Password</label><input type="password" id="reset-pw" placeholder="At least 6 characters"/></div>
-      <div class="fg"><label>Confirm Password</label><input type="password" id="reset-pw2" placeholder="Re-enter new password"/></div>
+      <div class="fg"><label>New Password</label><div class="ax-password-field"><input type="password" id="reset-pw" autocomplete="new-password" placeholder="8+ characters, letters and numbers"/><button type="button" onclick="toggleAuthPassword('reset-pw',this)" aria-pressed="false" aria-label="Show password">Show</button></div></div>
+      <div class="fg"><label>Confirm Password</label><div class="ax-password-field"><input type="password" id="reset-pw2" autocomplete="new-password" placeholder="Re-enter new password"/><button type="button" onclick="toggleAuthPassword('reset-pw2',this)" aria-pressed="false" aria-label="Show password">Show</button></div></div>
       <div id="reset-err" class="alert alert-e" style="display:none;"></div>`;
     showModal('Reset Your Password', body, () => {});
     const btn = document.getElementById('modal-confirm');
@@ -579,8 +582,9 @@ async function doResetVerifyOTP() {
   const errEl = document.getElementById('reset-err');
   const showErr = (m) => { if (errEl) { errEl.textContent = m; errEl.style.display = 'flex'; } };
   if (errEl) errEl.style.display = 'none';
-  if (!otp)          { showErr('Please enter the OTP code.'); return; }
-  if (pw.length < 6) { showErr('Password must be at least 6 characters.'); return; }
+  if (!/^[0-9]{6,8}$/.test(otp)) { showErr('Enter the verification code from your email.'); return; }
+  const strengthProblem = axPasswordValidation(pw);
+  if (strengthProblem) { showErr(strengthProblem); return; }
   if (pw !== pw2)    { showErr('Passwords do not match.'); return; }
   try {
     const { data, error } = await supaClient.auth.verifyOtp({
