@@ -55,8 +55,16 @@ function fixture({ counts=[], messages=[], open=false, query='', fail=false, sou
   const supaClient={
     rpc:async(name,args)=>{
       state.requests.push({name,args});
-      if(name==='axv2_ack_messages'&&args?.p_read){
-        state.unreadRows=state.unreadRows.filter(x=>!args.p_message_ids.includes(x.message_id));
+      if(name==='axv2_ack_messages'){
+        if(args?.p_read){
+          state.unreadRows=state.unreadRows.filter(x=>!args.p_message_ids.includes(x.message_id));
+        }else{
+          // Mock the server-created delivery receipt for newly received messages.
+          for(const id of args?.p_message_ids||[]){
+            if(!state.unreadRows.some(x=>x.message_id===id))
+              state.unreadRows.push({message_id:id,conversation_id:CID,user_id:ME,read_at:null});
+          }
+        }
       }
       return {data:1,error:null};
     },
@@ -169,4 +177,15 @@ test('legacy fallback keeps unread feature inactive',async()=>{
   const env=fixture({counts:[{}],query:'?axchatv2=0'});
   assert.equal(env.api.enabled,false);
   assert.equal(badge(env,0),null);
+});
+
+
+test('new incoming message updates badge after server delivery acknowledgment',async()=>{
+  const env=fixture();
+  env.api.onLogin({id:ME});await flush(env);
+  assert.equal(badge(env,0),null);
+  env.api.onIncoming({new:{id:MSG,conversation_id:CID,sender_id:PEER,receiver_id:ME}});
+  await flush(env);
+  assert.equal(badge(env,0)?.textContent,'1');
+  assert.ok(env.state.requests.some(r=>r.name==='axv2_ack_messages'&&!r.args.p_read));
 });
