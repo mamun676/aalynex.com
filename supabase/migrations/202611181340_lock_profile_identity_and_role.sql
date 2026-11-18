@@ -3,7 +3,7 @@
 -- A trusted backend role may still perform an intentional administrative change.
 -- Prevent arbitrary new role names (including 'admin') from being self-assigned.
 -- The existing 79 profiles already use only creator/freelancer.
-DO $
+DO $authroles$
 BEGIN
   IF NOT EXISTS (
     SELECT 1 FROM pg_constraint WHERE conrelid='public.profiles'::regclass
@@ -14,7 +14,7 @@ BEGIN
       CHECK (role IS NOT NULL AND role IN ('creator','freelancer'));
   END IF;
 END;
-$;
+$authroles$;
 
 CREATE OR REPLACE FUNCTION public.ax_auth_guard_profile_identity()
 RETURNS trigger
