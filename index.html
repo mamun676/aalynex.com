@@ -720,10 +720,10 @@
           <div class="role-btn ac" id="lr-c" onclick="setLRole('creator')">Creator</div>
           <div class="role-btn" id="lr-f" onclick="setLRole('freelancer')">Freelancer</div>
         </div>
-        <div class="fg"><label>Email Address</label><input type="email" id="login-email" placeholder="you@example.com"/></div>
-        <div class="fg"><label>Password</label><input type="password" id="login-pw" placeholder="Enter your password"/></div>
+        <div class="fg"><label>Email Address</label><input type="email" id="login-email" autocomplete="username" placeholder="you@example.com"/></div>
+        <div class="fg"><label>Password</label><div class="ax-password-field"><input type="password" id="login-pw" autocomplete="current-password" placeholder="Enter your password"/><button type="button" onclick="toggleAuthPassword('login-pw',this)" aria-label="Show password" aria-pressed="false">Show</button></div></div>
 <div style="text-align:right;margin:-6px 0 2px;"><a onclick="doForgotPassword()" style="cursor:pointer;font-size:.8rem;color:var(--text-3);">Forgot password?</a></div>
-<div id="login-err" class="alert alert-e" style="display:none;"></div>
+<div id="login-err" class="alert alert-e" style="display:none;" role="alert" aria-live="polite"></div>
         <button class="btn btn-primary full-btn" style="margin-top:10px;" id="login-btn" onclick="doLogin()">Login &rarr;</button>
         <div class="divider">or</div>
         <div class="form-footer">Don't have an account? <a onclick="switchTab('signup')">Sign up free</a></div>
@@ -742,7 +742,8 @@
           <input type="email" id="su-email" placeholder="you@example.com"/>
           <div class="otp-note">Verification email will be sent</div>
         </div>
-        <div class="fg"><label>Password</label><input type="password" id="su-pw" placeholder="Min 6 characters"/></div>
+        <div class="fg"><label>Password</label><div class="ax-password-field"><input type="password" id="su-pw" autocomplete="new-password" oninput="updateSignupStrength()" placeholder="8+ characters, letters and numbers"/><button type="button" onclick="toggleAuthPassword('su-pw',this)" aria-label="Show password" aria-pressed="false">Show</button></div><div class="ax-password-strength" id="su-pw-strength" aria-live="polite">Use 8+ characters with letters and numbers.</div></div>
+        <div class="fg"><label>Confirm Password</label><div class="ax-password-field"><input type="password" id="su-pw2" autocomplete="new-password" placeholder="Enter password again"/><button type="button" onclick="toggleAuthPassword('su-pw2',this)" aria-label="Show password" aria-pressed="false">Show</button></div></div>
         <div class="fg"><label>Profession</label>
           <select id="su-profession">
             <option>Content Creator</option><option>Influencer</option>
@@ -755,7 +756,8 @@
             <select id="su-platform"><option>YouTube</option><option>Instagram</option><option>LinkedIn</option><option>Multiple</option></select>
           </div>
         </div>
-        <div id="signup-err" class="alert alert-e" style="display:none;margin-top:8px;"></div>
+        <label class="ax-auth-terms"><input type="checkbox" id="su-terms"/> <span>I agree to the <a href="/terms.html" target="_blank" rel="noopener noreferrer">Terms</a> and <a href="/privacy.html" target="_blank" rel="noopener noreferrer">Privacy Policy</a>.</span></label>
+        <div id="signup-err" class="alert alert-e" style="display:none;margin-top:8px;" role="alert" aria-live="polite"></div>
         <button class="btn btn-primary full-btn" style="margin-top:14px;" id="signup-btn" onclick="doSignup()">Create Account &rarr;</button>
         <div class="form-footer" style="margin-top:12px;">Already have an account? <a onclick="switchTab('login')">Log in</a></div>
       </div>
@@ -948,7 +950,7 @@
 <script src="js/config.js?v=aalynex-v85"></script>
 <script src="js/db.js?v=aalynex-project-privacy-v1"></script>
 <script src="js/utils.js?v=aalynex-project-privacy-v1"></script>
-<script src="js/auth.js?v=aalynex-profile-privacy-v1"></script>
+<script src="js/auth.js?v=aalynex-auth-hardening-20261118"></script>
 <script src="js/sync.js?v=aalynex-v2-reply-20261118"></script>
 <script src="js/creator.js?v=aalynex-freelancer-role-picker-v1"></script>
 <script src="js/aiSuggest.js?v=content-ai-v6"></script>
