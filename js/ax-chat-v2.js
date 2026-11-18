@@ -154,7 +154,7 @@
   const replySender = message => {
     if (!message) return 'Original message';
     if (String(message.from) === me) return 'You';
-    const user = typeof DB !== 'undefined' && DB.users().find(u => String(u.id) === String(message.from));
+    const user = typeof DB !== 'undefined' && typeof DB.users === 'function' && DB.users().find(u => String(u.id) === String(message.from));
     return user?.name || 'Them';
   };
   function removeReplyComposer() {
