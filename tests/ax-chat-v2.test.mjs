@@ -279,8 +279,8 @@ test('typing bubble stays disabled in legacy fallback; CSS/JS versions are cache
   const env = fixture('?axchatv2=0');
   assert.equal(env.api.enabled, false);
   assert.equal(env.msgBox.children.length, 0);
-  assert.match(index, /ax-chat-v2\.js\?v=aalynex-v2-default-on-20261117/);
-  assert.match(index, /ax-chat-v2\.css\?v=aalynex-v2-chat-typing-bubble-20261117/);
+  assert.match(index, /ax-chat-v2\.js\?v=aalynex-v2-unread-badges-20261118/);
+  assert.match(index, /ax-chat-v2\.css\?v=aalynex-v2-unread-badges-20261118/);
   assert.match(css, /prefers-reduced-motion/);
   assert.match(css, /axv2-typing-bubble/);
 });

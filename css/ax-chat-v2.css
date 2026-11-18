@@ -62,3 +62,22 @@
 @media (prefers-reduced-motion: reduce) {
   .axv2-typing-bubble > span { animation: none; opacity: .8; }
 }
+
+/* Read receipts are the source of truth; these badges contain no message text. */
+.cc-item > .axv2-unread-badge {
+  display: inline-flex;
+  margin-left: auto;
+  flex: 0 0 auto;
+  min-width: 21px;
+  height: 21px;
+  padding: 0 6px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  background: var(--green, #16a34a);
+  color: #fff;
+  box-sizing: border-box;
+}
