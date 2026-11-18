@@ -29,7 +29,7 @@
   let receiptChannel = null, peerLastActive = null, typingUntil = 0;
   let lastTypingRequest = 0, typingTimer = null, typingSent = false;
   let heartbeatTimer = null, refreshTimer = null, pollingTimer = null, statusTimer = null;
-  let unreadPollingTimer = null, unreadRefreshTimeout = null, unreadFetching = false, unreadQueued = false;
+  let unreadPollingTimer = null, unreadRefreshTimeout = null, unreadRequest = null, unreadQueued = false;
   const currentUser = () => typeof CU !== 'undefined' && CU ? String(CU.id) : '';
   const openConversation = () => typeof currentConversationId !== 'undefined' ? currentConversationId : null;
   const otherUser = () => typeof currentChatUserId !== 'undefined' ? currentChatUserId : null;
@@ -81,8 +81,9 @@
   }
   async function refreshUnread() {
     if (!owner()) return;
-    if (unreadFetching) { unreadQueued = true; return; }
-    unreadFetching = true;
+    if (unreadRequest) { unreadQueued = true; return; }
+    const request = {};
+    unreadRequest = request;
     const myId = me, epoch = generation;
     try {
       // Conversation membership and receipt ownership are both enforced by RLS.
@@ -124,10 +125,14 @@
     } catch (_) {
       // Unread count is non-critical; never interrupt chats if offline or RLS denies the query.
     } finally {
-      unreadFetching = false;
-      if (unreadQueued && owner()) {
-        unreadQueued = false;
-        scheduleUnreadRefresh();
+      // A former account's late network response must not unset a newer
+      // account's fetch-in-progress marker or repaint its badges.
+      if (unreadRequest === request) {
+        unreadRequest = null;
+        if (unreadQueued && owner()) {
+          unreadQueued = false;
+          scheduleUnreadRefresh();
+        }
       }
     }
   }
@@ -373,6 +378,7 @@
     clearTimeout(unreadRefreshTimeout);
     clearInterval(unreadPollingTimer);
     unreadRefreshTimeout = unreadPollingTimer = null;
+    unreadRequest = null;
     unreadQueued = false;
     unreadByPeer.clear();
     document.querySelectorAll('.axv2-unread-badge').forEach(node => node.remove());
