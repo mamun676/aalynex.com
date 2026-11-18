@@ -55,5 +55,5 @@ test('retry still uses original UUID and checks server state before insert', () 
 });
 
 test('browser cache bust points to current compact-status chat bundle', () => {
-  assert.match(index, /js\/chat\.js\?v=aalynex-chat-compact-status-retry-v1/);
+  assert.match(index, /js\/chat\.js\?v=aalynex-v2-reply-20261118/);
 });

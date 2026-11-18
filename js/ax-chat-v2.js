@@ -21,6 +21,7 @@
 
   const uuidRe = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
   const receipts = new Map();
+  let replyDraft = null;
   const unreadByPeer = new Map();
   const delivered = new Set();
   const read = new Set();
@@ -136,6 +137,118 @@
       }
     }
   }
+
+  // Reply drafts are transient and account/peer-bound. Only original message IDs
+  // are stored server-side; no pasted quote text or secure file keys are saved.
+  const replyEscape = value => String(value ?? '').replace(/[&<>"']/g, c => (
+    {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const replySnippet = message => {
+    if (!message) return 'Original message unavailable';
+    if (message.file_url) return 'Protected attachment';
+    const text = String(message.text || '');
+    if (/^\[NEGOTIATION_REQ\]/.test(text)) return 'Negotiation offer';
+    if (/^(Final Delivery|Project Preview:)/i.test(text)) return 'Project delivery';
+    const plain = text.replace(/\s+/g, ' ').trim();
+    return plain.length > 110 ? plain.slice(0, 107) + '…' : plain || 'Message';
+  };
+  const replySender = message => {
+    if (!message) return 'Original message';
+    if (String(message.from) === me) return 'You';
+    const user = typeof DB !== 'undefined' && typeof DB.users === 'function' && DB.users().find(u => String(u.id) === String(message.from));
+    return user?.name || 'Them';
+  };
+  function removeReplyComposer() {
+    const node = document.getElementById('axv2-reply-composer');
+    if (node) node.remove();
+  }
+  function cancelReply() {
+    replyDraft = null;
+    removeReplyComposer();
+  }
+  function renderReplyComposer() {
+    removeReplyComposer();
+    if (!chatVisible() || !replyDraft || replyDraft.myId !== me || replyDraft.peer !== peer) return;
+    const bar = document.querySelector('.chat-inp-bar');
+    if (!bar || !bar.parentNode) return;
+    const original = ownMessages().find(m => String(m.id) === replyDraft.id);
+    if (!original || original.file_url) { cancelReply(); return; }
+    const el = document.createElement('div');
+    el.id = 'axv2-reply-composer';
+    el.className = 'axv2-reply-composer';
+    const title = document.createElement('div');
+    title.className = 'axv2-reply-composer-text';
+    const name = document.createElement('strong');
+    name.textContent = 'Replying to ' + replySender(original);
+    const preview = document.createElement('span');
+    preview.textContent = replySnippet(original);
+    title.append(name, preview);
+    const close = document.createElement('button');
+    close.type = 'button';
+    close.className = 'axv2-reply-cancel';
+    close.setAttribute('data-axv2-reply-cancel','true');
+    close.setAttribute('aria-label','Cancel reply');
+    close.textContent = '×';
+    el.append(title, close);
+    bar.parentNode.insertBefore(el, bar);
+  }
+  function startReply(messageId) {
+    if (!chatVisible() || !uuidRe.test(String(messageId))) return;
+    const original = ownMessages().find(m => String(m.id) === String(messageId));
+    if (!original || original.file_url || ['sending','failed','blocked'].includes(original._deliveryStatus)) return;
+    if (![me, peer].includes(String(original.from))) return;
+    replyDraft = {id:String(messageId),myId:me,peer};
+    renderReplyComposer();
+    document.getElementById('chat-inp-el')?.focus();
+  }
+  function takeReply(myId, otherId) {
+    if (!replyDraft || !owner()) return null;
+    const current = replyDraft;
+    if (current.myId !== String(myId) || current.peer !== String(otherId) ||
+        !chatVisible() || !ownMessages().some(m => m.id === current.id && !m.file_url)) {
+      cancelReply();
+      return null;
+    }
+    cancelReply();
+    return current.id;
+  }
+  function replyButton(message) {
+    if (!message || !uuidRe.test(String(message.id)) ||
+        ['sending','failed','blocked'].includes(message._deliveryStatus)) return '';
+    return '<button type="button" class="axv2-reply-action" data-axv2-reply="' +
+      replyEscape(message.id) + '" aria-label="Reply to message" title="Reply to message">↩ Reply</button>';
+  }
+  function quotedMessage(message, allMessages) {
+    const targetId = String(message?.replyToMessageId || message?.reply_to_message_id || '');
+    if (!uuidRe.test(targetId)) return '';
+    const target = (allMessages || []).find(m => String(m.id) === targetId);
+    return '<button type="button" class="axv2-message-quote" data-axv2-reply-jump="' +
+      replyEscape(targetId) + '" aria-label="Go to replied message"><strong>' +
+      replyEscape(replySender(target)) + '</strong><span>' +
+      replyEscape(replySnippet(target)) + '</span></button>';
+  }
+  document.addEventListener('click', event => {
+    if (!window.axChatV2?.enabled) return;
+    const cancel = event.target?.closest?.('[data-axv2-reply-cancel]');
+    if (cancel) { event.preventDefault(); cancelReply(); return; }
+    const button = event.target?.closest?.('[data-axv2-reply]');
+    if (button) {
+      event.preventDefault();
+      startReply(button.getAttribute('data-axv2-reply'));
+      return;
+    }
+    const quote = event.target?.closest?.('[data-axv2-reply-jump]');
+    if (quote) {
+      event.preventDefault();
+      const id = quote.getAttribute('data-axv2-reply-jump');
+      if (!uuidRe.test(String(id))) return;
+      const target = document.querySelector('[data-axv2-msg-id="' + id + '"]');
+      if (target) {
+        target.scrollIntoView({behavior:'smooth',block:'center'});
+        target.classList.add('axv2-reply-highlight');
+        setTimeout(() => target.classList.remove('axv2-reply-highlight'), 1700);
+      }
+    }
+  });
 
   function badge(message, isMine) {
     if (!isMine || !uuidRe.test(String(message?.id || '')) ||
@@ -345,6 +458,7 @@
       renderStatus();
       return;
     }
+    cancelReply();
     removeTypingBubble();
     stopTyping();
     if (receiptChannel) { try { void client().removeChannel(receiptChannel); } catch (_) {} }
@@ -374,6 +488,7 @@
     markReadIfVisible();
   }
   function cleanup() {
+    cancelReply();
     generation++;
     clearTimeout(unreadRefreshTimeout);
     clearInterval(unreadPollingTimer);
@@ -424,6 +539,7 @@
 
   window.axChatV2 = {
     enabled: true, ticks, repaintTicks, onLogin, onConversation, onSynced,
-    onIncoming, refreshPresence, cleanup
+    onIncoming, refreshPresence, cleanup,
+    replyButton, quotedMessage, takeReply, cancelReply, renderReplyComposer
   };
 })();
