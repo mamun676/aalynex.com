@@ -399,8 +399,8 @@
     heartbeatTimer = setInterval(touchPresence, 45000);
     refreshTimer = setInterval(refreshPresence, 12500);
     pollingTimer = setInterval(pollTyping, 3300);
-    statusTimer = setInterval(() => { renderStatus(); markReadIfVisible(); paintUnreadBadges(); }, 1800);
     unreadPollingTimer = setInterval(() => { void refreshUnread(); }, 30000);
+    statusTimer = setInterval(() => { renderStatus(); markReadIfVisible(); paintUnreadBadges(); }, 1800);
     void refreshUnread();
     if (openConversation() && otherUser()) onConversation(openConversation(), otherUser());
   }
